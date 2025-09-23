@@ -13,10 +13,36 @@ class Event extends Model
         'title',
         'description',
         'coordinator_name',
+        'event_type',
+        'other_event_type',
         'event_date',
         'registration_end_date',
+        'has_registration_end_date',
         'required_players',
         'is_done',
+        'allow_bracketing',
+    ];
+
+    protected $casts = [
+        'is_done' => 'boolean',
+        'allow_bracketing' => 'boolean',
+        'has_registration_end_date' => 'boolean',
+        'event_date' => 'datetime',
+        'registration_end_date' => 'datetime',
+    ];
+    
+    protected $attributes = [
+        'event_type' => 'competition', // Default value
+        'is_done' => false,
+        'allow_bracketing' => false,
+        'has_registration_end_date' => false,
+    ];
+    
+    protected $dates = [
+        'event_date',
+        'registration_end_date',
+        'created_at',
+        'updated_at',
     ];
 
 

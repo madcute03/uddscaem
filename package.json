@@ -25,7 +25,9 @@
     "dependencies": {
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-react": "^0.8.1",
+        "@types/react-datepicker": "^6.2.0",
         "dayjs": "^1.11.18",
+        "react-datepicker": "^8.7.0",
         "uuid": "^11.1.0",
         "ziggy-js": "^2.5.3"
     }

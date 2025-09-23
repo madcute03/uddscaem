@@ -20,8 +20,9 @@ export default function ShowEvent({ event }) {
     const isOngoing = today >= event.event_date && !event.is_done;
     const isDone = event.is_done === 1 || today > event.event_date;
 
-    const isRegistrationClosed =
-        event.registration_end_date && today > event.registration_end_date;
+    const isRegistrationClosed = event.registration_end_date 
+        ? today > event.registration_end_date 
+        : true; // Consider registration closed if no end date is set
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -105,23 +106,25 @@ export default function ShowEvent({ event }) {
                             </div>
 
                             <div className="flex flex-wrap gap-3 justify-center py-4">
-                                {isUpcoming && !isRegistrationClosed ? (
-                                    <Link
-                                        href={route("events.register", event.id)}
-                                        className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
+                                {event.registration_end_date && isUpcoming && (
+                                    isRegistrationClosed ? (
+                                        <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
+                                            Registration Not Available
+                                        </p>
+                                    ) : (
+                                        <Link
+                                            href={route("events.register", event.id)}
+                                            className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
                                                            transition duration-300 ease-in-out 
                                                            bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
                                                            bg-[#2e8eff]/20 flex items-center justify-center 
                                                            hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
                                                            focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                    >
-                                        Register
-                                    </Link>
-                                ) : isUpcoming && isRegistrationClosed ? (
-                                    <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
-                                        Registration Closed
-                                    </p>
-                                ) : null}
+                                        >
+                                            Register
+                                        </Link>
+                                    )
+                                )}
 
                                 {(isOngoing || isDone) && (
                                     <>
@@ -255,7 +258,7 @@ export default function ShowEvent({ event }) {
                                 </Link>
                             ) : isUpcoming && isRegistrationClosed ? (
                                 <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
-                                    Registration Closed
+                                    Registration Not Available
                                 </p>
                             ) : null}
 

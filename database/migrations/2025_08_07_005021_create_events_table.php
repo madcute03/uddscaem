@@ -17,8 +17,9 @@ return new class extends Migration
             $table->text('description');
             $table->string('coordinator_name');
             $table->string('image_path')->nullable();
-            $table->date('event_date');
-            $table->date('registration_end_date')->nullable(); // added here
+            $table->dateTime('event_date');
+            $table->dateTime('registration_end_date')->nullable(); // added here
+            $table->boolean('has_registration_end_date')->default(true);
             $table->boolean('is_done')->default(false); 
             $table->unsignedTinyInteger('required_players')->nullable();
             $table->timestamps();
@@ -39,6 +40,5 @@ return new class extends Migration
     {
         Schema::dropIfExists('event_images'); // drop child table first
         Schema::dropIfExists('events');       // then drop parent table
-
     }
 };
