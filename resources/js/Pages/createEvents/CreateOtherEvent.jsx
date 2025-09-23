@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Inertia } from '@inertiajs/inertia';
 import EventTypeSelector from '@/Components/EventTypeSelector';
@@ -27,7 +27,12 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const handleDateSelect = (date) => {
         if (date) {
-            const newDate = date.toISOString().split('T')[0];
+            // Create a new date string in YYYY-MM-DD format without timezone conversion
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const newDate = `${year}-${month}-${day}`;
+            
             setDateValue(newDate);
             updateDateTime(newDate, timeValue);
             setActiveTab('time');
@@ -391,13 +396,28 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
     );
 };
 
-export default function CreateEvent({ auth, events = [] }) {
+export default function CreateOtherEvent({ auth, events = [] }) {
+    // Get event name from URL
+    const [eventName, setEventName] = useState('');
+    
+    useEffect(() => {
+        // Extract the name from the URL query parameters
+        const params = new URLSearchParams(window.location.search);
+        const nameFromUrl = params.get('name');
+        if (nameFromUrl) {
+            const decodedName = decodeURIComponent(nameFromUrl);
+            setEventName(decodedName);
+            // Also set it in the form data
+            setData('other_event_type', decodedName);
+            setData('event_type', 'other');
+        }
+    }, []);
     const { data, setData, post, processing, reset, errors } = useForm({
         title: '',
         description: '',
         coordinator_name: '',
-        event_type: '',
-        other_event_type: '',
+        event_type: 'other',
+        other_event_type: eventName,
         event_date: '',
         registration_end_date: '',
         has_registration_end_date: false,
@@ -415,10 +435,21 @@ export default function CreateEvent({ auth, events = [] }) {
         description: '',
         coordinator_name: '',
         event_date: '',
-        registration_end_date: '', // 
+        registration_end_date: '',
         images: [],
         required_players: '',
     });
+
+    // Handle event type selection
+    const handleEventTypeSelect = (type) => {
+        if (type === 'tryouts') {
+            // You can add any additional logic here before navigating
+            // For example, saving the current form data or showing a confirmation
+            
+            // Navigate to the CreateTryouts page
+            router.visit('/dashboard/create-tryouts');
+        }
+    };
 
     const checkDateAndSubmit = (e) => {
         e.preventDefault();
@@ -438,8 +469,16 @@ export default function CreateEvent({ auth, events = [] }) {
     const handleSubmit = () => {
         const formData = new FormData();
         
+        // Create a copy of the data to modify
+        const formDataToSubmit = { ...data };
+        
+        // If this is an 'other' event type, use the custom name as the event_type
+        if (formDataToSubmit.event_type === 'other' && formDataToSubmit.other_event_type) {
+            formDataToSubmit.event_type = formDataToSubmit.other_event_type;
+        }
+        
         // Add all form data to formData object
-        Object.entries(data).forEach(([key, value]) => {
+        Object.entries(formDataToSubmit).forEach(([key, value]) => {
             if (key === 'images') {
                 // Handle file uploads
                 data.images.forEach((image, index) => {
@@ -453,8 +492,8 @@ export default function CreateEvent({ auth, events = [] }) {
             } else if (key === 'required_players' && !data.has_required_players) {
                 // Skip required players if not enabled
                 return;
-            } else if (key === 'other_event_type' && data.event_type !== 'other') {
-                // Skip other_event_type if event_type is not 'other'
+            } else if (key === 'other_event_type') {
+                // We'll handle this separately, skip here
                 return;
             } else if (value !== null && value !== undefined) {
                 // Handle all other fields
@@ -600,7 +639,9 @@ export default function CreateEvent({ auth, events = [] }) {
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                         <div className="flex flex-col space-y-4">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-lg font-semibold">Create Event</h2>
+                                <h2 className="text-lg font-semibold">
+                                    {eventName ? `Create ${eventName}` : 'Create Event'}
+                                </h2>
                                 <div className="flex items-center space-x-2">
                                     <span className="text-sm text-slate-300">Enable Bracketing</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -626,6 +667,7 @@ export default function CreateEvent({ auth, events = [] }) {
                                             ...newValue
                                         });
                                     }}
+                                    onTypeSelect={handleEventTypeSelect}
                                     error={errors.event_type}
                                 />
                                 {errors.event_type && (
@@ -812,7 +854,7 @@ export default function CreateEvent({ auth, events = [] }) {
                                 onClick={confirmPastDateSubmit}
                                 className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
                             >
-                                Yes, Create Event
+                                Yes, Create Tryouts
                             </button>
                             <button
                                 onClick={cancelPastDateSubmit}

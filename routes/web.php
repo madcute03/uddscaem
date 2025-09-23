@@ -94,7 +94,41 @@ Route::get('/bracket/double/{teams}', function ($teams) {
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [EventController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard/createevent', [EventController::class, 'index'])->name('dashboard.createevent');
+    Route::get('/dashboard/create-competition', function () {
+        return Inertia::render('createEvents/CreateCompetition', [
+            'auth' => [
+                'user' => auth()->user()
+            ],
+            'events' => []
+        ]);
+    })->name('dashboard.create-competition');
+    
+    Route::get('/dashboard/create-tryouts', function () {
+        return Inertia::render('createEvents/CreateTryouts', [
+            'auth' => [
+                'user' => auth()->user()
+            ],
+            'events' => []
+        ]);
+    })->name('dashboard.create-tryouts');
+    
+    Route::get('/dashboard/create-intramurals', function () {
+        return Inertia::render('createEvents/CreateIntramurals', [
+            'auth' => [
+                'user' => auth()->user()
+            ],
+            'events' => []
+        ]);
+    })->name('dashboard.create-intramurals');
+    
+    Route::get('/dashboard/create-other-event', function () {
+        return Inertia::render('createEvents/CreateOtherEvent', [
+            'auth' => [
+                'user' => auth()->user()
+            ],
+            'events' => []
+        ]);
+    })->name('dashboard.create-other-event');
     
     // Events
     Route::post('/events', [EventController::class, 'store'])->name('events.store');

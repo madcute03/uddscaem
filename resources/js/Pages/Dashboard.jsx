@@ -29,7 +29,11 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const handleDateSelect = (date) => {
         if (date) {
-            const newDate = date.toISOString().split('T')[0];
+            // Create a new date string in YYYY-MM-DD format using local time
+            // This ensures the date is not affected by timezone conversion
+            const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+            const newDate = localDate.toISOString().split('T')[0];
+            
             setDateValue(newDate);
             updateDateTime(newDate, timeValue);
             setActiveTab('time');
@@ -97,7 +101,9 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const isSelected = (date) => {
         if (!date || !dateValue) return false;
-        return date.toISOString().split('T')[0] === dateValue;
+        // Convert both dates to YYYY-MM-DD format for accurate comparison
+        const dateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        return dateStr === dateValue;
     };
 
     const isToday = (date) => {
@@ -334,60 +340,115 @@ function Dashboard() {
         });
     };
 
-    const handleEditSubmit = (e) => {
+    const handleEditSubmit = async (e) => {
         e.preventDefault();
-        const formData = new FormData();
         
-        // Handle each field in editData
-        Object.entries(editData).forEach(([key, val]) => {
-            if (key === 'images') {
-                val.forEach((img) => img && formData.append('images[]', img));
-            } else if (key === 'existingImages') {
-                val.forEach((imgPath) => formData.append('existing_images[]', imgPath));
-            } else if (key === 'event_date' || key === 'registration_end_date') {
-                // These will be handled separately
-                return;
-            } else {
-                formData.append(key, val);
+        try {
+            const formData = new FormData();
+            
+            // Add basic fields
+            formData.append('_method', 'PUT'); // For Laravel to recognize as PUT request
+            formData.append('title', editData.title);
+            formData.append('description', editData.description);
+            formData.append('coordinator_name', editData.coordinator_name);
+            formData.append('event_type', editData.event_type);
+            formData.append('allow_bracketing', editData.allow_bracketing ? '1' : '0');
+            
+            // Handle event date and time
+            if (editData.event_date) {
+                // Use the date string directly as it's already in YYYY-MM-DD format
+                const [datePart, timePart] = editData.event_date.split('T');
+                formData.append('event_date', datePart);
+                formData.append('event_time', timePart ? timePart.substring(0, 5) : '00:00');
             }
-        });
+            
+            // Handle registration end date and time if it exists
+            if (editData.has_registration_end_date && editData.registration_end_date) {
+                // Use the date string directly as it's already in YYYY-MM-DD format
+                const [datePart, timePart] = editData.registration_end_date.split('T');
+                formData.append('registration_end_date', datePart);
+                formData.append('registration_end_time', timePart ? timePart.substring(0, 5) : '00:00');
+            } else {
+                formData.append('registration_end_date', '');
+                formData.append('registration_end_time', '');
+            }
 
-        // Handle event date and time
-        if (editData.event_date) {
-            const eventDate = new Date(editData.event_date);
-            formData.append('event_date', eventDate.toISOString().split('T')[0]);
-            formData.append('event_time', eventDate.toTimeString().substring(0, 5));
-        }
-        
-        // Handle registration end date and time if it exists
-        if (editData.has_registration_end_date && editData.registration_end_date) {
-            const regEndDate = new Date(editData.registration_end_date);
-            formData.append('registration_end_date', regEndDate.toISOString().split('T')[0]);
-            formData.append('registration_end_time', regEndDate.toTimeString().substring(0, 5));
-        } else {
-            formData.append('registration_end_date', '');
-            formData.append('registration_end_time', '');
-        }
+            // Handle required players
+            formData.append('has_required_players', editData.has_required_players ? '1' : '0');
+            if (editData.has_required_players && editData.required_players) {
+                formData.append('required_players', editData.required_players);
+            } else {
+                formData.append('required_players', '');
+            }
 
-        // Handle required players
-        formData.append('has_required_players', editData.has_required_players ? '1' : '0');
-        if (editData.has_required_players && editData.required_players) {
-            formData.append('required_players', editData.required_players);
-        } else {
-            formData.append('required_players', '');
-        }
+            // Handle existing images (keep the ones that weren't removed)
+            if (editData.existingImages && editData.existingImages.length > 0) {
+                editData.existingImages.forEach(img => {
+                    formData.append('existing_images[]', img.image_path);
+                });
+            }
 
-        fetch(`/events/${editingEventId}`, {
-            method: 'POST',
-            headers: {
-                'X-HTTP-Method-Override': 'PUT',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            },
-            body: formData,
-        }).then(() => {
+            // Handle new image uploads
+            if (editData.images && editData.images.length > 0) {
+                editData.images.forEach((file) => {
+                    formData.append('images[]', file);
+                });
+            }
+
+            console.log('Submitting form with data:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ', pair[1]);
+            }
+
+            const response = await fetch(`/events/${editingEventId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData,
+            });
+
+            // Get the response text first
+            const responseText = await response.text();
+            let responseData;
+            
+            try {
+                // Try to parse as JSON
+                responseData = JSON.parse(responseText);
+            } catch (e) {
+                // If it's not JSON, it's probably an HTML error page
+                console.error('HTML Response:', responseText);
+                throw new Error('Server returned an error page. Check the console for details.');
+            }
+
+            if (!response.ok) {
+                console.error('Error response:', responseData);
+                // Handle validation errors
+                if (responseData.errors) {
+                    const errorMessages = Object.values(responseData.errors).flat().join('\n');
+                    throw new Error(errorMessages);
+                }
+                throw new Error(responseData.message || 'Failed to update event');
+            }
+
+            console.log('Success:', responseData);
+            
+            // Show success message and reload after a short delay
+            alert('Event updated successfully!');
             setEditingEventId(null);
             window.location.reload();
-        });
+        } catch (error) {
+            console.error('Error updating event:', error);
+            // Show more detailed error message
+            alert('Error updating event: ' + (error.message || 'Please check the console for details'));
+            
+            // Log the full error for debugging
+            if (error.response) {
+                console.error('Full error response:', error.response);
+            }
+        }
     };
 
     const handleDelete = (id) => {
@@ -420,18 +481,7 @@ function Dashboard() {
     };
 
     return (
-        <>
-            {/* Event Date Picker */}
-            <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">Event Date & Time</label>
-                <DateTimePicker
-                    value={editData.event_date}
-                    onChange={handleEventDateTimeChange}
-                    placeholder="Select event date and time"
-                />
-            </div>
-
-            <AuthenticatedLayout
+        <AuthenticatedLayout
                 user={auth.user}
                 header={<h2 className="font-semibold text-xl text-gray-100 leading-tight">Dashboard</h2>}
             >        <div className="flex items-center justify-center py-10">
@@ -538,7 +588,7 @@ function Dashboard() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm">Event Date</label>
+                                        <label className="block text-sm">Event Date & Time</label>
                                         <DateTimePicker
                                             value={editData.event_date}
                                             onChange={handleEventDateTimeChange}
@@ -546,7 +596,7 @@ function Dashboard() {
                                         />
                                     </div>
 
-                                    <div className="mb-4">
+                                    <div className="flex items-center gap-2">
                                         <div className="flex items-center justify-between mb-1">
                                             <label className="block text-sm font-medium text-gray-300">Registration End Date & Time</label>
                                             <div className="flex items-center">
@@ -575,46 +625,100 @@ function Dashboard() {
                                         )}
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm">Images</label>
-                                        {safeImages.map((img, idx) => (
-                                            <input
-                                                key={idx}
-                                                type="file"
-                                                className="w-full border border-slate-600 bg-slate-700 mt-1 text-white focus:border-blue-500 focus:outline-none"
-                                                onChange={e => {
-                                                    const newImages = [...safeImages];
-                                                    newImages[idx] = e.target.files[0];
-                                                    setEditData({ ...editData, images: newImages });
-                                                }}
-                                            />
-                                        ))}
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditData({ ...editData, images: [...editData.images, null] })}
-                                            className="text-blue-400 underline mt-2"
-                                        >
-                                            + Add image
-                                        </button>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2">
-                                        {editData.existingImages?.map((imgPath, idx) => (
-                                            <div key={idx} className="relative">
-                                                <img src={`/storage/${imgPath}`} alt="Existing event" className="w-24 h-24 object-cover rounded" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const newImagesPath = [...editData.existingImages];
-                                                        newImagesPath.splice(idx, 1);
-                                                        setEditData({ ...editData, existingImages: newImagesPath });
+                                    <div className="space-y-4">
+                                        <label className="block text-sm font-medium text-slate-300">Event Images</label>
+                                        
+                                        {/* New Images Upload - Made smaller */}
+                                        <div className="flex items-center justify-center w-full">
+                                            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-slate-800/50 border-slate-700 hover:bg-slate-800/70">
+                                                <div className="flex flex-col items-center justify-center px-4 py-3">
+                                                    <svg className="w-6 h-6 mb-1 text-slate-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                                    </svg>
+                                                    <p className="text-xs text-slate-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                                    <p className="text-[10px] text-slate-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                                                </div>
+                                                <input 
+                                                    id="dropzone-file" 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    multiple
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const files = Array.from(e.target.files);
+                                                        setEditData(prev => ({
+                                                            ...prev,
+                                                            images: [...prev.images, ...files]
+                                                        }));
                                                     }}
-                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                                                >
-                                                    ×
-                                                </button>
+                                                />
+                                            </label>
+                                        </div>
+
+                                        {/* Existing Images Grid - Moved below upload */}
+                                        {editData.existingImages && editData.existingImages.length > 0 && (
+                                            <div className="mt-4">
+                                                <p className="text-sm text-slate-400 mb-2">Current Images:</p>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {editData.existingImages.map((img, i) => (
+                                                        <div key={i} className="relative aspect-square">
+                                                            <img
+                                                                src={`/storage/${img.image_path}`}
+                                                                alt={`Event ${i + 1}`}
+                                                                className="w-full h-full object-cover rounded"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('Remove this image?')) {
+                                                                        setEditData(prev => ({
+                                                                            ...prev,
+                                                                            existingImages: prev.existingImages.filter((_, idx) => idx !== i)
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                className="absolute top-0.5 right-0.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        ))}
+                                        )}
+                                        
+                                        {/* New Images Preview */}
+                                        {safeImages.length > 0 && (
+                                            <div className="mt-4">
+                                                <p className="text-sm text-slate-400 mb-2">New images to upload:</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {safeImages.map((file, index) => (
+                                                        <div key={index} className="relative">
+                                                            <img 
+                                                                src={URL.createObjectURL(file)} 
+                                                                alt={`Preview ${index + 1}`} 
+                                                                className="h-16 w-16 object-cover rounded"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newImages = [...safeImages];
+                                                                    newImages.splice(index, 1);
+                                                                    setEditData(prev => ({
+                                                                        ...prev,
+                                                                        images: newImages
+                                                                    }));
+                                                                }}
+                                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex gap-2 mt-2">
@@ -823,7 +927,6 @@ function Dashboard() {
                 </div>
             </div>
         </AuthenticatedLayout>
-        </>
     )
 }
 

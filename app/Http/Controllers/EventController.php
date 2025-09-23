@@ -110,12 +110,18 @@ class EventController extends Controller
             $validated['registration_end_date'] = null;
         }
 
+        // Handle custom event type
+        $eventType = $validated['event_type'];
+        if ($eventType === 'other' && $request->has('other_event_type') && !empty($request->input('other_event_type'))) {
+            $eventType = $request->input('other_event_type');
+        }
+
         // Create the event
         $event = Event::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'coordinator_name' => $validated['coordinator_name'],
-            'event_type' => $validated['event_type'],
+            'event_type' => $eventType,
             'event_date' => $validated['event_date'],
             'registration_end_date' => $validated['registration_end_date'] ?? null,
             'has_registration_end_date' => $validated['has_registration_end_date'] ?? false,
@@ -141,23 +147,47 @@ class EventController extends Controller
     // ADMIN: Update an event with existing images support
     public function update(Request $request, $id)
     {
-        $event = Event::findOrFail($id);
+        try {
+            \Log::info('Update request received', $request->except('images'));
+            \Log::info('Files received:', array_map(function($file) {
+                return [
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'mime' => $file->getMimeType(),
+                ];
+            }, $request->file('images', [])));
+            
+            $event = Event::findOrFail($id);
 
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'coordinator_name' => 'required|string|max:255',
-            'event_type' => 'required|string|max:255',
-            'event_date' => 'required|date',
-            'event_time' => 'required|date_format:H:i',
-            'registration_end_date' => 'nullable|date',
-            'registration_end_time' => 'nullable|date_format:H:i',
-            'required_players' => 'nullable|integer|min:1|max:20',
-            'images.*' => 'nullable|image|max:2048',
-            'allow_bracketing' => 'sometimes|boolean',
-            'existing_images' => 'nullable|array',
-            'existing_images.*' => 'exists:event_images,id',
-        ]);
+            $rules = [
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'coordinator_name' => 'required|string|max:255',
+                'event_type' => 'required|string|max:255',
+                'event_date' => 'required|date',
+                'event_time' => 'required|date_format:H:i',
+                'registration_end_date' => 'nullable|date',
+                'registration_end_time' => 'nullable|date_format:H:i',
+                'required_players' => 'nullable|integer|min:1|max:20',
+                'images' => 'nullable|array',
+                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'allow_bracketing' => 'sometimes|boolean',
+                'existing_images' => 'nullable|array',
+                'existing_images.*' => 'string',
+            ];
+
+            $validator = \Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                \Log::error('Validation failed', $validator->errors()->toArray());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $data = $validator->validated();
 
         // Combine date and time for event_date
         $eventDateTime = $data['event_date'] . ' ' . ($data['event_time'] ?? '00:00:00');
@@ -177,25 +207,57 @@ class EventController extends Controller
             'event_date' => $eventDateTime,
             'registration_end_date' => $registrationDateTime,
             'required_players' => $data['required_players'] ?? null,
-            'allow_bracketing' => $data['allow_bracketing'] ?? false,
+            'allow_bracketing' => $request->boolean('allow_bracketing'),
         ]);
 
-        // Remove deleted images
+        // Handle existing images
         $existingImages = $request->input('existing_images', []);
-        $event->images()->whereNotIn('image_path', $existingImages)->each(function ($img) {
-            Storage::disk('public')->delete($img->image_path);
-            $img->delete();
-        });
+        \Log::info('Existing images to keep:', $existingImages);
+        
+        // Remove images that are not in the existing_images array
+        if (!empty($existingImages)) {
+            $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
+                \Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
+                Storage::disk('public')->delete($image->image_path);
+                $image->delete();
+            });
+        } else {
+            // If no existing images are sent, remove all existing images
+            $event->images->each(function ($image) {
+                Storage::disk('public')->delete($image->image_path);
+                $image->delete();
+            });
+        }
 
-        // Add new uploaded images
+        // Handle new image uploads
         if ($request->hasFile('images')) {
+            \Log::info('Processing new image uploads');
             foreach ($request->file('images') as $file) {
-                $path = $file->store('events', 'public');
-                $event->images()->create(['image_path' => $path]);
+                if ($file->isValid()) {
+                    $path = $file->store('events', 'public');
+                    $event->images()->create(['image_path' => $path]);
+                    \Log::info('Uploaded new image:', ['path' => $path]);
+                }
             }
         }
 
-        return redirect()->back()->with('success', 'Event updated successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Event updated successfully.',
+                'event' => $event->fresh('images')
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating event: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the event.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // ADMIN: Delete an event
