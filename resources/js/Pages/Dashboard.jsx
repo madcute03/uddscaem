@@ -2,6 +2,246 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
 import React, { useState, useEffect } from 'react'
 import { usePage, Link } from '@inertiajs/react'
 
+// Custom DateTime Picker Component
+const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
+    // Parse the initial date and time from the value prop
+    const initialDate = value ? value.split('T')[0] : '';
+    const initialTime = value ? (value.split('T')[1] || '').substring(0, 5) : '00:00';
+    
+    const [dateValue, setDateValue] = useState(initialDate);
+    const [timeValue, setTimeValue] = useState(initialTime);
+    const [isOpen, setIsOpen] = useState(false);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
+
+    const formatDateTime = (date) => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    const handleDateSelect = (date) => {
+        if (date) {
+            const newDate = date.toISOString().split('T')[0];
+            setDateValue(newDate);
+            updateDateTime(newDate, timeValue);
+            setActiveTab('time');
+        }
+    };
+
+    const handleTimeChange = (e) => {
+        const newTime = e.target.value;
+        setTimeValue(newTime);
+        // Only update the date time if we have a date value
+        if (dateValue) {
+            updateDateTime(dateValue, newTime);
+        }
+    };
+
+    const updateDateTime = (date, time) => {
+        if (date) {
+            // If time is not provided, use the current timeValue or default to '00:00'
+            const timeToUse = time || timeValue || '00:00';
+            const dateTimeString = `${date}T${timeToUse}`;
+            onChange(dateTimeString);
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const getDaysInMonth = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+
+        const days = [];
+
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            days.push(null);
+        }
+
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            days.push(new Date(year, month, day));
+        }
+
+        return days;
+    };
+
+    const navigateMonth = (direction) => {
+        setCurrentMonth(prev => {
+            const newDate = new Date(prev);
+            newDate.setMonth(prev.getMonth() + direction);
+            return newDate;
+        });
+    };
+
+    const isSelected = (date) => {
+        if (!date || !dateValue) return false;
+        return date.toISOString().split('T')[0] === dateValue;
+    };
+
+    const isToday = (date) => {
+        if (!date) return false;
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+    };
+
+    const days = getDaysInMonth(currentMonth);
+    const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    return (
+        <div className="relative">
+            <div
+                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
+                onClick={() => {
+                    setIsOpen(!isOpen);
+                    setActiveTab('date');
+                }}
+            >
+                <span className={value ? 'text-slate-100' : 'text-slate-400'}>
+                    {value ? formatDateTime(value) : placeholder}
+                </span>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+
+            {isOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
+                    {/* Tabs */}
+                    <div className="flex border-b border-slate-700 mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('date')}
+                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            Date
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('time')}
+                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            Time
+                        </button>
+                    </div>
+
+                    {activeTab === 'date' && (
+                        <>
+                            {/* Calendar Header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => navigateMonth(-1)}
+                                    className="p-1 hover:bg-slate-700 rounded"
+                                >
+                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <h3 className="text-slate-100 font-medium">{monthYear}</h3>
+                                <button
+                                    type="button"
+                                    onClick={() => navigateMonth(1)}
+                                    className="p-1 hover:bg-slate-700 rounded"
+                                >
+                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {/* Days of Week */}
+                            <div className="grid grid-cols-7 gap-1 mb-2">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                    <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
+                                        {day}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Calendar Days */}
+                            <div className="grid grid-cols-7 gap-1">
+                                {days.map((date, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => handleDateSelect(date)}
+                                        disabled={!date}
+                                        className={`
+                                            h-8 text-sm rounded transition-colors
+                                            ${!date ? 'invisible' : ''}
+                                            ${isSelected(date)
+                                                ? 'bg-blue-600 text-white'
+                                                : isToday(date)
+                                                    ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
+                                                    : 'text-slate-300 hover:bg-slate-700'
+                                            }
+                                        `}
+                                    >
+                                        {date?.getDate()}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {activeTab === 'time' && (
+                        <div className="p-2">
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Select Time
+                            </label>
+                            <input
+                                type="time"
+                                value={timeValue}
+                                onChange={handleTimeChange}
+                                className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2"
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-slate-700">
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(false)}
+                            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-700/50 border border-slate-600 rounded-md hover:bg-slate-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(false)}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 function Dashboard() {
     const { auth, events = [] } = usePage().props;
     const user = auth.user;
@@ -27,9 +267,6 @@ function Dashboard() {
     // Ensure images is always an array
     const safeImages = Array.isArray(editData.images) ? editData.images : [];
 
-    // DateTimePicker states
-    const [showEventDatePicker, setShowEventDatePicker] = useState(false);
-    const [showRegistrationDatePicker, setShowRegistrationDatePicker] = useState(false);
 
     // Event type color mapping
     const eventTypeColors = {
@@ -83,9 +320,11 @@ function Dashboard() {
             title: event.title,
             description: event.description,
             event_type: event.event_type,
-            event_date: event.event_date,
+            // Ensure event_date is properly formatted
+            event_date: event.event_date ? event.event_date.split('.')[0] : '', // Remove milliseconds if present
             coordinator_name: event.coordinator_name || '',
-            registration_end_date: event.registration_end_date || '',
+            // Ensure registration_end_date is properly formatted
+            registration_end_date: event.registration_end_date ? event.registration_end_date.split('.')[0] : '',
             has_registration_end_date: !!event.registration_end_date,
             has_required_players: !!event.required_players,
             is_done: event.is_done,
@@ -105,23 +344,32 @@ function Dashboard() {
                 val.forEach((img) => img && formData.append('images[]', img));
             } else if (key === 'existingImages') {
                 val.forEach((imgPath) => formData.append('existing_images[]', imgPath));
-            } else if (key === 'has_registration_end_date' || key === 'registration_end_date' || key === 'has_required_players' || key === 'required_players') {
-                // These will be handled separately to ensure proper values
+            } else if (key === 'event_date' || key === 'registration_end_date') {
+                // These will be handled separately
                 return;
             } else {
                 formData.append(key, val);
             }
         });
+
+        // Handle event date and time
+        if (editData.event_date) {
+            const eventDate = new Date(editData.event_date);
+            formData.append('event_date', eventDate.toISOString().split('T')[0]);
+            formData.append('event_time', eventDate.toTimeString().substring(0, 5));
+        }
         
-        // Explicitly handle registration date fields
-        formData.append('has_registration_end_date', editData.has_registration_end_date ? '1' : '0');
+        // Handle registration end date and time if it exists
         if (editData.has_registration_end_date && editData.registration_end_date) {
-            formData.append('registration_end_date', editData.registration_end_date);
+            const regEndDate = new Date(editData.registration_end_date);
+            formData.append('registration_end_date', regEndDate.toISOString().split('T')[0]);
+            formData.append('registration_end_time', regEndDate.toTimeString().substring(0, 5));
         } else {
             formData.append('registration_end_date', '');
+            formData.append('registration_end_time', '');
         }
 
-        // Explicitly handle required players fields
+        // Handle required players
         formData.append('has_required_players', editData.has_required_players ? '1' : '0');
         if (editData.has_required_players && editData.required_players) {
             formData.append('required_players', editData.required_players);
@@ -173,109 +421,15 @@ function Dashboard() {
 
     return (
         <>
-            {/* Event Date Picker Modal */}
-            {showEventDatePicker && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowEventDatePicker(false)}>
-                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-2xl max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-white">Select Event Date & Time</h3>
-                            <button 
-                                onClick={() => setShowEventDatePicker(false)}
-                                className="text-gray-400 hover:text-white text-xl"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
-                            <input
-                                type="date"
-                                className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 mb-2"
-                                value={editData.event_date ? editData.event_date.split('T')[0] : ''}
-                                onChange={(e) => {
-                                    const date = e.target.value;
-                                    const time = editData.event_date ? editData.event_date.split('T')[1] || '12:00' : '12:00';
-                                    handleEventDateTimeChange(`${date}T${time}`);
-                                }}
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
-                            <input
-                                type="time"
-                                className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2"
-                                value={editData.event_date ? editData.event_date.split('T')[1]?.substring(0, 5) || '12:00' : '12:00'}
-                                onChange={(e) => {
-                                    const time = e.target.value;
-                                    const date = editData.event_date ? editData.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
-                                    handleEventDateTimeChange(`${date}T${time}:00`);
-                                }}
-                            />
-                        </div>
-                        <div className="flex justify-end">
-                            <button
-                                type="button"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                onClick={() => setShowEventDatePicker(false)}
-                            >
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Registration End Date Picker Modal */}
-            {showRegistrationDatePicker && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowRegistrationDatePicker(false)}>
-                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-2xl max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-white">Select Registration End Date & Time</h3>
-                            <button 
-                                onClick={() => setShowRegistrationDatePicker(false)}
-                                className="text-gray-400 hover:text-white text-xl"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
-                            <input
-                                type="date"
-                                className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 mb-2"
-                                value={editData.registration_end_date ? editData.registration_end_date.split('T')[0] : ''}
-                                onChange={(e) => {
-                                    const date = e.target.value;
-                                    const time = editData.registration_end_date ? editData.registration_end_date.split('T')[1] || '23:59' : '23:59';
-                                    handleRegistrationDateTimeChange(`${date}T${time}`);
-                                }}
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
-                            <input
-                                type="time"
-                                className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2"
-                                value={editData.registration_end_date ? editData.registration_end_date.split('T')[1]?.substring(0, 5) || '23:59' : '23:59'}
-                                onChange={(e) => {
-                                    const time = e.target.value;
-                                    const date = editData.registration_end_date ? editData.registration_end_date.split('T')[0] : new Date().toISOString().split('T')[0];
-                                    handleRegistrationDateTimeChange(`${date}T${time}:00`);
-                                }}
-                            />
-                        </div>
-                        <div className="flex justify-end">
-                            <button
-                                type="button"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                onClick={() => setShowRegistrationDatePicker(false)}
-                            >
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Event Date Picker */}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Event Date & Time</label>
+                <DateTimePicker
+                    value={editData.event_date}
+                    onChange={handleEventDateTimeChange}
+                    placeholder="Select event date and time"
+                />
+            </div>
 
             <AuthenticatedLayout
                 user={auth.user}
@@ -385,87 +539,41 @@ function Dashboard() {
 
                                     <div>
                                         <label className="block text-sm">Event Date</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={editData.event_date ? 
-                                                    `${new Date(editData.event_date).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'long',
-                                                        day: 'numeric'
-                                                    })} ${new Date(editData.event_date).toLocaleTimeString('en-US', {
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                        hour12: true
-                                                    })}` 
-                                                    : 'Select event date and time'}
-                                                onClick={() => setShowEventDatePicker(true)}
-                                                readOnly
-                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded cursor-pointer hover:bg-slate-600 transition-colors focus:border-blue-500 focus:outline-none"
-                                                placeholder="Select event date and time"
-                                            />
-                                            <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setShowEventDatePicker(true);
-                                                }}
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </button>
-                                        </div>
+                                        <DateTimePicker
+                                            value={editData.event_date}
+                                            onChange={handleEventDateTimeChange}
+                                            placeholder="Select event date and time"
+                                        />
                                     </div>
 
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <input
-                                            type="checkbox"
-                                            id="hasRegistrationEndDate"
-                                            checked={editData.has_registration_end_date}
-                                            onChange={(e) => {
-                                                const hasDate = e.target.checked;
-                                                setEditData({
-                                                    ...editData,
-                                                    has_registration_end_date: hasDate,
-                                                    registration_end_date: hasDate ? editData.registration_end_date || '' : ''
-                                                });
-                                            }}
-                                            className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                                        />
-                                        <label htmlFor="hasRegistrationEndDate" className="text-sm text-gray-300">
-                                            Set registration end date
-                                        </label>
-                                    </div>
-                                    
-                                    {editData.has_registration_end_date && (
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-gray-300 mb-2">Registration End Date & Time</label>
-                                            <div className="relative">
+                                    <div className="mb-4">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="block text-sm font-medium text-gray-300">Registration End Date & Time</label>
+                                            <div className="flex items-center">
                                                 <input
-                                                    type="text"
-                                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                                    value={editData.registration_end_date ? formatDateTime(editData.registration_end_date) : ''}
-                                                    readOnly
-                                                    onClick={() => setShowRegistrationDatePicker(true)}
-                                                    placeholder="Select registration end date and time"
+                                                    type="checkbox"
+                                                    id="has_registration_end_date"
+                                                    checked={editData.has_registration_end_date}
+                                                    onChange={(e) => setEditData(prev => ({
+                                                        ...prev,
+                                                        has_registration_end_date: e.target.checked,
+                                                        registration_end_date: e.target.checked ? (prev.registration_end_date || '') : ''
+                                                    }))}
+                                                    className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-600"
                                                 />
-                                                <button
-                                                    type="button"
-                                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setShowRegistrationDatePicker(true);
-                                                    }}
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                </button>
+                                                <label htmlFor="has_registration_end_date" className="ml-2 text-sm text-gray-300">
+                                                    Set registration end date
+                                                </label>
                                             </div>
                                         </div>
-                                    )}
+                                        {editData.has_registration_end_date && (
+                                            <DateTimePicker
+                                                value={editData.registration_end_date}
+                                                onChange={handleRegistrationDateTimeChange}
+                                                placeholder="Select registration end date and time"
+                                            />
+                                        )}
+                                    </div>
 
                                     <div>
                                         <label className="block text-sm">Images</label>
@@ -546,23 +654,25 @@ function Dashboard() {
                                                 {event.coordinator_name}
                                             </div>
                                             <div className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <div>
-                                                    {new Date(event.event_date).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric'
+                                            <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <div>
+                                                {new Date(event.event_date).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    timeZone: 'UTC'
+                                                })}
+                                                <span className="text-amber-400 ml-2">
+                                                    {new Date(event.event_date).toLocaleTimeString('en-US', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        hour12: true,
+                                                        timeZone: 'UTC'
                                                     })}
-                                                    <span className="text-amber-400 ml-2">
-                                                        {new Date(event.event_date).toLocaleTimeString('en-US', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        })}
-                                                    </span>
-                                                </div>
+                                                </span>
+                                            </div>
                                             </div>
                                             {event.registration_end_date && (
                                                 <div className="flex items-center">
@@ -572,7 +682,8 @@ function Dashboard() {
                                                     <span className="text-amber-400">
                                                         Reg. until: {new Date(event.registration_end_date).toLocaleDateString('en-US', {
                                                             month: 'short',
-                                                            day: 'numeric'
+                                                            day: 'numeric',
+                                                            timeZone: 'UTC'
                                                         })}
                                                     </span>
                                                 </div>
