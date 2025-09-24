@@ -19,6 +19,7 @@ export default function ShowEvent({ event }) {
     const isUpcoming = today < event.event_date && !event.is_done;
     const isOngoing = today >= event.event_date && !event.is_done;
     const isDone = event.is_done === 1 || today > event.event_date;
+    const hasBracket = Boolean(event.bracket_type && event.teams);
 
     const isRegistrationClosed = event.registration_end_date 
         ? today > event.registration_end_date 
@@ -126,7 +127,7 @@ export default function ShowEvent({ event }) {
                                     )
                                 )}
 
-                                {(isOngoing || isDone) && (
+                                {(hasBracket || isOngoing || isDone) && (
                                     <>
                                         <Link
                                             href={route("bracket.show", {
@@ -262,7 +263,7 @@ export default function ShowEvent({ event }) {
                                 </p>
                             ) : null}
 
-                            {(isOngoing || isDone) && (
+                            {(hasBracket || isOngoing || isDone) && (
                                 <>
                                     <Link
                                         href={route("bracket.show", {
