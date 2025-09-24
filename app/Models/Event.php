@@ -13,6 +13,8 @@ class Event extends Model
         'title',
         'description',
         'coordinator_name',
+        'category',
+        'other_category',
         'event_type',
         'other_event_type',
         'event_date',
@@ -33,6 +35,7 @@ class Event extends Model
     
     protected $attributes = [
         'event_type' => 'competition', // Default value
+        'category' => 'sport', // Default value
         'is_done' => false,
         'allow_bracketing' => false,
         'has_registration_end_date' => false,

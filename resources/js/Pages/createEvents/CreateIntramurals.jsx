@@ -32,7 +32,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const newDate = `${year}-${month}-${day}`;
-            
+
             setDateValue(newDate);
             updateDateTime(newDate, timeValue);
             setActiveTab('time');
@@ -401,6 +401,8 @@ export default function CreateIntramurals({ auth, events = [] }) {
         title: '',
         description: '',
         coordinator_name: '',
+        category: 'sport',
+        other_category: '',
         event_type: 'intramurals', // Set default to 'intramurals'
         other_event_type: '',
         event_date: '',
@@ -430,7 +432,7 @@ export default function CreateIntramurals({ auth, events = [] }) {
         if (type === 'tryouts') {
             // You can add any additional logic here before navigating
             // For example, saving the current form data or showing a confirmation
-            
+
             // Navigate to the CreateTryouts page
             router.visit('/dashboard/create-tryouts');
         }
@@ -453,7 +455,7 @@ export default function CreateIntramurals({ auth, events = [] }) {
 
     const handleSubmit = () => {
         const formData = new FormData();
-        
+
         // Add all form data to formData object
         Object.entries(data).forEach(([key, value]) => {
             if (key === 'images') {
@@ -472,6 +474,12 @@ export default function CreateIntramurals({ auth, events = [] }) {
             } else if (key === 'other_event_type' && data.event_type !== 'other') {
                 // Skip other_event_type if event_type is not 'other'
                 return;
+            } else if (key === 'event_date' || key === 'registration_end_date') {
+                if (value) {
+                    const [date, time] = value.split('T');
+                    formData.append(key, date);
+                    formData.append(key === 'event_date' ? 'event_time' : 'registration_end_time', time ? time : '00:00');
+                }
             } else if (value !== null && value !== undefined) {
                 // Handle all other fields
                 formData.append(key, value);
@@ -620,9 +628,9 @@ export default function CreateIntramurals({ auth, events = [] }) {
                                 <div className="flex items-center space-x-2">
                                     <span className="text-sm text-slate-300">Enable Bracketing</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="sr-only peer" 
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
                                             checked={data.allow_bracketing}
                                             onChange={(e) => setData('allow_bracketing', e.target.checked)}
                                         />
@@ -653,7 +661,7 @@ export default function CreateIntramurals({ auth, events = [] }) {
                                 )}
                             </div>
                         </div>
-                        
+
                         <form onSubmit={checkDateAndSubmit} encType="multipart/form-data" className="mt-4">
                             <div className="mb-2">
                                 <label className="block mb-1 text-slate-300">Event Title</label>
@@ -680,6 +688,38 @@ export default function CreateIntramurals({ auth, events = [] }) {
                                     value={data.coordinator_name}
                                     onChange={e => setData('coordinator_name', e.target.value)}
                                 />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block mb-1 text-slate-300">Category</label>
+                                <select
+                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                    value={data.category}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setData(prev => ({
+                                            ...prev,
+                                            category: value,
+                                            other_category: value === 'other' ? prev.other_category : ''
+                                        }));
+                                    }}
+                                >
+                                    <option value="sport">Sport</option>
+                                    <option value="culture">Culture</option>
+                                    <option value="arts">Arts</option>
+                                    <option value="intramurals">Intramurals</option>
+                                    <option value="other">Other (please specify)</option>
+                                </select>
+                                {data.category === 'other' && (
+                                    <div className="mt-2">
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            placeholder="Please specify category"
+                                            value={data.other_category}
+                                            onChange={(e) => setData('other_category', e.target.value)}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             <div className="mb-4">
                                 <label className="block mb-1 text-slate-300">Event Start Date & Time</label>
@@ -711,7 +751,7 @@ export default function CreateIntramurals({ auth, events = [] }) {
                             </div>
                             {data.has_registration_end_date && (
                                 <div className="mb-4">
-                                    <label className="block mb-1 text-slate-300">Registration End Date & Time</label>
+                                    <label className="flex items-center mb-2"></label>
                                     <DateTimePicker
                                         value={data.registration_end_date}
                                         onChange={(value) => setData('registration_end_date', value)}
@@ -721,6 +761,51 @@ export default function CreateIntramurals({ auth, events = [] }) {
                                     {errors.registration_end_date && <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>}
                                 </div>
                             )}
+                            <div className="mt-4">
+                                <div className="flex items-center mb-3">
+                                    <label className="text-slate-300 mr-2">Enable Required Players</label>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="sr-only peer" 
+                                            checked={data.has_required_players}
+                                            onChange={(e) => {
+                                                setData({
+                                                    ...data,
+                                                    has_required_players: e.target.checked,
+                                                    required_players: e.target.checked ? data.required_players || '1' : ''
+                                                });
+                                            }}
+                                        />
+                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                
+                                {data.has_required_players && (
+                                    <div>
+                                        <label htmlFor="required_players" className="block text-sm font-medium text-slate-300 mb-1">
+                                        </label>
+                                        <select
+                                            id="required_players"
+                                            value={data.required_players}
+                                            onChange={(e) => setData('required_players', e.target.value)}
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                        >
+                                            <option value="">Select number of players</option>
+                                            {[...Array(20)].map((_, i) => (
+                                                <option key={i + 1} value={i + 1}>
+                                                    {i + 1}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.required_players && (
+                                            <p className="mt-1 text-sm text-red-500">
+                                                {errors.required_players}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>     {/* Images */}
                             <div className="mb-2">
                                 <label className="block mb-1 text-slate-300">Image of the event</label>
@@ -743,53 +828,6 @@ export default function CreateIntramurals({ auth, events = [] }) {
                                 >
                                     + Add image
                                 </button>
-                            </div>
-
-                            <div className="mt-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-slate-300">Set Required Players</label>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="sr-only peer" 
-                                            checked={data.has_required_players}
-                                            onChange={(e) => {
-                                                setData({
-                                                    ...data,
-                                                    has_required_players: e.target.checked,
-                                                    required_players: e.target.checked ? data.required_players || '1' : ''
-                                                });
-                                            }}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                                
-                                {data.has_required_players && (
-                                    <div>
-                                        <label htmlFor="required_players" className="block text-sm font-medium text-slate-300 mb-1">
-                                            Required Players
-                                        </label>
-                                        <select
-                                            id="required_players"
-                                            value={data.required_players}
-                                            onChange={(e) => setData('required_players', e.target.value)}
-                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                        >
-                                            <option value="">Select number of players</option>
-                                            {[...Array(20)].map((_, i) => (
-                                                <option key={i + 1} value={i + 1}>
-                                                    {i + 1}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {errors.required_players && (
-                                            <p className="mt-1 text-sm text-red-500">
-                                                {errors.required_players}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
                             </div>
 
                             <button type="submit" className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 

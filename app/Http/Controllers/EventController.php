@@ -18,6 +18,8 @@ class EventController extends Controller
             'description',
             'coordinator_name',
             'event_type',
+            'category',
+            'other_category',
             'event_date',
             'registration_end_date',
             'has_registration_end_date',
@@ -59,7 +61,9 @@ class EventController extends Controller
             'has_registration_end_date',
             'required_players',
             'is_done',
-            'allow_bracketing'
+            'allow_bracketing',
+            'category',
+            'other_category',
         )
             ->with('images')
             ->orderBy('event_date')
@@ -95,10 +99,12 @@ class EventController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'coordinator_name' => 'required|string|max:255',
+            'category' => 'required|string|in:sport,culture,arts,intramurals,other',
+            'other_category' => 'required_if:category,other|string|max:255|nullable',
             'event_type' => 'required|string|max:255',
             'event_date' => 'required|date',
             'has_registration_end_date' => 'sometimes|boolean',
-            'registration_end_date' => 'nullable|date|after_or_equal:event_date',
+            'registration_end_date' => 'nullable|date',
             'required_players' => 'nullable|integer|min:1|max:20',
             'allow_bracketing' => 'sometimes|boolean',
             'images' => 'nullable|array',
@@ -110,10 +116,16 @@ class EventController extends Controller
             $validated['registration_end_date'] = null;
         }
 
-        // Handle custom event type
+        // Handle custom event type and category
         $eventType = $validated['event_type'];
-        if ($eventType === 'other' && $request->has('other_event_type') && !empty($request->input('other_event_type'))) {
+        if ($eventType === 'other' && !empty($request->input('other_event_type'))) {
             $eventType = $request->input('other_event_type');
+        }
+        
+        // Handle custom category
+        $category = $validated['category'];
+        if ($category === 'other' && !empty($validated['other_category'])) {
+            $category = $validated['other_category'];
         }
 
         // Create the event
@@ -121,6 +133,8 @@ class EventController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'],
             'coordinator_name' => $validated['coordinator_name'],
+            'category' => $category,
+            'other_category' => $validated['other_category'] ?? null,
             'event_type' => $eventType,
             'event_date' => $validated['event_date'],
             'registration_end_date' => $validated['registration_end_date'] ?? null,
@@ -163,6 +177,8 @@ class EventController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
                 'coordinator_name' => 'required|string|max:255',
+                'category' => 'required|string|in:sport,culture,arts,intramurals,other',
+                'other_category' => 'required_if:category,other|string|max:255|nullable',
                 'event_type' => 'required|string|max:255',
                 'event_date' => 'required|date',
                 'event_time' => 'required|date_format:H:i',
@@ -189,33 +205,35 @@ class EventController extends Controller
 
             $data = $validator->validated();
 
-        // Combine date and time for event_date
-        $eventDateTime = $data['event_date'] . ' ' . ($data['event_time'] ?? '00:00:00');
-        
-        // Combine date and time for registration_end_date if provided
-        $registrationDateTime = null;
-        if (!empty($data['registration_end_date']) && !empty($data['registration_end_time'])) {
-            $registrationDateTime = $data['registration_end_date'] . ' ' . $data['registration_end_time'] . ':00';
-        }
+            // Handle custom event type and category
+            $eventType = $data['event_type'];
+            if ($eventType === 'other' && !empty($data['other_event_type'])) {
+                $eventType = $data['other_event_type'];
+            }
+            
+            // Handle custom category
+            $category = $data['category'];
+            if ($category === 'other' && !empty($data['other_category'])) {
+                $category = $data['other_category'];
+            }
+            
+            // Update the event
+            $event->update([
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'coordinator_name' => $data['coordinator_name'],
+                'category' => $category,
+                'other_category' => $data['other_category'] ?? null,
+                'event_type' => $eventType,
+                'event_date' => $data['event_date'],
+                'registration_end_date' => $data['registration_end_date'] ?? null,
+                'required_players' => $data['required_players'] ?? null,
+                'allow_bracketing' => $data['allow_bracketing'] ?? false,
+            ]);
 
-        // Update event data
-        $event->update([
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'coordinator_name' => $data['coordinator_name'],
-            'event_type' => $data['event_type'],
-            'event_date' => $eventDateTime,
-            'registration_end_date' => $registrationDateTime,
-            'required_players' => $data['required_players'] ?? null,
-            'allow_bracketing' => $request->boolean('allow_bracketing'),
-        ]);
-
-        // Handle existing images
-        $existingImages = $request->input('existing_images', []);
-        \Log::info('Existing images to keep:', $existingImages);
-        
-        // Remove images that are not in the existing_images array
-        if (!empty($existingImages)) {
+            // Handle existing images
+            $existingImages = $data['existing_images'] ?? [];
+            if (!empty($existingImages)) {
             $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
                 \Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
                 Storage::disk('public')->delete($image->image_path);
