@@ -1,0 +1,13 @@
+
+[build]
+# Install PHP and JS dependencies, then build assets
+command = "composer install --no-dev --optimize-autoloader && npm install && npm run build"
+
+[deploy]
+# Run migrations after deploy
+dependsOn = ["build"]
+command = "php artisan migrate --force"
+
+[start]
+# Start the PHP built-in server for Laravel
+command = "php -S 0.0.0.0:$PORT -t public"
