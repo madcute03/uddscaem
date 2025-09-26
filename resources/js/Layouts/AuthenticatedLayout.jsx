@@ -12,16 +12,20 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 flex">
-            {/* Mobile Drawer Button */}
-            <button
-                className="sm:hidden fixed top-4 left-4 z-50 bg-slate-900/80 rounded-lg p-2 shadow-lg border border-slate-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                onClick={() => setShowingNavigationDropdown(true)}
-                aria-label="Open menu"
-            >
-                <svg className="w-7 h-7 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
+            {/* Mobile Drawer Header: Hamburger + Admin Panel */}
+            <div className="sm:hidden fixed top-0 left-0 w-full z-50 flex items-center justify-between bg-slate-900/90 border-b border-slate-800/50 h-14 px-4 shadow-lg">
+                <button
+                    className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800/90 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    onClick={() => setShowingNavigationDropdown(true)}
+                    aria-label="Open menu"
+                >
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <span className="flex-1 text-center text-lg font-bold text-slate-100 tracking-wide">Admin Panel</span>
+                <span className="w-9" /> {/* Spacer for symmetry */}
+            </div>
 
             {/* Sidebar as Drawer on mobile, fixed on desktop */}
             {/* Overlay for mobile drawer */}
@@ -37,23 +41,25 @@ export default function AuthenticatedLayout({ header, children }) {
                 style={{ display: showingNavigationDropdown ? 'block' : undefined }}
             >
                 <div className="flex flex-col h-full">
-                    {/* Logo/Brand & User Profile + Close button on mobile */}
-                    <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
-                        <Link href="/dashboard" className="flex-1">
-                            <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide text-center">SCAEMS</p>
-                            <p className="text-xs text-slate-400 text-center mt-1">Admin Panel</p>
-                        </Link>
-                        {/* Close button for mobile drawer */}
+                    {/* Drawer header for mobile: only close button */}
+                    <div className="sm:hidden flex items-center justify-between h-14 px-4 border-b border-slate-800/50 bg-slate-900/90">
+                        <span className="text-lg font-bold text-slate-100 tracking-wide">Admin Panel</span>
                         <button
-                            className="sm:hidden ml-2 p-2 rounded-lg bg-slate-800/70 hover:bg-slate-800/90 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800/90 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                             onClick={() => setShowingNavigationDropdown(false)}
                             aria-label="Close menu"
-                            style={{ display: showingNavigationDropdown ? 'block' : 'none' }}
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
+                    </div>
+                    {/* Desktop: original header/profile */}
+                    <div className="hidden sm:flex p-6 border-b border-slate-800/50 items-center justify-between">
+                        <Link href="/dashboard" className="flex-1">
+                            <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide text-center">SCAEMS</p>
+                            <p className="text-xs text-slate-400 text-center mt-1">Admin Panel</p>
+                        </Link>
                         {/* Compact User Profile */}
                         <div className="relative">
                             <Dropdown>

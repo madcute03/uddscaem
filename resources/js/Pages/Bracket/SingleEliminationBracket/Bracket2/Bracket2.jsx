@@ -175,16 +175,21 @@ export default function TwoTeamBracket({ eventId }) {
                     </div>
                 </div>
 
+                {/* Landscape layout for 2-team bracket */}
                 <div id="bracket-container" className="relative w-full">
-                    <div className="flex flex-col md:flex-row md:gap-12 lg:gap-16 xl:gap-24 justify-center">
-                        <div className="mt-8 sm:mt-12">
+                    <div className="flex flex-row gap-16 justify-center items-center min-w-[350px] py-8">
+                        {/* Team 1 */}
+                        <div className="flex flex-col items-center">
                             {renderMatch("F", "Final")}
-                            {champion && (
+                        </div>
+                        {/* Champion */}
+                        {champion && (
+                            <div className="flex flex-col items-center">
                                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
                                     🏆 {champion} 🏆
                                 </h2>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

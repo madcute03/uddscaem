@@ -117,26 +117,32 @@ export default function FiveTeamShowResult({ eventId, refreshTrigger }) {
                     ))}
                 </svg>
 
-                {/* Upper Bracket */}
-                <h2 className="font-bold mb-2">Upper Bracket</h2>
-                <div className="flex gap-12 mb-10">
-                    <div>{renderMatch("UB1")}</div>
-                    <div>{renderMatch("UB2")}{renderMatch("UB3")}</div>
-                    <div>{renderMatch("UB4")}</div>
-                </div>
-
-                {/* Lower Bracket */}
-                <h2 className="font-bold mb-2">Lower Bracket</h2>
-                <div className="flex gap-12 mb-10">
-                    <div>{renderMatch("LB1")}</div>
-                    <div>{renderMatch("LB2")}</div>
-                    <div>{renderMatch("LB3")}</div>
-                </div>
-
-                {/* Grand Final */}
-                <div className="flex flex-col justify-center items-center absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2">
-                    <h2 className="font-bold mb-2 text-center">Grand Final</h2>
-                    {renderMatch("GF")}
+                <div className="w-full overflow-x-auto pb-4">
+                    <div className="flex flex-row gap-16 sm:gap-20 md:gap-24 lg:gap-28 xl:gap-32 min-w-[900px]">
+                        {/* Upper Bracket */}
+                        <div className="flex flex-col mb-10">
+                            <h2 className="font-bold mb-2">Upper Bracket</h2>
+                            <div className="flex flex-row gap-8">
+                                <div className="flex flex-col gap-2">{renderMatch("UB1")}</div>
+                                <div className="flex flex-col gap-2">{renderMatch("UB2")}{renderMatch("UB3")}</div>
+                                <div className="flex flex-col gap-2">{renderMatch("UB4")}</div>
+                            </div>
+                        </div>
+                        {/* Lower Bracket */}
+                        <div className="flex flex-col mb-10">
+                            <h2 className="font-bold mb-2">Lower Bracket</h2>
+                            <div className="flex flex-row gap-8">
+                                <div className="flex flex-col gap-2">{renderMatch("LB1")}</div>
+                                <div className="flex flex-col gap-2">{renderMatch("LB2")}</div>
+                                <div className="flex flex-col gap-2">{renderMatch("LB3")}</div>
+                            </div>
+                        </div>
+                        {/* Grand Final */}
+                        <div className="flex flex-col justify-center items-center mt-24">
+                            <h2 className="font-bold mb-2 text-center">Grand Final</h2>
+                            {renderMatch("GF")}
+                        </div>
+                    </div>
                 </div>
             </div>
 

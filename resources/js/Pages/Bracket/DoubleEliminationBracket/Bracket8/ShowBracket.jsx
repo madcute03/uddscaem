@@ -88,43 +88,35 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
             <div className="bg-gray-900 min-h-screen p-4 text-white py-10 px-2 sm:px-4 md:px-8 max-w-5xl mx-auto w-full">
                 <h1 className="text-2xl font-bold text-center mb-6">{teamCount}-Team Double Elimination Bracket</h1>
 
-                <div id="bracket-container" className="relative">
+                <div id="bracket-container" className="relative w-full overflow-x-auto pb-4">
                     <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                         {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                     </svg>
-                    {/* Upper Bracket */}
-                    <div className="mb-10">
-                        <h2 className="font-bold mb-2">Upper Bracket</h2>
-                        <div className="flex gap-12">
-                            {/* First column: UB1–UB4 */}
-                            <div>{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}{renderMatch("UB4")}</div>
-
-                            {/* Second column: UB5 & UB6 with extra top margin */}
-                            <div className="mt-12"> {/* <-- adjust mt-12 or mt-16 for more gap */}
-                                {renderMatch("UB5")}
-                                {renderMatch("UB6")}
+                    <div className="flex flex-row gap-16 sm:gap-20 md:gap-24 lg:gap-28 xl:gap-32 min-w-[1400px]">
+                        {/* Upper Bracket */}
+                        <div className="flex flex-col mb-10">
+                            <h2 className="font-bold mb-2">Upper Bracket</h2>
+                            <div className="flex flex-row gap-8">
+                                <div className="flex flex-col gap-2">{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}{renderMatch("UB4")}</div>
+                                <div className="flex flex-col gap-12 mt-12">{renderMatch("UB5")}{renderMatch("UB6")}</div>
+                                <div className="flex flex-col gap-24 mt-24">{renderMatch("UB7")}</div>
                             </div>
-
-                            {/* Third column: UB7 */}
-                            <div className="mt-24">{renderMatch("UB7")}</div> {/* optional vertical alignment */}
                         </div>
-                    </div>
-
-                    {/* Lower Bracket */}
-                    <div className="mb-10">
-                        <h2 className="font-bold mb-2">Lower Bracket</h2>
-                        <div className="flex gap-12">
-                            <div>{renderMatch("LB1")}{renderMatch("LB2")}</div>
-                            <div>{renderMatch("LB3")}{renderMatch("LB4")}</div>
-                            <div>{renderMatch("LB5")}</div>
-                            <div>{renderMatch("LB6")}</div>
+                        {/* Lower Bracket */}
+                        <div className="flex flex-col mb-10">
+                            <h2 className="font-bold mb-2">Lower Bracket</h2>
+                            <div className="flex flex-row gap-8">
+                                <div className="flex flex-col gap-2">{renderMatch("LB1")}{renderMatch("LB2")}</div>
+                                <div className="flex flex-col gap-2">{renderMatch("LB3")}{renderMatch("LB4")}</div>
+                                <div className="flex flex-col gap-12">{renderMatch("LB5")}</div>
+                                <div className="flex flex-col gap-12">{renderMatch("LB6")}</div>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Grand Final */}
-                    <div className="absolute left-2/3 top-1/2 transform -translate-y-1/2">
-                        {renderMatch("GF")}
-                        {champion && <h2 className="text-3xl font-bold text-yellow-400 mt-4">🏆 Champion: {champion}</h2>}
+                        {/* Grand Final */}
+                        <div className="flex flex-col justify-center items-center mt-24">
+                            {renderMatch("GF")}
+                            {champion && <h2 className="text-3xl font-bold text-yellow-400 mt-4">🏆 Champion: {champion}</h2>}
+                        </div>
                     </div>
                 </div>
             </div>

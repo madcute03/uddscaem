@@ -6,6 +6,8 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class EventController extends Controller
 {
@@ -162,8 +164,8 @@ class EventController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            \Log::info('Update request received', $request->except('images'));
-            \Log::info('Files received:', array_map(function($file) {
+            Log::info('Update request received', $request->except('images'));
+            Log::info('Files received:', array_map(function($file) {
                 return [
                     'name' => $file->getClientOriginalName(),
                     'size' => $file->getSize(),
@@ -192,10 +194,10 @@ class EventController extends Controller
                 'existing_images.*' => 'string',
             ];
 
-            $validator = \Validator::make($request->all(), $rules);
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
-                \Log::error('Validation failed', $validator->errors()->toArray());
+                Log::error('Validation failed', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
@@ -233,28 +235,29 @@ class EventController extends Controller
 
             // Handle existing images
             $existingImages = $data['existing_images'] ?? [];
+
             if (!empty($existingImages)) {
-            $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
-                \Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
-                Storage::disk('public')->delete($image->image_path);
-                $image->delete();
-            });
-        } else {
-            // If no existing images are sent, remove all existing images
-            $event->images->each(function ($image) {
-                Storage::disk('public')->delete($image->image_path);
-                $image->delete();
-            });
-        }
+                $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
+                    Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
+                    Storage::disk('public')->delete($image->image_path);
+                    $image->delete();
+                });
+            } else {
+                // If no existing images are sent, remove all existing images
+                $event->images->each(function ($image) {
+                    Storage::disk('public')->delete($image->image_path);
+                    $image->delete();
+                });
+            }
 
         // Handle new image uploads
         if ($request->hasFile('images')) {
-            \Log::info('Processing new image uploads');
+            Log::info('Processing new image uploads');
             foreach ($request->file('images') as $file) {
                 if ($file->isValid()) {
                     $path = $file->store('events', 'public');
                     $event->images()->create(['image_path' => $path]);
-                    \Log::info('Uploaded new image:', ['path' => $path]);
+                    Log::info('Uploaded new image:', ['path' => $path]);
                 }
             }
         }
@@ -265,7 +268,7 @@ class EventController extends Controller
                 'event' => $event->fresh('images')
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error updating event: ' . $e->getMessage(), [
+            Log::error('Error updating event: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);

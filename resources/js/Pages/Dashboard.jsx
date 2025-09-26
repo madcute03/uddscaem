@@ -641,7 +641,7 @@ function Dashboard() {
             header={<h2 className="font-semibold text-xl text-gray-100 leading-tight">Dashboard</h2>}
         >        <div className="flex items-center justify-center py-10">
                 <div className="flex items-center gap-10 flex-col md:flex-row">
-                    <img src="/images/sems.png" alt="Logo" className="h-40 w-40 rounded-full object-cover ring-4 ring-blue-500/60 shadow-2xl shadow-blue-900/40" />
+                    <img src="/images/sems.png" alt="Logo" className="rounded-full object-cover ring-4 ring-blue-500/60 shadow-2xl shadow-blue-900/40" style={{height: 'auto', width: 'auto', maxWidth: '100%', maxHeight: '100%'}} />
                     <div className="text-center md:text-left">
                         <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300">Welcome!</span>

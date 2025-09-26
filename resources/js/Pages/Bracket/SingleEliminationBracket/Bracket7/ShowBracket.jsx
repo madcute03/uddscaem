@@ -93,30 +93,29 @@ export default function ShowResult({ eventId }) {
     <div className="bg-gray-900 min-h-screen p-4 text-white py-10 px-2 sm:px-4 md:px-8 max-w-5xl mx-auto w-full">
             <h1 className="text-2xl font-bold text-center mb-6">7-Team Bracket Result</h1>
 
-            <div id="bracket-container" className="relative flex justify-center items-start gap-24">
-                {/* Round 1 */}
-                <div className="flex flex-col gap-24">
-                    {renderMatch("R1A", "Round 1")}
-                    {renderMatch("R1B", "Round 1")}
-                    {renderMatch("R1C", "Round 1")}
-                </div>
+            <div id="bracket-container" className="relative w-full overflow-x-auto pb-4">
+                <div className="flex flex-row gap-12 sm:gap-16 md:gap-20 lg:gap-24 xl:gap-32 justify-center min-w-[1100px]">
+                    {/* Each round is now a column, rounds are in a row */}
+                    <div className="flex flex-col gap-24 justify-center">
+                        {renderMatch("R1A", "Round 1")}
+                        {renderMatch("R1B", "Round 1")}
+                        {renderMatch("R1C", "Round 1")}
+                    </div>
 
-                {/* Semi-Finals */}
-                <div className="flex flex-col gap-24 mt-12">
-                    {renderMatch("SF1", "Semi-Final 1")}
-                    {renderMatch("SF2", "Semi-Final 2")}
-                </div>
+                    <div className="flex flex-col gap-24 mt-12 justify-center">
+                        {renderMatch("SF1", "Semi-Final 1")}
+                        {renderMatch("SF2", "Semi-Final 2")}
+                    </div>
 
-                {/* Grand Final */}
-                <div className="relative mt-24 ml-12">
-                    {renderMatch("GF", "Grand Final")}
-                    {champion && (
-                        <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-6">
-                            <h2 className="text-3xl font-bold text-yellow-400">🏆 {champion}</h2>
-                        </div>
-                    )}
+                    <div className="flex flex-col justify-center mt-24 ml-12 relative">
+                        {renderMatch("GF", "Grand Final")}
+                        {champion && (
+                            <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-6">
+                                <h2 className="text-3xl font-bold text-yellow-400">🏆 {champion}</h2>
+                            </div>
+                        )}
+                    </div>
                 </div>
-
                 {/* Lines */}
                 <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                     {lines.map((d, i) => (

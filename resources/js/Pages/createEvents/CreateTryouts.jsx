@@ -800,7 +800,8 @@ export default function CreateTryouts({ auth, events = [] }) {
                                     <input
                                         key={idx}
                                         type="file"
-                                        className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                        className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                        style={{width: '100%'}}
                                         onChange={e => {
                                             const newImages = [...data.images];
                                             newImages[idx] = e.target.files[0];
