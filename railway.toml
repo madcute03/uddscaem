@@ -1,7 +1,7 @@
 
 [build]
-# Install PHP and JS dependencies, then build assets
-command = "composer install --no-dev --optimize-autoloader && npm install && npm run build"
+# Install PHP and JS dependencies, then build assets and clear config cache
+command = "composer install --no-dev --optimize-autoloader && npm install && npm run build && php artisan config:clear"
 
 [deploy]
 # Run migrations after deploy
