@@ -612,7 +612,6 @@ function Dashboard() {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-semibold text-xl text-gray-100 leading-tight">Dashboard</h2>}
         >
             {successMessage && (
                 <div className="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
@@ -624,18 +623,7 @@ function Dashboard() {
                     {errorMessage}
                 </div>
             )}
-            <div className="flex items-center justify-center py-10">
-                <div className="flex items-center gap-10 flex-col md:flex-row">
-                    <img src="/images/sems.png" alt="Logo" className="rounded-full object-cover ring-4 ring-blue-500/60 shadow-2xl shadow-blue-900/40" style={{height: 'auto', width: 'auto', maxWidth: '100%', maxHeight: '100%'}} />
-                    <div className="text-center md:text-left">
-                        <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300">Welcome!</span>
-                            <span className="block md:inline md:ml-3 text-blue-300">{user.name}</span>
-                        </h1>
-
-                    </div>
-                </div>
-            </div>
+           
 
             <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                 <h2 className="text-2xl font-bold mb-6 text-white">Events</h2>
@@ -648,6 +636,28 @@ function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {events.map(event => {
                         const statusInfo = getEventStatus(event);
+                        const cardImages = (() => {
+                            if (Array.isArray(event.images_path) && event.images_path.length > 0) {
+                                return event.images_path.map((path) => (path.startsWith('http') ? path : `/storage/${path}`));
+                            }
+
+                            if (Array.isArray(event.images) && event.images.length > 0) {
+                                return event.images
+                                    .map((img) => {
+                                        if (!img) return null;
+                                        if (typeof img === 'string') {
+                                            return img.startsWith('http') ? img : `/storage/${img}`;
+                                        }
+                                        if (typeof img === 'object' && img.image_path) {
+                                            return img.image_path.startsWith('http') ? img.image_path : `/storage/${img.image_path}`;
+                                        }
+                                        return null;
+                                    })
+                                    .filter(Boolean);
+                            }
+
+                            return [];
+                        })();
 
                         return (
                             <div key={event.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 relative">
@@ -981,14 +991,14 @@ function Dashboard() {
                                                 )}
                                             </div>
 
-                                            {event.images_path?.length > 0 && (
+                                            {cardImages.length > 0 && (
                                                 <div className="mt-3 relative h-32 overflow-hidden rounded-lg bg-slate-700/30 group">
                                                     <div className="absolute inset-0 flex transition-transform duration-300 ease-in-out"
                                                         style={{ transform: `translateX(-${currentSlide[event.id] || 0}%)` }}>
-                                                        {event.images_path.map((imgPath, idx) => (
+                                                        {cardImages.map((imgPath, idx) => (
                                                             <div key={idx} className="min-w-full h-full">
                                                                 <img
-                                                                    src={`/storage/${imgPath}`}
+                                                                    src={imgPath}
                                                                     alt={`Event ${idx + 1}`}
                                                                     className="w-full h-full object-cover"
                                                                 />
@@ -1001,7 +1011,7 @@ function Dashboard() {
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             const current = currentSlide[event.id] || 0;
-                                                            const newSlide = current > 0 ? current - 100 : (event.images_path.length - 1) * 100;
+                                                            const newSlide = current > 0 ? current - 100 : (cardImages.length - 1) * 100;
                                                             setCurrentSlide({ ...currentSlide, [event.id]: newSlide });
                                                         }}
                                                         className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black/70"
@@ -1012,7 +1022,7 @@ function Dashboard() {
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             const current = currentSlide[event.id] || 0;
-                                                            const newSlide = current < (event.images_path.length - 1) * 100 ? current + 100 : 0;
+                                                            const newSlide = current < (cardImages.length - 1) * 100 ? current + 100 : 0;
                                                             setCurrentSlide({ ...currentSlide, [event.id]: newSlide });
                                                         }}
                                                         className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black/70"
@@ -1022,7 +1032,7 @@ function Dashboard() {
 
                                                     {/* Dots Indicator */}
                                                     <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                                                        {event.images_path.map((_, idx) => (
+                                                        {cardImages.map((_, idx) => (
                                                             <button
                                                                 key={idx}
                                                                 onClick={(e) => {

@@ -196,10 +196,10 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
 
     return (
         <div className="bracket-root">
-            <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full max-w-[1800px] mx-auto overflow-x-auto">
+            <div className="bg-gray-900 min-h-screen p-3 md:p-6 text-white w-full overflow-x-auto">
                 <h1 className="text-xl font-bold text-center mb-4">{teamCount}-Team Double Elimination Bracket</h1>
 
-                <div className="flex gap-2 sm:gap-4 justify-center mb-4 sm:mb-6 flex-wrap">
+                <div className="flex gap-3 justify-center mb-6 flex-wrap">
                     {teamsInput.map((team, i) => (
                         <input
                             key={i}
@@ -207,43 +207,30 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
                             value={team}
                             onChange={(e) => handleTeamChange(i, e.target.value)}
                             placeholder={`Team ${i + 1}`}
-                            className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-auto"
+                            className="w-28 sm:w-32 px-2 py-1 rounded-md border border-slate-600 bg-slate-800 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
                     ))}
-                    <div className="flex gap-2 w-full sm:w-auto justify-center mt-2 sm:mt-0">
-                        <button 
-                            onClick={applyTeams} 
-                            className="px-3 sm:px-4 py-1 bg-blue-600 rounded text-white font-bold text-sm sm:text-base"
-                        >
-                            Apply Teams
-                        </button>
-                        <button 
-                            onClick={() => {
-                                setMatches(defaultMatches);
-                                setTeamsInput(Array(teamCount).fill(""));
-                                setChampion(null);
-                            }}
-                            className="px-3 sm:px-4 py-1 bg-red-600 rounded text-white font-bold text-sm sm:text-base"
-                        >
-                            Reset
-                        </button>
-                        <button 
-                            onClick={handleSave} 
-                            className="px-3 sm:px-4 py-1 bg-green-600 rounded text-white font-bold text-sm sm:text-base"
-                        >
-                            Save Bracket
-                        </button>
-                    </div>
+                    <button onClick={applyTeams} className="px-3 py-1 bg-blue-600 rounded-md text-white text-sm font-semibold hover:bg-blue-500 transition">Apply Teams</button>
+                    <button
+                        onClick={() => {
+                            setMatches(defaultMatches);
+                            setTeamsInput(Array(teamCount).fill(""));
+                            setChampion(null);
+                        }}
+                        className="px-3 py-1 bg-red-600 rounded-md text-white text-sm font-semibold hover:bg-red-500 transition"
+                    >Reset</button>
+                    <button onClick={handleSave} className="px-3 py-1 bg-green-600 rounded-md text-white text-sm font-semibold hover:bg-green-500 transition">Save Bracket</button>
                 </div>
 
-                <div id="bracket-container" className="relative w-full">
-                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                        {lines.map((d, i) => (
-                            <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
-                        ))}
-                    </svg>
+                <div className="relative overflow-x-auto">
+                    <div id="bracket-container" className="relative min-w-[900px]">
+                        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                            {lines.map((d, i) => (
+                                <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
+                            ))}
+                        </svg>
 
-                    <div className="flex gap-4 sm:gap-6 min-w-max w-full">
+                        <div className="flex gap-4 sm:gap-6 w-full">
                         {/* Left Column - Brackets */}
                         <div className="w-3/4">
                             {/* Upper Bracket */}
@@ -283,15 +270,16 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
                                 )}
                             </div>
                         </div>
-                    </div>
-
-                    {/* Popup */}
-                    {showPopup && (
-                        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 px-4 py-2 rounded shadow-lg text-sm sm:text-base">
-                            Bracket Saved!
                         </div>
-                    )}
+                    </div>
                 </div>
+
+                {/* Popup */}
+                {showPopup && (
+                    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 px-4 py-2 rounded shadow-lg text-sm sm:text-base">
+                        Bracket Saved!
+                    </div>
+                )}
 
                 {/* Score Modal */}
                 {modalMatch && (
