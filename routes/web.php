@@ -31,9 +31,9 @@ Route::get('/', function () {
         'phpVersion'     => PHP_VERSION,
         'events'         => Event::with('images')->orderBy('event_date')->get(),
         'news'           => News::orderByDesc('published_at')
-                                ->orderByDesc('created_at')
-                                ->take(10)
-                                ->get(),
+            ->orderByDesc('created_at')
+            ->take(10)
+            ->get(),
     ]);
 })->name('home');
 
@@ -43,6 +43,14 @@ Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
 
 // Events
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
+Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
+
+// Bracket Data (Public JSON endpoints)
+Route::get('/double-elimination/{event}', [DoubleEliminationController::class, 'show'])
+    ->name('double-elimination.show');
+Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])
+    ->name('single-elimination.show');
 
 // Event Registration
 Route::get('/events/{event}/register', [EventRegistrationController::class, 'create'])
@@ -102,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'events' => []
         ]);
     })->name('dashboard.create-competition');
-    
+
     Route::get('/dashboard/create-tryouts', function () {
         return Inertia::render('createEvents/CreateTryouts', [
             'auth' => [
@@ -111,7 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'events' => []
         ]);
     })->name('dashboard.create-tryouts');
-    
+
     Route::get('/dashboard/create-intramurals', function () {
         return Inertia::render('createEvents/CreateIntramurals', [
             'auth' => [
@@ -120,7 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'events' => []
         ]);
     })->name('dashboard.create-intramurals');
-    
+
     Route::get('/dashboard/create-other-event', function () {
         return Inertia::render('createEvents/CreateOtherEvent', [
             'auth' => [
@@ -129,40 +137,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'events' => []
         ]);
     })->name('dashboard.create-other-event');
-    
+
     // Events
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('/events/{id}/mark-done', [EventController::class, 'markDone'])->name('events.markDone');
     Route::post('/events/{id}/mark-undone', [EventController::class, 'markUndone'])->name('events.markUndone');
-    
+
     // Bracket Management
     Route::get('/dashboard/bracket', [CreateBracketController::class, 'bracket'])->name('bracket');
     Route::post('/events/{event}/bracket-settings', [BracketController::class, 'storeBracketSettings'])->name('bracket.storeSettings');
     Route::post('/double-elimination/save', [DoubleEliminationController::class, 'save'])->name('double-elimination.save');
-    Route::get('/double-elimination/{event}', [DoubleEliminationController::class, 'show'])->name('double-elimination.show');
     Route::post('/single-elimination/save', [SingleEliminationController::class, 'save'])->name('single-elimination.save');
-    Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])->name('single-elimination.show');
     Route::post('/brackets/save', [BracketController::class, 'save'])->name('bracket.save');
-    Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
-    Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
-    
+
+
     // News Management
     Route::get('/dashboard/createnews', [NewsController::class, 'index'])->name('dashboard.createnews');
     Route::post('/news', [NewsController::class, 'store'])->name('news.store');
     Route::put('/news/{news}', [NewsController::class, 'update'])->name('news.update');
     Route::delete('/news/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
-    
+
     // Complaints Management
     Route::prefix('admin')->group(function () {
         Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('admin.complaints.index');
         Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('admin.complaints.destroy');
     });
-    
+
     // Player Management
     Route::post('/player/update-status', [PlayerController::class, 'updateStatus'])->name('player.updateStatus');
-    
+
     // User Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
