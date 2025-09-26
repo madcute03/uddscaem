@@ -204,19 +204,20 @@ export default function FourTeamBracket({ eventId }) {
                     </div>
                 </div>
 
-                <div id="bracket-container" className="relative w-full overflow-x-auto pb-4">
+                <div id="bracket-container" className="relative w-full">
                     <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                         {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                     </svg>
 
-                    <div className="flex flex-row gap-8 sm:gap-12 md:gap-16 lg:gap-20 xl:gap-24 justify-center min-w-[700px]">
-                        {/* Each round is now a column, rounds are in a row */}
+                    <div className="flex flex-col md:flex-row md:gap-12 lg:gap-16 xl:gap-24 justify-center">
+                        {/* Left column: Semi-Finals */}
                         <div className="flex flex-col gap-16 sm:gap-20 md:gap-24 lg:gap-28 xl:gap-32">
                             {renderMatch("SF1", "Semi-Final 1")}
                             {renderMatch("SF2", "Semi-Final 2")}
                         </div>
 
-                        <div className="flex flex-col justify-center mt-16 sm:mt-24">
+                        {/* Right column: Grand Final */}
+                        <div className="mt-16 sm:mt-24">
                             {renderMatch("GF", "Grand Final")}
                             {champion && (
                                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">

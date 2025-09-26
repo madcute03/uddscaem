@@ -104,7 +104,7 @@ export default function CreateBracket({ events = [] }) {
     return (
         <AuthenticatedLayout>
             <Head title="Create Bracket" />
-            <div className="p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto">
+            <div className="p-6">
                 <h1 className="text-2xl font-bold mb-4">
                     Select Event for Bracket
                 </h1>
