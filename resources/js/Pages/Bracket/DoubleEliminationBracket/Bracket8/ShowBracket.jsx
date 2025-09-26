@@ -85,17 +85,17 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
     return (
         <PublicLayout>
             <Head title={`${teamCount}-Team Double Elimination`} />
-            <div className="bg-gray-900 min-h-screen p-4 text-white">
+            <div className="bg-gray-900 min-h-screen p-2 sm:p-4 text-white">
                 <h1 className="text-2xl font-bold text-center mb-6">{teamCount}-Team Double Elimination Bracket</h1>
 
-                <div id="bracket-container" className="relative">
+                <div id="bracket-container" className="relative w-full overflow-x-auto pb-4">
                     <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                         {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                     </svg>
                     {/* Upper Bracket */}
-                    <div className="mb-10">
+                    <div className="mb-10 min-w-[900px]">
                         <h2 className="font-bold mb-2">Upper Bracket</h2>
-                        <div className="flex gap-12">
+                        <div className="flex flex-row gap-6 sm:gap-10 md:gap-12 lg:gap-16 xl:gap-20">
                             {/* First column: UB1–UB4 */}
                             <div>{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}{renderMatch("UB4")}</div>
 
@@ -111,9 +111,9 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
                     </div>
 
                     {/* Lower Bracket */}
-                    <div className="mb-10">
+                    <div className="mb-10 min-w-[900px]">
                         <h2 className="font-bold mb-2">Lower Bracket</h2>
-                        <div className="flex gap-12">
+                        <div className="flex flex-row gap-6 sm:gap-10 md:gap-12 lg:gap-16 xl:gap-20">
                             <div>{renderMatch("LB1")}{renderMatch("LB2")}</div>
                             <div>{renderMatch("LB3")}{renderMatch("LB4")}</div>
                             <div>{renderMatch("LB5")}</div>
