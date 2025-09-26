@@ -138,114 +138,108 @@ export default function TwoTeamBracket({ eventId }) {
     }, [matches]);
 
     return (
-        <div className="bracket-root">
-            <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full max-w-[1800px] mx-auto overflow-x-auto">
-                <h1 className="text-xl font-bold text-center mb-4">2-Team Single Elimination Bracket</h1>
+        <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full overflow-x-auto">
+            <h1 className="text-xl font-bold text-center mb-4">2-Team Single Elimination Bracket</h1>
 
-                <div className="flex gap-2 sm:gap-4 justify-center mb-4 sm:mb-6 flex-wrap">
-                    {teamsInput.map((t, i) => (
-                        <input
-                            key={i}
-                            type="text"
-                            value={t}
-                            onChange={e => handleTeamChange(i, e.target.value)}
-                            placeholder={`Team ${i + 1}`}
-                            className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-auto"
-                        />
-                    ))}
-                    <div className="flex gap-2 w-full sm:w-auto justify-center mt-2 sm:mt-0">
-                        <button 
-                            onClick={applyTeams} 
-                            className="px-3 sm:px-4 py-1 bg-blue-600 rounded text-white font-bold text-sm sm:text-base"
-                        >
-                            Apply Teams
-                        </button>
-                        <button 
-                            onClick={handleSave} 
-                            className="px-3 sm:px-4 py-1 bg-green-600 rounded text-white font-bold text-sm sm:text-base"
-                        >
-                            Save Bracket
-                        </button>
-                        <button
-                            onClick={resetBracket}
-                            className="px-3 sm:px-4 py-1 bg-red-600 rounded text-white font-bold text-sm sm:text-base"
-                        >
-                            Reset
-                        </button>
+            <div className="flex gap-3 justify-center mb-6 flex-wrap">
+                {teamsInput.map((t, i) => (
+                    <input
+                        key={i}
+                        type="text"
+                        value={t}
+                        onChange={e => handleTeamChange(i, e.target.value)}
+                        placeholder={`Team ${i + 1}`}
+                        className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-28"
+                    />
+                ))}
+                <button
+                    onClick={applyTeams}
+                    className="px-3 py-1 bg-blue-600 rounded-md text-white text-sm font-semibold hover:bg-blue-500 transition"
+                >
+                    Apply Teams
+                </button>
+                <button
+                    onClick={handleSave}
+                    className="px-3 py-1 bg-green-600 rounded-md text-white text-sm font-semibold hover:bg-green-500 transition"
+                >
+                    Save Bracket
+                </button>
+                <button
+                    onClick={resetBracket}
+                    className="px-3 py-1 bg-red-600 rounded-md text-white text-sm font-semibold hover:bg-red-500 transition"
+                >
+                    Reset
+                </button>
+            </div>
+
+            <div id="bracket-container" className="relative">
+                <div className="flex justify-center min-w-max">
+                    <div className="mt-8">
+                        {renderMatch("F", "Final")}
+                        {champion && (
+                            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                🏆 {champion} 🏆
+                            </h2>
+                        )}
                     </div>
                 </div>
+            </div>
 
-                <div id="bracket-container" className="relative w-full">
-                    <div className="flex flex-col md:flex-row md:gap-12 lg:gap-16 xl:gap-24 justify-center">
-                        <div className="mt-8 sm:mt-12">
-                            {renderMatch("F", "Final")}
-                            {champion && (
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
-                                    🏆 {champion} 🏆
-                                </h2>
-                            )}
-                        </div>
-                    </div>
+            {showPopup && (
+                <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 px-4 py-2 rounded shadow-lg text-sm sm:text-base">
+                    Bracket Saved!
                 </div>
+            )}
 
-                {/* Popup */}
-                {showPopup && (
-                    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 px-4 py-2 rounded shadow-lg text-sm sm:text-base">
-                        Bracket Saved!
-                    </div>
-                )}
-
-                {/* Score Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-                        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg w-full max-w-md">
-                            <h2 className="text-lg sm:text-xl font-bold mb-4">Report Score ({currentMatch})</h2>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm mb-1">
-                                        {matches[currentMatch]?.p1?.name}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={scoreInput.p1}
-                                        onChange={e => setScoreInput({ ...scoreInput, p1: e.target.value })}
-                                        className="w-full px-3 py-1.5 rounded text-black text-sm sm:text-base"
-                                        placeholder="Score"
-                                        min="0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm mb-1">
-                                        {matches[currentMatch]?.p2?.name}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={scoreInput.p2}
-                                        onChange={e => setScoreInput({ ...scoreInput, p2: e.target.value })}
-                                        className="w-full px-3 py-1.5 rounded text-black text-sm sm:text-base"
-                                        placeholder="Score"
-                                        min="0"
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2 sm:gap-3 mt-4">
-                                    <button
-                                        onClick={() => setShowModal(false)}
-                                        className="px-3 sm:px-4 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm sm:text-base font-medium"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={submitScore}
-                                        className="px-3 sm:px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-white text-sm sm:text-base font-medium"
-                                    >
-                                        Submit
-                                    </button>
-                                </div>
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg w-full max-w-md">
+                        <h2 className="text-lg sm:text-xl font-bold mb-4">Report Score ({currentMatch})</h2>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-sm mb-1">
+                                    {matches[currentMatch]?.p1?.name}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={scoreInput.p1}
+                                    onChange={e => setScoreInput({ ...scoreInput, p1: e.target.value })}
+                                    className="w-full px-3 py-1.5 rounded text-black text-sm sm:text-base"
+                                    placeholder="Score"
+                                    min="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm mb-1">
+                                    {matches[currentMatch]?.p2?.name}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={scoreInput.p2}
+                                    onChange={e => setScoreInput({ ...scoreInput, p2: e.target.value })}
+                                    className="w-full px-3 py-1.5 rounded text-black text-sm sm:text-base"
+                                    placeholder="Score"
+                                    min="0"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 sm:gap-3 mt-4">
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="px-3 sm:px-4 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm sm:text-base font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={submitScore}
+                                    className="px-3 sm:px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-white text-sm sm:text-base font-medium"
+                                >
+                                    Submit
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }
