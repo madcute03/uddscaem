@@ -4,8 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite",
-        "prebuild": "del /q public\\build\\*.* && if exist public\\build\\assets rmdir /s /q public\\build\\assets"
+        "dev": "vite"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",
