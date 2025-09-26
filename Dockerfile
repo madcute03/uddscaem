@@ -21,6 +21,9 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
     /etc/apache2/apache2.conf \
     /etc/apache2/conf-available/*.conf
 
+# 🔑 Make Apache listen on Railway's assigned $PORT
+RUN sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
+
 # Copy Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -37,8 +40,8 @@ RUN npm install && npm run build
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port
-EXPOSE 80
+# Expose dynamic Railway port
+EXPOSE ${PORT}
 
-# Start Apache in foreground
+# Start Apache
 CMD ["apache2-foreground"]
