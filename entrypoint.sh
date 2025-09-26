@@ -31,4 +31,4 @@ fi
 php artisan migrate --force || true
 
 # Start Apache in the foreground
-apache2-foreground
+exec apache2-foreground
