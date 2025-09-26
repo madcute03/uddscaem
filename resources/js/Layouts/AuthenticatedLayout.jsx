@@ -12,61 +12,90 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 flex">
-            {/* Left Sidebar - responsive */}
-            <aside className="fixed left-0 top-0 h-full w-64 md:w-80 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 hidden sm:block">
+            {/* Mobile Drawer Button */}
+            <button
+                className="sm:hidden fixed top-4 left-4 z-50 bg-slate-900/80 rounded-lg p-2 shadow-lg border border-slate-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                onClick={() => setShowingNavigationDropdown(true)}
+                aria-label="Open menu"
+            >
+                <svg className="w-7 h-7 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            {/* Sidebar as Drawer on mobile, fixed on desktop */}
+            {/* Overlay for mobile drawer */}
+            {showingNavigationDropdown && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
+                    onClick={() => setShowingNavigationDropdown(false)}
+                />
+            )}
+            <aside
+                className={`fixed left-0 top-0 h-full w-64 md:w-80 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 transition-transform duration-300 ease-in-out
+                ${showingNavigationDropdown ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 sm:block`}
+                style={{ display: showingNavigationDropdown ? 'block' : undefined }}
+            >
                 <div className="flex flex-col h-full">
-                    {/* Logo/Brand & User Profile */}
-                    <div className="p-6 border-b border-slate-800/50">
-                        <div className="flex items-center justify-between">
-                            <Link href="/dashboard" className="flex-1">
-                                <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide text-center">SCAEMS</p>
-                                <p className="text-xs text-slate-400 text-center mt-1">Admin Panel</p>
-                            </Link>
-
-                            {/* Compact User Profile */}
-                            <div className="relative">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <button className="flex items-center px-2 py-2 text-sm font-medium rounded-lg bg-slate-800/50 hover:bg-slate-800/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
-                                            <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-                                                <span className="text-white font-semibold text-xs">{user.name.charAt(0).toUpperCase()}</span>
-                                            </div>
-                                            <svg className="w-3 h-3 text-slate-400 ml-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
-                                        <div className="py-1">
-                                            <div className="px-4 py-2 border-b border-gray-100">
-                                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                                <div className="text-xs text-gray-500 truncate">{user.email}</div>
-                                            </div>
-                                            <Dropdown.Link
-                                                href={route('profile.edit')}
-                                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
-                                            >
-                                                <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                                Profile
-                                            </Dropdown.Link>
-                                            <Dropdown.Link
-                                                href={route('logout')}
-                                                method="post"
-                                                as="button"
-                                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150"
-                                            >
-                                                <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                                </svg>
-                                                Log Out
-                                            </Dropdown.Link>
+                    {/* Logo/Brand & User Profile + Close button on mobile */}
+                    <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
+                        <Link href="/dashboard" className="flex-1">
+                            <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide text-center">SCAEMS</p>
+                            <p className="text-xs text-slate-400 text-center mt-1">Admin Panel</p>
+                        </Link>
+                        {/* Close button for mobile drawer */}
+                        <button
+                            className="sm:hidden ml-2 p-2 rounded-lg bg-slate-800/70 hover:bg-slate-800/90 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            onClick={() => setShowingNavigationDropdown(false)}
+                            aria-label="Close menu"
+                            style={{ display: showingNavigationDropdown ? 'block' : 'none' }}
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        {/* Compact User Profile */}
+                        <div className="relative">
+                            <Dropdown>
+                                <Dropdown.Trigger>
+                                    <button className="flex items-center px-2 py-2 text-sm font-medium rounded-lg bg-slate-800/50 hover:bg-slate-800/70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+                                        <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white font-semibold text-xs">{user.name.charAt(0).toUpperCase()}</span>
                                         </div>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
+                                        <svg className="w-3 h-3 text-slate-400 ml-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Content className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+                                    <div className="py-1">
+                                        <div className="px-4 py-2 border-b border-gray-100">
+                                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                            <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                                        </div>
+                                        <Dropdown.Link
+                                            href={route('profile.edit')}
+                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                                        >
+                                            <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            Profile
+                                        </Dropdown.Link>
+                                        <Dropdown.Link
+                                            href={route('logout')}
+                                            method="post"
+                                            as="button"
+                                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150"
+                                        >
+                                            <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                            </svg>
+                                            Log Out
+                                        </Dropdown.Link>
+                                    </div>
+                                </Dropdown.Content>
+                            </Dropdown>
                         </div>
                     </div>
 
@@ -147,6 +176,6 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <main className="min-h-screen w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6">{children}</main>
             </div>
-    </div>
+        </div>
     );
 }
