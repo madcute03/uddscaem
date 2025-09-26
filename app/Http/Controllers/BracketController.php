@@ -76,7 +76,6 @@ class BracketController extends Controller
 
         $normalizedType = strtolower($bracketType);
         $bracketFolder = $bracketMap[$normalizedType] ?? 'DoubleElimination';
-        $bracketFolder = $bracketMap[$normalizedType] ?? 'SingleElimination';
 
         // Build correct path
         $pagePath = "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowBracket";
@@ -108,7 +107,6 @@ class BracketController extends Controller
 
         $normalizedType = strtolower($bracketType);
         $bracketFolder = $bracketMap[$normalizedType] ?? 'DoubleElimination';
-        $bracketFolder = $bracketMap[$normalizedType] ?? 'SingleElimination';
 
         // Build correct path
         $pagePath = "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowStanding";

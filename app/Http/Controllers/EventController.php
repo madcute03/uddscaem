@@ -271,11 +271,22 @@ class EventController extends Controller
             }
         }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Event updated successfully.',
-                'event' => $event->fresh('images')
-            ]);
+            $event = $event->fresh('images');
+            $successMessage = 'Event updated successfully.';
+
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()->with('success', $successMessage);
+            }
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMessage,
+                    'event' => $event
+                ]);
+            }
+
+            return redirect()->back()->with('success', $successMessage);
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage(), [
                 'exception' => $e,

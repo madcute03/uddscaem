@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
 import React, { useState, useEffect } from 'react'
-import { usePage, Link } from '@inertiajs/react'
+import { usePage, Link, router } from '@inertiajs/react'
 
 // Custom DateTime Picker Component
 const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
@@ -249,7 +249,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 };
 
 function Dashboard() {
-    const { auth, events = [] } = usePage().props;
+    const { auth, events = [], flash = {} } = usePage().props;
     const user = auth.user;
     const [currentSlide, setCurrentSlide] = useState({});
 
@@ -273,9 +273,28 @@ function Dashboard() {
         allow_bracketing: false,
     });
 
+    const [successMessage, setSuccessMessage] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(null);
+
     // Ensure images is always an array
     const safeImages = Array.isArray(editData.images) ? editData.images : [];
 
+    useEffect(() => {
+        if (flash?.success) {
+            setSuccessMessage(flash.success);
+            setErrorMessage(null);
+        }
+    }, [flash]);
+
+    useEffect(() => {
+        if (!successMessage) return;
+
+        const timer = setTimeout(() => {
+            setSuccessMessage(null);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [successMessage]);
 
     // Event type color mapping
     const eventTypeColorDefaults = {
@@ -488,8 +507,7 @@ function Dashboard() {
         try {
             const formData = new FormData();
 
-            // Add basic fields
-            formData.append('_method', 'PUT'); // For Laravel to recognize as PUT request
+            formData.append('_method', 'PUT');
             formData.append('title', editData.title);
             formData.append('description', editData.description);
             formData.append('coordinator_name', editData.coordinator_name);
@@ -499,17 +517,13 @@ function Dashboard() {
             formData.append('allow_bracketing', editData.allow_bracketing ? '1' : '0');
             formData.append('has_registration_end_date', editData.has_registration_end_date ? '1' : '0');
 
-            // Handle event date and time
             if (editData.event_date) {
-                // Use the date string directly as it's already in YYYY-MM-DD format
                 const [datePart, timePart] = editData.event_date.split('T');
                 formData.append('event_date', datePart);
                 formData.append('event_time', timePart ? timePart.substring(0, 5) : '00:00');
             }
 
-            // Handle registration end date and time if it exists
             if (editData.has_registration_end_date && editData.registration_end_date) {
-                // Use the date string directly as it's already in YYYY-MM-DD format
                 const [datePart, timePart] = editData.registration_end_date.split('T');
                 formData.append('registration_end_date', datePart);
                 formData.append('registration_end_time', timePart ? timePart.substring(0, 5) : '00:00');
@@ -518,22 +532,15 @@ function Dashboard() {
                 formData.append('registration_end_time', '');
             }
 
-            // Handle required players
             formData.append('has_required_players', editData.has_required_players ? '1' : '0');
-            if (editData.has_required_players && editData.required_players) {
-                formData.append('required_players', editData.required_players);
-            } else {
-                formData.append('required_players', '');
-            }
+            formData.append('required_players', editData.has_required_players ? (editData.required_players || '') : '');
 
-            // Handle existing images (keep the ones that weren't removed)
             if (editData.existingImages && editData.existingImages.length > 0) {
                 editData.existingImages.forEach(img => {
                     formData.append('existing_images[]', img.image_path);
                 });
             }
 
-            // Handle new image uploads
             if (editData.images && editData.images.length > 0) {
                 editData.images.forEach((file) => {
                     formData.append('images[]', file);
@@ -545,70 +552,25 @@ function Dashboard() {
                 console.log(pair[0] + ': ', pair[1]);
             }
 
-            // Get CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-            // Also include token in form body as fallback
-            if (csrfToken) {
-                formData.append('_token', csrfToken);
-            }
-
-            // Ensure headers is a plain object
-            const headers = {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            };
-
-            // Only add X-CSRF-TOKEN if we have a token
-            if (csrfToken) {
-                headers['X-CSRF-TOKEN'] = csrfToken;
-            }
-
-            const response = await fetch(`/events/${editingEventId}`, {
-                method: 'POST',
-                headers: headers,
-                body: formData,
-                credentials: 'include',
-            });
-
-            // Get the response text first
-            const responseText = await response.text();
-            let responseData;
-
-            try {
-                // Try to parse as JSON
-                responseData = JSON.parse(responseText);
-            } catch (e) {
-                // If it's not JSON, it's probably an HTML error page
-                console.error('HTML Response:', responseText);
-                throw new Error('Server returned an error page. Check the console for details.');
-            }
-
-            if (!response.ok) {
-                console.error('Error response:', responseData);
-                // Handle validation errors
-                if (responseData.errors) {
-                    const errorMessages = Object.values(responseData.errors).flat().join('\n');
-                    throw new Error(errorMessages);
+            setErrorMessage(null);
+            router.post(`/events/${editingEventId}`, formData, {
+                forceFormData: true,
+                onSuccess: () => {
+                    setEditingEventId(null);
+                },
+                onError: (errors) => {
+                    const message = errors ? Object.values(errors).flat().join('\n') : 'Failed to update event';
+                    setErrorMessage(message);
+                    setSuccessMessage(null);
+                },
+                onFinish: () => {
+                    // optional cleanup if needed
                 }
-                throw new Error(responseData.message || 'Failed to update event');
-            }
-
-            console.log('Success:', responseData);
-
-            // Show success message and reload after a short delay
-            alert('Event updated successfully!');
-            setEditingEventId(null);
-            window.location.reload();
+            });
         } catch (error) {
             console.error('Error updating event:', error);
-            // Show more detailed error message
-            alert('Error updating event: ' + (error.message || 'Please check the console for details'));
-
-            // Log the full error for debugging
-            if (error.response) {
-                console.error('Full error response:', error.response);
-            }
+            setErrorMessage(error.message || 'Please check the console for details');
+            setSuccessMessage(null);
         }
     };
 
@@ -651,7 +613,18 @@ function Dashboard() {
         <AuthenticatedLayout
             user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-100 leading-tight">Dashboard</h2>}
-        >        <div className="flex items-center justify-center py-10">
+        >
+            {successMessage && (
+                <div className="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
+                    {successMessage}
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mb-4 rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-rose-200">
+                    {errorMessage}
+                </div>
+            )}
+            <div className="flex items-center justify-center py-10">
                 <div className="flex items-center gap-10 flex-col md:flex-row">
                     <img src="/images/sems.png" alt="Logo" className="rounded-full object-cover ring-4 ring-blue-500/60 shadow-2xl shadow-blue-900/40" style={{height: 'auto', width: 'auto', maxWidth: '100%', maxHeight: '100%'}} />
                     <div className="text-center md:text-left">

@@ -166,22 +166,52 @@ export default function AuthenticatedLayout({ header, children }) {
                             </NavLink>
                         </div>
                     </nav>
-
                 </div>
             </aside>
+
+            {/* Top Horizontal Navigation Bar */}
+            <header className="bg-slate-900/70 backdrop-blur border-b border-slate-800/60 shadow-lg shadow-blue-950/25">
+                <div className="mx-auto max-w-2xl md:max-w-4xl lg:max-w-5xl px-3 py-3 sm:px-4 md:px-6 lg:px-8">
+                    <nav className="flex flex-wrap items-center justify-center gap-3 text-[11px] sm:text-xs md:text-sm font-semibold uppercase tracking-[0.15em] text-slate-300">
+                        <NavLink
+                            href={route('dashboard.create-competition')}
+                            active={route().current('dashboard.create-competition') || route().current('dashboard.create-tryouts')}
+                            className="px-2 py-1 rounded-md transition-colors duration-200 hover:text-white hover:bg-slate-800/70"
+                        >
+                            Create Event
+                        </NavLink>
+                        <span className="text-slate-600">|</span>
+                        <NavLink
+                            href={route('dashboard')}
+                            active={route().current('dashboard')}
+                            className="px-2 py-1 rounded-md transition-colors duration-200 hover:text-white hover:bg-slate-800/70"
+                        >
+                            Content
+                        </NavLink>
+                        <span className="text-slate-600">|</span>
+                        <NavLink
+                            href={route('bracket')}
+                            active={route().current('bracket')}
+                            className="px-2 py-1 rounded-md transition-colors duration-200 hover:text-white hover:bg-slate-800/70"
+                        >
+                            Create Bracket
+                        </NavLink>
+                    </nav>
+                </div>
+            </header>
 
             {/* Main Content Area */}
             <div className="flex-1 pl-0 sm:pl-64 md:pl-80">
                 {header && (
-                    <header className="bg-slate-900/60 backdrop-blur border-b border-slate-800/50 shadow-lg shadow-blue-950/20">
+                    <div className="bg-slate-900/60 border-b border-slate-800/50 shadow-lg shadow-blue-950/20">
                         <div className="mx-auto max-w-2xl md:max-w-4xl lg:max-w-5xl px-2 py-4 sm:px-4 md:px-6 lg:px-8">
                             {header}
                         </div>
-                    </header>
+                    </div>
                 )}
 
                 <main className="min-h-screen w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6">{children}</main>
             </div>
         </div>
-    );
+{{ ... }}
 }
