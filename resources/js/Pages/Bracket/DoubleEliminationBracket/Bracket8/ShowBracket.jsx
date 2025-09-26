@@ -1,35 +1,13 @@
 //ShowResult.jsx
-
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head,Link} from "@inertiajs/react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
-// Simple Modal component
-function Modal({ open, onClose, children }) {
-    if (!open) return null;
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-            <div className="relative bg-gray-900 rounded-lg shadow-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-auto border border-gray-700">
-                <button
-                    className="absolute top-2 right-2 text-white bg-gray-700 hover:bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center z-10"
-                    onClick={onClose}
-                    aria-label="Close"
-                >
-                    &times;
-                </button>
-                {children}
-            </div>
-        </div>
-    );
-}
-
-
-export default function ShowResult({ eventId, matches: initialMatches, champion: initialChampion, teamCount = 8 }) {
+export default function ShowResult({ eventId, matches: initialMatches, champion: initialChampion, teamCount=8 }) {
     const boxRefs = useRef({});
     const [matches, setMatches] = useState(initialMatches || {});
     const [lines, setLines] = useState([]);
     const [champion, setChampion] = useState(initialChampion || null);
-    const [modalOpen, setModalOpen] = useState(true);
 
     // Generate empty matches if none exist
     const generateEmptyMatches = () => {
@@ -45,13 +23,9 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
         return empty;
     };
 
-
-    // Only set matches if initialMatches is undefined and matches is still empty
-    React.useEffect(() => {
-        if (!initialMatches && Object.keys(matches).length === 0) {
-            setMatches(generateEmptyMatches());
-        }
-    }, [initialMatches]);
+    if (!initialMatches) {
+        setMatches(generateEmptyMatches());
+    }
 
     const renderMatch = (id) => {
         const m = matches[id] || { p1: { name: "TBD", score: 0 }, p2: { name: "TBD", score: 0 }, winner: null };
@@ -111,55 +85,48 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
     return (
         <PublicLayout>
             <Head title={`${teamCount}-Team Double Elimination`} />
-            <div className="bg-gray-900 min-h-screen p-4 text-white flex flex-col items-center justify-center">
+            <div className="bg-gray-900 min-h-screen p-4 text-white">
                 <h1 className="text-2xl font-bold text-center mb-6">{teamCount}-Team Double Elimination Bracket</h1>
-                <button
-                    className="px-6 py-3 bg-blue-700 hover:bg-blue-800 rounded-lg text-white font-bold mb-8 shadow-lg"
-                    onClick={() => setModalOpen(true)}
-                >
-                    View Bracket
-                </button>
-                <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-                    <div
-                        id="bracket-container"
-                        className="relative bg-gray-900 p-4 rounded-lg flex flex-col items-center justify-center min-w-[900px] min-h-[600px] max-w-full max-h-[80vh] overflow-auto border border-gray-700"
-                        style={{ boxSizing: 'border-box' }}
-                    >
-                        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
-                            {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
-                        </svg>
-                        {/* Upper Bracket */}
-                        <div className="mb-10 z-10">
-                            <h2 className="font-bold mb-2">Upper Bracket</h2>
-                            <div className="flex gap-12">
-                                {/* First column: UB1–UB4 */}
-                                <div className="flex flex-col gap-4">{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}{renderMatch("UB4")}</div>
-                                {/* Second column: UB5 & UB6 with extra top margin */}
-                                <div className="flex flex-col gap-4 mt-12">
-                                    {renderMatch("UB5")}
-                                    {renderMatch("UB6")}
-                                </div>
-                                {/* Third column: UB7 */}
-                                <div className="flex flex-col gap-4 mt-24">{renderMatch("UB7")}</div>
+
+                <div id="bracket-container" className="relative">
+                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                        {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
+                    </svg>
+                    {/* Upper Bracket */}
+                    <div className="mb-10">
+                        <h2 className="font-bold mb-2">Upper Bracket</h2>
+                        <div className="flex gap-12">
+                            {/* First column: UB1–UB4 */}
+                            <div>{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}{renderMatch("UB4")}</div>
+
+                            {/* Second column: UB5 & UB6 with extra top margin */}
+                            <div className="mt-12"> {/* <-- adjust mt-12 or mt-16 for more gap */}
+                                {renderMatch("UB5")}
+                                {renderMatch("UB6")}
                             </div>
-                        </div>
-                        {/* Lower Bracket */}
-                        <div className="mb-10 z-10">
-                            <h2 className="font-bold mb-2">Lower Bracket</h2>
-                            <div className="flex gap-12">
-                                <div className="flex flex-col gap-4">{renderMatch("LB1")}{renderMatch("LB2")}</div>
-                                <div className="flex flex-col gap-4">{renderMatch("LB3")}{renderMatch("LB4")}</div>
-                                <div className="flex flex-col gap-4">{renderMatch("LB5")}</div>
-                                <div className="flex flex-col gap-4">{renderMatch("LB6")}</div>
-                            </div>
-                        </div>
-                        {/* Grand Final */}
-                        <div className="absolute left-2/3 top-1/2 transform -translate-y-1/2 z-20">
-                            {renderMatch("GF")}
-                            {champion && <h2 className="text-3xl font-bold text-yellow-400 mt-4">🏆 Champion: {champion}</h2>}
+
+                            {/* Third column: UB7 */}
+                            <div className="mt-24">{renderMatch("UB7")}</div> {/* optional vertical alignment */}
                         </div>
                     </div>
-                </Modal>
+
+                    {/* Lower Bracket */}
+                    <div className="mb-10">
+                        <h2 className="font-bold mb-2">Lower Bracket</h2>
+                        <div className="flex gap-12">
+                            <div>{renderMatch("LB1")}{renderMatch("LB2")}</div>
+                            <div>{renderMatch("LB3")}{renderMatch("LB4")}</div>
+                            <div>{renderMatch("LB5")}</div>
+                            <div>{renderMatch("LB6")}</div>
+                        </div>
+                    </div>
+
+                    {/* Grand Final */}
+                    <div className="absolute left-2/3 top-1/2 transform -translate-y-1/2">
+                        {renderMatch("GF")}
+                        {champion && <h2 className="text-3xl font-bold text-yellow-400 mt-4">🏆 Champion: {champion}</h2>}
+                    </div>
+                </div>
             </div>
         </PublicLayout>
     );
