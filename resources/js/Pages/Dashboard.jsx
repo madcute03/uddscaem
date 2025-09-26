@@ -548,6 +548,11 @@ function Dashboard() {
             // Get CSRF token from meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
+            // Also include token in form body as fallback
+            if (csrfToken) {
+                formData.append('_token', csrfToken);
+            }
+
             // Ensure headers is a plain object
             const headers = {
                 'Accept': 'application/json',
@@ -563,6 +568,7 @@ function Dashboard() {
                 method: 'POST',
                 headers: headers,
                 body: formData,
+                credentials: 'include',
             });
 
             // Get the response text first
@@ -608,30 +614,36 @@ function Dashboard() {
 
     const handleDelete = (id) => {
         if (!confirm('Delete this event?')) return;
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         fetch(`/events/${id}`, {
             method: 'POST',
             headers: {
                 'X-HTTP-Method-Override': 'DELETE',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
+            credentials: 'include',
         }).then(() => window.location.reload());
     };
 
     const handleMarkDone = (id) => {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         fetch(`/events/${id}/mark-done`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
+            credentials: 'include',
         }).then(() => window.location.reload());
     };
 
     const handleMarkUndone = (id) => {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         fetch(`/events/${id}/mark-undone`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
+            credentials: 'include',
         }).then(() => window.location.reload());
     };
 
