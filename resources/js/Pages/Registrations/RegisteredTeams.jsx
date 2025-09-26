@@ -125,7 +125,7 @@ export default function RegisteredTeams({ registrations: initialRegistrations, e
         <>
             <Head title="Registered Teams" />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-10 px-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-10 px-2 sm:px-4 md:px-8">
                 <Link href={route('dashboard')} className="relative
                                             text-[14px] font-extrabold font-inherit uppercase
                                             text-[#e1e1e1]
@@ -140,7 +140,7 @@ export default function RegisteredTeams({ registrations: initialRegistrations, e
                                             h-15 px-2 mt-10">
                     ← Back to dashboard
                 </Link>
-                <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-6 sm:p-8">
+                <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-semibold">Registered Teams{event?.title ? ` — ${event.title}` : ''}</h1>

@@ -86,7 +86,7 @@ export default function ShowFiveTeamBracket({ eventId }) {
 
     return (
         <PublicLayout>
-        <div className="bg-gray-900 min-h-screen p-6 text-white">
+    <div className="bg-gray-900 min-h-screen p-4 text-white py-10 px-2 sm:px-4 md:px-8 max-w-5xl mx-auto w-full">
             <h1 className="text-2xl font-bold text-center mb-6">5-Team Bracket Result</h1>
 
             <div id="bracket-container" className="relative flex justify-center items-start gap-24">

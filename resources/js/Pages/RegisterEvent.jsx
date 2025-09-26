@@ -76,8 +76,8 @@ export default function RegisterEvent({ event, requiredPlayers }) {
     return (
         <>
             <Head title={`Register: ${event.title}`} />
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-10 px-4">
-                <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-6 sm:p-8">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-8 px-2 sm:px-4 md:px-8">
+                <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
                     <h1 className="text-2xl font-semibold text-center">Register for {event.title}</h1>
                     <p className="text-lg text-slate-300 text-center">Fill in participant details</p>
 

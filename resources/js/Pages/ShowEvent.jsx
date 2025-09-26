@@ -61,7 +61,7 @@ export default function ShowEvent({ event }) {
                     </div>
                 </div>
             )}
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 px-2 sm:px-4 md:px-8 max-w-7xl mx-auto w-full py-8">
                 {/* Image Carousel */}
                 {event.images_path && event.images_path.length > 0 ? (
                     <div className="relative w-full h-screen overflow-hidden">

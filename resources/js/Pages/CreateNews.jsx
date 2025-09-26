@@ -726,8 +726,8 @@ export default function CreateNews() {
   return (
     <AuthenticatedLayout>
       <Head title="Create News" />
-      <div className="py-12">
-        <div className="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6 text-slate-100">
+      <div className="py-8 px-2 sm:px-4 md:px-8">
+        <div className="mx-auto max-w-4xl w-full space-y-6 text-slate-100">
 
           <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
             <div className="flex items-center justify-between">

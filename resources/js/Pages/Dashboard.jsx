@@ -116,7 +116,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     return (
-        <div className="relative w-full">
+    <div className="relative w-full px-2 sm:px-4 md:px-8 max-w-7xl mx-auto py-8">
             <div
                 className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
                 onClick={() => {

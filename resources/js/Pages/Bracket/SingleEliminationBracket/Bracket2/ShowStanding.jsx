@@ -63,7 +63,7 @@ export default function ShowStanding({
     return (
         <PublicLayout>
             <Head title={`${teamCount}-Team Standings`} />
-            <div className="bg-gray-900 min-h-screen p-6 text-white">
+            <div className="bg-gray-900 min-h-screen p-4 text-white py-10 px-2 sm:px-4 md:px-8 max-w-5xl mx-auto w-full">
                 {/* Title */}
                 <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">
                     {teamCount}-Team Tournament Standings
