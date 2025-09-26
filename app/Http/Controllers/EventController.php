@@ -38,9 +38,12 @@ class EventController extends Controller
             $event->has_registration_end_date = !is_null($event->registration_end_date);
         });
 
-        // Map image paths for frontend convenience
-        $events->transform(function ($event) {
-            $event->images_path = $event->images->pluck('image_path');
+        // Map image paths for frontend convenience (use absolute URLs matching request scheme/host)
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $events->transform(function ($event) use ($base) {
+            $event->images_path = $event->images->map(function ($img) use ($base) {
+                return $base . '/storage/' . ltrim($img->image_path, '/');
+            });
             return $event;
         });
 
@@ -71,9 +74,12 @@ class EventController extends Controller
             ->orderBy('event_date')
             ->get();
 
-        // Map image paths for frontend
-        $events->transform(function ($event) {
-            $event->images_path = $event->images->pluck('image_path');
+        // Map image paths for frontend (use absolute URLs matching request scheme/host)
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $events->transform(function ($event) use ($base) {
+            $event->images_path = $event->images->map(function ($img) use ($base) {
+                return $base . '/storage/' . ltrim($img->image_path, '/');
+            });
             return $event;
         });
 
@@ -86,7 +92,10 @@ class EventController extends Controller
     public function show(Event $event)
     {
         $event->load('images');
-        $event->images_path = $event->images->pluck('image_path');
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $event->images_path = $event->images->map(function ($img) use ($base) {
+            return $base . '/storage/' . ltrim($img->image_path, '/');
+        });
 
         return Inertia::render('ShowEvent', [
             'event' => $event,
@@ -317,8 +326,11 @@ class EventController extends Controller
             ->orderBy('event_date')
             ->get();
 
-        $events->transform(function ($event) {
-            $event->images_path = $event->images->pluck('image_path');
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $events->transform(function ($event) use ($base) {
+            $event->images_path = $event->images->map(function ($img) use ($base) {
+                return $base . '/storage/' . ltrim($img->image_path, '/');
+            });
             return $event;
         });
 
