@@ -12,8 +12,8 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 flex">
-            {/* Left Sidebar */}
-            <aside className="fixed left-0 top-0 h-full w-80 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50">
+            {/* Left Sidebar - responsive */}
+            <aside className="fixed left-0 top-0 h-full w-64 md:w-80 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 hidden sm:block">
                 <div className="flex flex-col h-full">
                     {/* Logo/Brand & User Profile */}
                     <div className="p-6 border-b border-slate-800/50">
@@ -136,17 +136,17 @@ export default function AuthenticatedLayout({ header, children }) {
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 pl-80">
+            <div className="flex-1 pl-0 sm:pl-64 md:pl-80">
                 {header && (
                     <header className="bg-slate-900/60 backdrop-blur border-b border-slate-800/50 shadow-lg shadow-blue-950/20">
-                        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                        <div className="mx-auto max-w-2xl md:max-w-4xl lg:max-w-5xl px-2 py-4 sm:px-4 md:px-6 lg:px-8">
                             {header}
                         </div>
                     </header>
                 )}
 
-                <main className="min-h-screen">{children}</main>
+                <main className="min-h-screen w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6">{children}</main>
             </div>
-        </div>
+    </div>
     );
 }
