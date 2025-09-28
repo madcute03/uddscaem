@@ -56,7 +56,7 @@ export default function PublicNavbar({
                                 className
                             }
                         >
-                            Complaints
+                            Protest
                         </Link>
                     </div>
                 </div>

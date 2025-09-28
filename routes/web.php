@@ -88,6 +88,10 @@ Route::get('/bracket/double/{teams}', function ($teams) {
     return Inertia::render($componentMap[$teams], ['teams' => $teams]);
 })->name('bracket.double');
 
+// Public Bracket Routes
+Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
+Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
+
 // ============================================
 // Admin Routes (Authenticated & Verified)
 // ============================================
@@ -145,8 +149,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/single-elimination/save', [SingleEliminationController::class, 'save'])->name('single-elimination.save');
     Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])->name('single-elimination.show');
     Route::post('/brackets/save', [BracketController::class, 'save'])->name('bracket.save');
-    Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
-    Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
     
     // News Management
     Route::get('/dashboard/createnews', [NewsController::class, 'index'])->name('dashboard.createnews');

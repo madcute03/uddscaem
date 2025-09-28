@@ -110,7 +110,7 @@ export default function ShowEvent({ event }) {
                                 {event.registration_end_date && isUpcoming && (
                                     isRegistrationClosed ? (
                                         <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
-                                            Registration Not Available
+                                            Registration Closed
                                         </p>
                                     ) : (
                                         <Link
@@ -259,7 +259,7 @@ export default function ShowEvent({ event }) {
                                 </Link>
                             ) : isUpcoming && isRegistrationClosed ? (
                                 <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
-                                    Registration Not Available
+                                    Registration Closed
                                 </p>
                             ) : null}
 
