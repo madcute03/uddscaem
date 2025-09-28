@@ -12,16 +12,44 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
 
-    const formatDateTime = (date) => {
-        if (!date) return '';
-        const d = new Date(date);
-        return d.toLocaleString('en-US', {
+    const parseDateTimeValue = (dateTimeValue) => {
+        if (!dateTimeValue) return null;
+
+        const [datePart, rawTimePart = ''] = String(dateTimeValue).split('T');
+        if (!datePart) return null;
+
+        const [yearStr, monthStr, dayStr] = datePart.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr ?? 1) - 1;
+        const day = Number(dayStr ?? 1);
+
+        let timePart = rawTimePart
+            .replace(/Z$/i, '')
+            .replace(/\.[0-9]+$/, '')
+            .replace(/([+-][0-9:]+)$/, '')
+            .trim();
+
+        if (!timePart) {
+            return new Date(year, month, day, 0, 0, 0);
+        }
+
+        const [hourStr = '0', minuteStr = '0'] = timePart.split(':');
+        const hour = Number(hourStr);
+        const minute = Number(minuteStr);
+
+        return new Date(year, month, day, hour, minute, 0);
+    };
+
+    const formatDateTime = (value) => {
+        const parsed = parseDateTimeValue(value);
+        if (!parsed) return '';
+        return parsed.toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
         });
     };
 
@@ -54,11 +82,12 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        const parsed = parseDateTimeValue(`${dateString}T00:00`);
+        if (!parsed) return '';
+        return parsed.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -113,7 +142,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
             <div
                 className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
                 onClick={() => {
-                    setIsOpen(!isOpen);
+                    setIsOpen(true);
                     setActiveTab('date');
                 }}
             >
@@ -126,118 +155,141 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
             </div>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
-                    {/* Tabs */}
-                    <div className="flex border-b border-slate-700 mb-4">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('date')}
-                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 z-[70]"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
+                        <div
+                            className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            Date
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('time')}
-                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            Time
-                        </button>
-                    </div>
-
-                    {activeTab === 'date' && (
-                        <>
-                            {/* Calendar Header */}
-                            <div className="flex items-center justify-between mb-4">
-                                <button
-                                    type="button"
-                                    onClick={() => navigateMonth(-1)}
-                                    className="p-1 hover:bg-slate-700 rounded"
-                                >
-                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                                <h3 className="text-slate-100 font-medium">{monthYear}</h3>
-                                <button
-                                    type="button"
-                                    onClick={() => navigateMonth(1)}
-                                    className="p-1 hover:bg-slate-700 rounded"
-                                >
-                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            {/* Days of Week */}
-                            <div className="grid grid-cols-7 gap-1 mb-2">
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                    <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
-                                        {day}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Calendar Days */}
-                            <div className="grid grid-cols-7 gap-1">
-                                {days.map((date, index) => (
-                                    <button
-                                        key={index}
-                                        type="button"
-                                        onClick={() => handleDateSelect(date)}
-                                        disabled={!date}
-                                        className={`
-                                            h-8 text-sm rounded transition-colors
-                                            ${!date ? 'invisible' : ''}
-                                            ${isSelected(date)
-                                                ? 'bg-blue-600 text-white'
-                                                : isToday(date)
-                                                    ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
-                                                    : 'text-slate-300 hover:bg-slate-700'
-                                            }
-                                        `}
-                                    >
-                                        {date?.getDate()}
-                                    </button>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {activeTab === 'time' && (
-                        <div className="py-2">
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
-                                </label>
-                                <input
-                                    type="time"
-                                    value={timeValue}
-                                    onChange={handleTimeChange}
-                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                />
-                            </div>
-                            <div className="flex justify-end">
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-100">Select Event Start</h3>
+                                    <p className="text-sm text-slate-400">{monthYear}</p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setIsOpen(false)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                                    className="text-slate-400 hover:text-slate-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="flex border-b border-slate-700 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('date')}
+                                    className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                >
+                                    Date
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('time')}
+                                    className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                >
+                                    Time
+                                </button>
+                            </div>
+
+                            {activeTab === 'date' && (
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigateMonth(-1)}
+                                            className="p-2 hover:bg-slate-800 rounded-full"
+                                        >
+                                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <h4 className="text-base font-medium text-slate-100">{monthYear}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => navigateMonth(1)}
+                                            className="p-2 hover:bg-slate-800 rounded-full"
+                                        >
+                                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-7 gap-1 mb-2">
+                                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                            <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
+                                                {day}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="grid grid-cols-7 gap-1">
+                                        {days.map((date, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => handleDateSelect(date)}
+                                                disabled={!date}
+                                                className={`
+                                                    h-10 text-sm rounded-md transition-colors
+                                                    ${!date ? 'invisible' : ''}
+                                                    ${isSelected(date)
+                                                        ? 'bg-blue-600 text-white'
+                                                        : isToday(date)
+                                                            ? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                                                            : 'text-slate-200 hover:bg-slate-800'
+                                                    }
+                                                `}
+                                            >
+                                                {date?.getDate()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            {activeTab === 'time' && (
+                                <div className="py-2">
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={timeValue}
+                                            onChange={handleTimeChange}
+                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 border border-slate-700 rounded-md"
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                                 >
                                     Done
                                 </button>
                             </div>
                         </div>
-                    )}
-                </div>
-            )}
-
-            {/* Overlay to close calendar when clicking outside */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[55]"
-                    onClick={() => setIsOpen(false)}
-                />
+                    </div>
+                </>
             )}
         </div>
     );
@@ -248,9 +300,29 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
-    const formatDate = (date) => {
+    const parseToLocalDate = (dateValue) => {
+        if (!dateValue) return null;
+        if (dateValue instanceof Date) {
+            return dateValue;
+        }
+
+        if (typeof dateValue === 'string') {
+            const [datePart] = dateValue.split('T');
+            const parts = datePart?.split('-');
+            if (parts && parts.length === 3) {
+                const [year, month, day] = parts.map(Number);
+                return new Date(year, (month ?? 1) - 1, day ?? 1);
+            }
+        }
+
+        const parsed = new Date(dateValue);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const formatDate = (dateValue) => {
+        const date = parseToLocalDate(dateValue);
         if (!date) return '';
-        return new Date(date).toLocaleDateString('en-US', {
+        return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -280,10 +352,19 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
         return days;
     };
 
+    const toDateString = (dateValue) => {
+        if (!dateValue) return '';
+        const date = parseToLocalDate(dateValue);
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleDateSelect = (date) => {
         if (date) {
-            const formattedDate = date.toISOString().split('T')[0];
-            onChange(formattedDate);
+            onChange(toDateString(date));
             setIsOpen(false);
         }
     };
@@ -298,7 +379,7 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
 
     const isSelected = (date) => {
         if (!date || !value) return false;
-        return date.toISOString().split('T')[0] === value;
+        return toDateString(date) === toDateString(value);
     };
 
     const isToday = (date) => {
@@ -315,7 +396,7 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
             <label className="block mb-1 text-slate-300">{label}</label>
             <div
                 className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => setIsOpen(true)}
             >
                 <span className={value ? 'text-slate-100' : 'text-slate-400'}>
                     {value ? formatDate(value) : placeholder}
@@ -326,86 +407,115 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
             </div>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
-                    {/* Calendar Header */}
-                    <div className="flex items-center justify-between mb-4">
-                        <button
-                            type="button"
-                            onClick={() => navigateMonth(-1)}
-                            className="p-1 hover:bg-slate-700 rounded"
-                        >
-                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <h3 className="text-slate-100 font-medium">{monthYear}</h3>
-                        <button
-                            type="button"
-                            onClick={() => navigateMonth(1)}
-                            className="p-1 hover:bg-slate-700 rounded"
-                        >
-                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    {/* Days of Week */}
-                    <div className="grid grid-cols-7 gap-1 mb-2">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
-                                {day}
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 z-[70]"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
+                        <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6">
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-100">Select Date</h3>
+                                    <p className="text-sm text-slate-400">{monthYear}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-slate-400 hover:text-slate-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* Calendar Days */}
-                    <div className="grid grid-cols-7 gap-1">
-                        {days.map((date, index) => (
-                            <button
-                                key={index}
-                                type="button"
-                                onClick={() => handleDateSelect(date)}
-                                disabled={!date}
-                                className={`
-                                    h-8 text-sm rounded transition-colors
-                                    ${!date ? 'invisible' : ''}
-                                    ${isSelected(date)
-                                        ? 'bg-blue-600 text-white'
-                                        : isToday(date)
-                                            ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
-                                            : 'text-slate-300 hover:bg-slate-700'
-                                    }
-                                `}
-                            >
-                                {date?.getDate()}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
+                            {/* Calendar Header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => navigateMonth(-1)}
+                                    className="p-2 hover:bg-slate-800 rounded-full"
+                                >
+                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <h4 className="text-base font-medium text-slate-100">{monthYear}</h4>
+                                <button
+                                    type="button"
+                                    onClick={() => navigateMonth(1)}
+                                    className="p-2 hover:bg-slate-800 rounded-full"
+                                >
+                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
 
-            {/* Overlay to close calendar when clicking outside */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[55]"
-                    onClick={() => setIsOpen(false)}
-                />
+                            {/* Days of Week */}
+                            <div className="grid grid-cols-7 gap-1 mb-2">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                    <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
+                                        {day}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Calendar Days */}
+                            <div className="grid grid-cols-7 gap-1">
+                                {days.map((date, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => handleDateSelect(date)}
+                                        disabled={!date}
+                                        className={`
+                                            h-10 text-sm rounded-md transition-colors
+                                            ${!date ? 'invisible' : ''}
+                                            ${isSelected(date)
+                                                ? 'bg-blue-600 text-white'
+                                                : isToday(date)
+                                                    ? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                                                    : 'text-slate-200 hover:bg-slate-800'
+                                            }
+                                        `}
+                                    >
+                                        {date?.getDate()}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );
-};
+}
+;
 
 export default function CreateCompetition({ auth, events = [] }) {
     const { data, setData, post, processing, reset, errors } = useForm({
         title: '',
         description: '',
         coordinator_name: '',
+        participants: [''],
         category: 'sport', // Default to sport
         other_category: '', // For 'other' category input
         event_type: 'competition', // Set default to 'competition'
         other_event_type: '',
         event_date: '',
+        event_end_date: '',
         registration_end_date: '',
         has_registration_end_date: false,
         has_required_players: false,
@@ -421,7 +531,9 @@ export default function CreateCompetition({ auth, events = [] }) {
         title: '',
         description: '',
         coordinator_name: '',
+        participants: [''],
         event_date: '',
+        event_end_date: '',
         registration_end_date: '', // 
         images: [],
         required_players: '',
@@ -454,6 +566,13 @@ export default function CreateCompetition({ auth, events = [] }) {
                         formData.append(`images[${index}]`, image);
                     }
                 });
+            } else if (key === 'participants') {
+                (value || [])
+                    .map(participant => (participant || '').trim())
+                    .filter(participant => participant.length > 0)
+                    .forEach((participant, index) => {
+                        formData.append(`participants[${index}]`, participant);
+                    });
             } else if (key === 'registration_end_date' && !data.has_registration_end_date) {
                 // Skip registration end date if not enabled
                 return;
@@ -504,7 +623,11 @@ export default function CreateCompetition({ auth, events = [] }) {
             title: event.title,
             description: event.description,
             coordinator_name: event.coordinator_name,
+            participants: Array.isArray(event.participants) && event.participants.length > 0
+                ? event.participants
+                : [''],
             event_date: event.event_date,
+            event_end_date: event.event_end_date ? event.event_end_date.split('T')[0] : '',
             registration_end_date: event.registration_end_date || '',
             images: [], // bagong uploads
             existingImages: event.images_path || [], // existing images
@@ -522,6 +645,13 @@ export default function CreateCompetition({ auth, events = [] }) {
                 val.forEach(img => img && formData.append('images[]', img));
             } else if (key === 'existingImages') {
                 val.forEach(imgPath => formData.append('existing_images[]', imgPath));
+            } else if (key === 'participants') {
+                (val || [])
+                    .map(participant => (participant || '').trim())
+                    .filter(participant => participant.length > 0)
+                    .forEach((participant, index) => {
+                        formData.append(`participants[${index}]`, participant);
+                    });
             } else {
                 formData.append(key, val);
             }
@@ -671,6 +801,63 @@ export default function CreateCompetition({ auth, events = [] }) {
                                     onChange={e => setData('coordinator_name', e.target.value)}
                                 />
                             </div>
+                            <div className="mb-4">
+                                <label className="block mb-2 text-slate-300">Participants</label>
+                                <div className="space-y-2">
+                                    {data.participants.map((participant, index) => {
+                                        const trimmedError = (() => {
+                                            if (!errors) return null;
+                                            if (Array.isArray(errors.participants)) {
+                                                return errors.participants[index] || null;
+                                            }
+                                            return (
+                                                errors[`participants.${index}`] ||
+                                                (typeof errors.participants === 'string' ? errors.participants : null)
+                                            );
+                                        })();
+
+                                        return (
+                                            <div key={index} className="space-y-1">
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        className="flex-1 bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                        value={participant}
+                                                        placeholder={`Participant ${index + 1}`}
+                                                        onChange={e => {
+                                                            const updated = [...data.participants];
+                                                            updated[index] = e.target.value;
+                                                            setData('participants', updated);
+                                                        }}
+                                                    />
+                                                    {data.participants.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            className="px-3 py-2 text-sm text-red-300 hover:text-red-200"
+                                                            onClick={() => {
+                                                                const updated = data.participants.filter((_, idx) => idx !== index);
+                                                                setData('participants', updated.length > 0 ? updated : ['']);
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {trimmedError && (
+                                                    <p className="text-xs text-red-500">{trimmedError}</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="mt-3 text-blue-300 hover:text-blue-200 underline"
+                                    onClick={() => setData('participants', [...data.participants, ''])}
+                                >
+                                    + Add participant
+                                </button>
+                            </div>
                             <div className="mb-2">
                                 <label className="block mb-1 text-slate-300">Category</label>
                                 <select
@@ -706,82 +893,18 @@ export default function CreateCompetition({ auth, events = [] }) {
                                 />
                                 {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
                             </div>
-                            <div className="mt-4">
-                            <div className="flex items-center mb-2">
-                                <label className="text-slate-300 mr-2">Enable Registration</label>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        className="sr-only peer" 
-                                        checked={data.has_registration_end_date}
-                                        onChange={(e) => {
-                                            setData('has_registration_end_date', e.target.checked);
-                                            if (!e.target.checked) {
-                                                setData('registration_end_date', '');
-                                            }
-                                        }}
-                                    />
-                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
+
+                            <div className="mb-4">
+                                <label className="block mb-1 text-slate-300">Event End Date</label>
+                                <CalendarPicker
+                                    value={data.event_end_date}
+                                    onChange={(value) => setData('event_end_date', value)}
+                                    placeholder="Select event end date"
+                                />
+                                {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
                             </div>
-                            {data.has_registration_end_date && (
-                                <div className="mb-4">
-                                    <label className="flex items-center mb-2"></label>
-                                    <DateTimePicker
-                                        value={data.registration_end_date}
-                                        onChange={(value) => setData('registration_end_date', value)}
-                                        label=""
-                                        placeholder="Select registration end date and time"
-                                    />
-                                    {errors.registration_end_date && <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>}
-                                </div>
-                            )}
-                            <div className="mt-4">
-                                <div className="flex items-center mb-3">
-                                    <label className="text-slate-300 mr-2">Enable Required Players</label>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="sr-only peer" 
-                                            checked={data.has_required_players}
-                                            onChange={(e) => {
-                                                setData({
-                                                    ...data,
-                                                    has_required_players: e.target.checked,
-                                                    required_players: e.target.checked ? data.required_players || '1' : ''
-                                                });
-                                            }}
-                                        />
-                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                                
-                                {data.has_required_players && (
-                                    <div>
-                                        <label htmlFor="required_players" className="block text-sm font-medium text-slate-300 mb-1">
-                                        </label>
-                                        <select
-                                            id="required_players"
-                                            value={data.required_players}
-                                            onChange={(e) => setData('required_players', e.target.value)}
-                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                        >
-                                            <option value="">Select number of players</option>
-                                            {[...Array(20)].map((_, i) => (
-                                                <option key={i + 1} value={i + 1}>
-                                                    {i + 1}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {errors.required_players && (
-                                            <p className="mt-1 text-sm text-red-500">
-                                                {errors.required_players}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>     {/* Images */}
+
+                            {/* Images */}
                             <div className="mb-2">
                                 <label className="block mb-1 text-slate-300">Image of the event</label>
                                 {data.images.map((img, idx) => (

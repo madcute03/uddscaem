@@ -4,9 +4,41 @@ import { usePage, Link, router } from '@inertiajs/react'
 
 // Custom DateTime Picker Component
 const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
-    // Parse the initial date and time from the value prop
-    const initialDate = value ? value.split('T')[0] : '';
-    const initialTime = value ? (value.split('T')[1] || '').substring(0, 5) : '00:00';
+    const parseDateTimeValue = (dateTimeValue) => {
+        if (!dateTimeValue) return null;
+
+        const [datePart, rawTimePart = ''] = String(dateTimeValue).split('T');
+        if (!datePart) return null;
+
+        const [yearStr, monthStr, dayStr] = datePart.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr ?? 1) - 1;
+        const day = Number(dayStr ?? 1);
+
+        let timePart = rawTimePart
+            .replace(/Z$/i, '')
+            .replace(/\.[0-9]+$/, '')
+            .replace(/([+-][0-9:]+)$/, '')
+            .trim();
+
+        if (!timePart) {
+            return new Date(year, month, day, 0, 0, 0);
+        }
+
+        const [hourStr = '0', minuteStr = '0'] = timePart.split(':');
+        const hour = Number(hourStr);
+        const minute = Number(minuteStr);
+
+        return new Date(year, month, day, hour, minute, 0);
+    };
+
+    const parsedInitial = parseDateTimeValue(value);
+    const initialDate = parsedInitial
+        ? `${parsedInitial.getFullYear()}-${String(parsedInitial.getMonth() + 1).padStart(2, '0')}-${String(parsedInitial.getDate()).padStart(2, '0')}`
+        : '';
+    const initialTime = parsedInitial
+        ? `${String(parsedInitial.getHours()).padStart(2, '0')}:${String(parsedInitial.getMinutes()).padStart(2, '0')}`
+        : '00:00';
 
     const [dateValue, setDateValue] = useState(initialDate);
     const [timeValue, setTimeValue] = useState(initialTime);
@@ -14,10 +46,10 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
 
-    const formatDateTime = (date) => {
-        if (!date) return '';
-        const d = new Date(date);
-        return d.toLocaleString('en-US', {
+    const formatDateTime = (dateTime) => {
+        const parsed = parseDateTimeValue(dateTime);
+        if (!parsed) return '';
+        return parsed.toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -29,10 +61,10 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const handleDateSelect = (date) => {
         if (date) {
-            // Create a new date string in YYYY-MM-DD format using local time
-            // This ensures the date is not affected by timezone conversion
-            const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-            const newDate = localDate.toISOString().split('T')[0];
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const newDate = `${year}-${month}-${day}`;
 
             setDateValue(newDate);
             updateDateTime(newDate, timeValue);
@@ -50,18 +82,18 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     };
 
     const updateDateTime = (date, time) => {
-        if (date) {
-            // If time is not provided, use the current timeValue or default to '00:00'
+        if (date && (time || timeValue)) {
             const timeToUse = time || timeValue || '00:00';
-            const dateTimeString = `${date}T${timeToUse}`;
+            const dateTimeString = `${date}T${timeToUse}:00`;
             onChange(dateTimeString);
         }
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        const parsed = parseDateTimeValue(`${dateString}T00:00`);
+        if (!parsed) return '';
+        return parsed.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -101,9 +133,10 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const isSelected = (date) => {
         if (!date || !dateValue) return false;
-        // Convert both dates to YYYY-MM-DD format for accurate comparison
-        const dateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-        return dateStr === dateValue;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}` === dateValue;
     };
 
     const isToday = (date) => {
@@ -116,11 +149,14 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     return (
-    <div className="relative w-full px-2 sm:px-4 md:px-8 max-w-7xl mx-auto py-8">
+        <div className="relative">
+            {label && (
+                <label className="block mb-1 text-slate-300">{label}</label>
+            )}
             <div
                 className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
                 onClick={() => {
-                    setIsOpen(!isOpen);
+                    setIsOpen(true);
                     setActiveTab('date');
                 }}
             >
@@ -133,43 +169,327 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
             </div>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
-                    {/* Tabs */}
-                    <div className="flex border-b border-slate-700 mb-4">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('date')}
-                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 z-[70]"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
+                        <div
+                            className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            Date
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('time')}
-                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            Time
-                        </button>
-                    </div>
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-100">Select Date & Time</h3>
+                                    <p className="text-sm text-slate-400">{monthYear}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-slate-400 hover:text-slate-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
 
-                    {activeTab === 'date' && (
-                        <>
-                            {/* Calendar Header */}
+                            <div className="flex border-b border-slate-700 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('date')}
+                                    className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                >
+                                    Date
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('time')}
+                                    className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                >
+                                    Time
+                                </button>
+                            </div>
+
+                            {activeTab === 'date' && (
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigateMonth(-1)}
+                                            className="p-2 hover:bg-slate-800 rounded-full"
+                                        >
+                                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <h4 className="text-base font-medium text-slate-100">{monthYear}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => navigateMonth(1)}
+                                            className="p-2 hover:bg-slate-800 rounded-full"
+                                        >
+                                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-7 gap-1 mb-2">
+                                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                            <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
+                                                {day}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="grid grid-cols-7 gap-1">
+                                        {days.map((date, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => handleDateSelect(date)}
+                                                disabled={!date}
+                                                className={`
+                                                    h-10 text-sm rounded-md transition-colors
+                                                    ${!date ? 'invisible' : ''}
+                                                    ${isSelected(date)
+                                                        ? 'bg-blue-600 text-white'
+                                                        : isToday(date)
+                                                            ? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                                                            : 'text-slate-200 hover:bg-slate-800'
+                                                    }
+                                                `}
+                                            >
+                                                {date?.getDate()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            {activeTab === 'time' && (
+                                <div className="py-2">
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={timeValue}
+                                            onChange={handleTimeChange}
+                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 border border-slate-700 rounded-md"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
+const DatePicker = ({ value, onChange, label, placeholder = "Select date" }) => {
+    const parseDateValue = (dateValue) => {
+        if (!dateValue) return null;
+
+        if (dateValue instanceof Date) {
+            return dateValue;
+        }
+
+        const stringValue = String(dateValue).trim();
+        if (!stringValue) return null;
+
+        const normalized = stringValue.includes('T') ? stringValue : `${stringValue}T00:00`;
+        const cleaned = normalized
+            .replace(/Z$/i, '')
+            .replace(/\.[0-9]+$/, '')
+            .replace(/([+-][0-9:]+)$/, '');
+
+        const parsed = new Date(cleaned);
+        if (Number.isNaN(parsed.getTime())) {
+            const [datePart] = cleaned.split('T');
+            if (!datePart) return null;
+            const [yearStr, monthStr, dayStr] = datePart.split('-');
+            const year = Number(yearStr);
+            const month = Number(monthStr ?? 1) - 1;
+            const day = Number(dayStr ?? 1);
+            if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+                return null;
+            }
+            return new Date(year, month, day, 0, 0, 0);
+        }
+
+        return parsed;
+    };
+
+    const toDateString = (date) => {
+        if (!(date instanceof Date)) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const formatDate = (dateValue) => {
+        const parsed = parseDateValue(dateValue);
+        if (!parsed) return '';
+        return parsed.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    };
+
+    const parsedInitial = parseDateValue(value);
+    const initialDate = parsedInitial ? toDateString(parsedInitial) : '';
+    const [selectedDate, setSelectedDate] = useState(initialDate);
+    const [isOpen, setIsOpen] = useState(false);
+    const [currentMonth, setCurrentMonth] = useState(parsedInitial || new Date());
+
+    useEffect(() => {
+        const parsed = parseDateValue(value);
+        if (parsed) {
+            setSelectedDate(toDateString(parsed));
+            setCurrentMonth(parsed);
+        } else {
+            setSelectedDate('');
+            setCurrentMonth(new Date());
+        }
+    }, [value]);
+
+    const getDaysInMonth = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+
+        const days = [];
+
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            days.push(null);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            days.push(new Date(year, month, day));
+        }
+
+        return days;
+    };
+
+    const navigateMonth = (direction) => {
+        setCurrentMonth(prev => {
+            const newDate = new Date(prev);
+            newDate.setMonth(prev.getMonth() + direction);
+            return newDate;
+        });
+    };
+
+    const isSelected = (date) => {
+        if (!date || !selectedDate) return false;
+        return toDateString(date) === selectedDate;
+    };
+
+    const isToday = (date) => {
+        if (!date) return false;
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+    };
+
+    const days = getDaysInMonth(currentMonth);
+    const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const handleDateSelect = (date) => {
+        if (!date) return;
+        const newDate = toDateString(date);
+        setSelectedDate(newDate);
+        if (onChange) {
+            onChange(newDate);
+        }
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="relative">
+            {label && (
+                <label className="block mb-1 text-slate-300">{label}</label>
+            )}
+            <div
+                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
+                onClick={() => setIsOpen(true)}
+            >
+                <span className={selectedDate ? 'text-slate-100' : 'text-slate-400'}>
+                    {selectedDate ? formatDate(selectedDate) : placeholder}
+                </span>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+
+            {isOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 z-[70]"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
+                        <div
+                            className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-100">Select Date</h3>
+                                    <p className="text-sm text-slate-400">{monthYear}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="text-slate-400 hover:text-slate-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
                             <div className="flex items-center justify-between mb-4">
                                 <button
                                     type="button"
                                     onClick={() => navigateMonth(-1)}
-                                    className="p-1 hover:bg-slate-700 rounded"
+                                    className="p-2 hover:bg-slate-800 rounded-full"
                                 >
                                     <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <h3 className="text-slate-100 font-medium">{monthYear}</h3>
+                                <h4 className="text-base font-medium text-slate-100">{monthYear}</h4>
                                 <button
                                     type="button"
                                     onClick={() => navigateMonth(1)}
-                                    className="p-1 hover:bg-slate-700 rounded"
+                                    className="p-2 hover:bg-slate-800 rounded-full"
                                 >
                                     <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -177,7 +497,6 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                 </button>
                             </div>
 
-                            {/* Days of Week */}
                             <div className="grid grid-cols-7 gap-1 mb-2">
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                                     <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
@@ -186,7 +505,6 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                 ))}
                             </div>
 
-                            {/* Calendar Days */}
                             <div className="grid grid-cols-7 gap-1">
                                 {days.map((date, index) => (
                                     <button
@@ -195,13 +513,13 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                         onClick={() => handleDateSelect(date)}
                                         disabled={!date}
                                         className={`
-                                            h-8 text-sm rounded transition-colors
+                                            h-10 text-sm rounded-md transition-colors
                                             ${!date ? 'invisible' : ''}
                                             ${isSelected(date)
                                                 ? 'bg-blue-600 text-white'
                                                 : isToday(date)
-                                                    ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
-                                                    : 'text-slate-300 hover:bg-slate-700'
+                                                    ? 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                                                    : 'text-slate-200 hover:bg-slate-800'
                                             }
                                         `}
                                     >
@@ -209,40 +527,19 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                     </button>
                                 ))}
                             </div>
-                        </>
-                    )}
 
-                    {activeTab === 'time' && (
-                        <div className="p-2">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Select Time
-                            </label>
-                            <input
-                                type="time"
-                                value={timeValue}
-                                onChange={handleTimeChange}
-                                className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2"
-                            />
+                            <div className="flex justify-end gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 border border-slate-700 rounded-md"
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
-                    )}
-
-                    <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-slate-700">
-                        <button
-                            type="button"
-                            onClick={() => setIsOpen(false)}
-                            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-700/50 border border-slate-600 rounded-md hover:bg-slate-700 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsOpen(false)}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                            Apply
-                        </button>
                     </div>
-                </div>
+                </>
             )}
         </div>
     );
@@ -262,14 +559,13 @@ function Dashboard() {
         category: 'sport',
         other_category: '',
         event_date: '',
-        coordinator_name: '',
+        event_end_date: '',
         registration_end_date: '',
-        has_registration_end_date: false,
-        has_required_players: false,
+        coordinator_name: '',
+        participants: [''],
         is_done: false,
         images: [],
         existingImages: [],
-        required_players: '2',
         allow_bracketing: false,
     });
 
@@ -408,17 +704,55 @@ function Dashboard() {
         return eventTypePalette[paletteIndex];
     };
 
+    const parseDateTimeValue = (dateTimeValue) => {
+        if (!dateTimeValue) return null;
+
+        const [datePart, rawTimePart = ''] = String(dateTimeValue).split('T');
+        if (!datePart) return null;
+
+        const [yearStr, monthStr, dayStr] = datePart.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr ?? 1) - 1;
+        const day = Number(dayStr ?? 1);
+
+        let timePart = rawTimePart
+            .replace(/Z$/i, '')
+            .replace(/\.[0-9]+$/, '')
+            .replace(/([+-][0-9:]+)$/, '')
+            .trim();
+
+        if (!timePart) {
+            return new Date(year, month, day, 0, 0, 0);
+        }
+
+        const [hourStr = '0', minuteStr = '0'] = timePart.split(':');
+        const hour = Number(hourStr);
+        const minute = Number(minuteStr);
+
+        return new Date(year, month, day, hour, minute, 0);
+    };
+
     // Format date and time for display
     const formatDateTime = (dateTimeString) => {
-        if (!dateTimeString) return '';
-        const date = new Date(dateTimeString);
-        return date.toLocaleString('en-US', {
+        const parsed = parseDateTimeValue(dateTimeString);
+        if (!parsed) return '';
+        return parsed.toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
             hour12: true
+        });
+    };
+
+    const formatDateOnly = (dateString) => {
+        const parsed = parseDateTimeValue(`${dateString ?? ''}T00:00`);
+        if (!parsed) return '';
+        return parsed.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
         });
     };
 
@@ -430,25 +764,38 @@ function Dashboard() {
         }));
     };
 
-    // Handle date time change for the registration end date
-    const handleRegistrationDateTimeChange = (dateTimeString) => {
+    const handleRegistrationEndDateChange = (dateTimeString) => {
         setEditData(prev => ({
             ...prev,
             registration_end_date: dateTimeString
         }));
     };
 
+    // Handle date time change for the registration end date
     const normalizeDateTimeForInput = (value) => {
         if (!value) return '';
+        const parsed = parseDateTimeValue(value);
+        if (!parsed) return '';
 
-        const parsed = new Date(value);
-        if (!Number.isNaN(parsed.getTime())) {
-            const local = new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000));
-            return local.toISOString().slice(0, 16);
-        }
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const hour = String(parsed.getHours()).padStart(2, '0');
+        const minute = String(parsed.getMinutes()).padStart(2, '0');
 
-        // Fallback for strings like "2025-09-25T00:00:00"
-        return value.includes('T') ? value.slice(0, 16) : value;
+        return `${year}-${month}-${day}T${hour}:${minute}`;
+    };
+
+    const normalizeDateOnlyForInput = (value) => {
+        if (!value) return '';
+        const parsed = parseDateTimeValue(value.includes('T') ? value : `${value}T00:00`);
+        if (!parsed) return '';
+
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
     };
 
     const buildExistingImages = (event) => {
@@ -478,8 +825,8 @@ function Dashboard() {
             : (event.other_category || event.category || '');
 
         const eventDateValue = normalizeDateTimeForInput(event.event_date);
-        const registrationDateValue = normalizeDateTimeForInput(event.registration_end_date);
-
+        const registrationEndDateValue = normalizeDateTimeForInput(event.registration_end_date);
+        const eventEndDateValue = normalizeDateOnlyForInput(event.event_end_date);
         setEditingEventId(event.id);
         setEditData({
             id: event.id,
@@ -489,14 +836,15 @@ function Dashboard() {
             category: derivedCategory || 'sport',
             other_category: derivedOtherCategory,
             event_date: eventDateValue,
+            event_end_date: eventEndDateValue,
+            registration_end_date: registrationEndDateValue,
             coordinator_name: event.coordinator_name || '',
-            registration_end_date: registrationDateValue,
-            has_registration_end_date: !!registrationDateValue || !!event.has_registration_end_date,
-            has_required_players: !!event.required_players,
+            participants: Array.isArray(event.participants) && event.participants.length > 0
+                ? event.participants.map((participant) => (typeof participant === 'string' ? participant : '')).filter(Boolean)
+                : [''],
             is_done: event.is_done ?? false,
             images: [],
             existingImages: buildExistingImages(event),
-            required_players: event.required_players ? String(event.required_players) : '',
             allow_bracketing: !!event.allow_bracketing,
         });
     };
@@ -515,25 +863,35 @@ function Dashboard() {
             formData.append('category', editData.category);
             formData.append('other_category', editData.other_category || '');
             formData.append('allow_bracketing', editData.allow_bracketing ? '1' : '0');
-            formData.append('has_registration_end_date', editData.has_registration_end_date ? '1' : '0');
 
             if (editData.event_date) {
-                const [datePart, timePart] = editData.event_date.split('T');
-                formData.append('event_date', datePart);
-                formData.append('event_time', timePart ? timePart.substring(0, 5) : '00:00');
+                const sanitizedEventDate = editData.event_date.length === 16
+                    ? `${editData.event_date}:00`
+                    : editData.event_date;
+                formData.append('event_date', sanitizedEventDate);
             }
 
-            if (editData.has_registration_end_date && editData.registration_end_date) {
-                const [datePart, timePart] = editData.registration_end_date.split('T');
-                formData.append('registration_end_date', datePart);
-                formData.append('registration_end_time', timePart ? timePart.substring(0, 5) : '00:00');
-            } else {
-                formData.append('registration_end_date', '');
-                formData.append('registration_end_time', '');
+            const eventTypeLower = (editData.event_type || '').toLowerCase();
+
+            if (eventTypeLower !== 'tryouts' && editData.event_end_date) {
+                formData.append('event_end_date', editData.event_end_date);
             }
 
-            formData.append('has_required_players', editData.has_required_players ? '1' : '0');
-            formData.append('required_players', editData.has_required_players ? (editData.required_players || '') : '');
+            if (eventTypeLower === 'tryouts' && editData.registration_end_date) {
+                const sanitizedRegistrationDate = editData.registration_end_date.length === 16
+                    ? `${editData.registration_end_date}:00`
+                    : editData.registration_end_date;
+                formData.append('registration_end_date', sanitizedRegistrationDate);
+            }
+
+            if (eventTypeLower !== 'tryouts' && Array.isArray(editData.participants)) {
+                editData.participants
+                    .map((participant) => (typeof participant === 'string' ? participant.trim() : ''))
+                    .filter((participant) => participant.length > 0)
+                    .forEach((participant, index) => {
+                        formData.append(`participants[${index}]`, participant);
+                    });
+            }
 
             if (editData.existingImages && editData.existingImages.length > 0) {
                 editData.existingImages.forEach(img => {
@@ -658,6 +1016,13 @@ function Dashboard() {
 
                             return [];
                         })();
+                        const participants = Array.isArray(event.participants)
+                            ? event.participants
+                                .map((participant) => (typeof participant === 'string' ? participant.trim() : ''))
+                                .filter((participant) => participant.length > 0)
+                            : [];
+
+                        const isTryouts = editingEventId === event.id && (editData.event_type || '').toLowerCase() === 'tryouts';
 
                         return (
                             <div key={event.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 relative">
@@ -700,6 +1065,54 @@ function Dashboard() {
                                             />
                                         </div>
 
+                                        {!isTryouts && (
+                                            <div>
+                                                <label className="block text-sm">Participants</label>
+                                                <div className="space-y-2">
+                                                    {(Array.isArray(editData.participants) ? editData.participants : ['']).map((participant, index) => (
+                                                        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={participant}
+                                                                placeholder={`Participant ${index + 1}`}
+                                                                onChange={(e) => {
+                                                                    const updated = Array.isArray(editData.participants) ? [...editData.participants] : [''];
+                                                                    updated[index] = e.target.value;
+                                                                    setEditData({ ...editData, participants: updated });
+                                                                }}
+                                                                className="flex-1 border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
+                                                            />
+                                                            {(editData.participants?.length ?? 0) > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const updated = (editData.participants || []).filter((_, idx) => idx !== index);
+                                                                        setEditData({ ...editData, participants: updated.length > 0 ? updated : [''] });
+                                                                    }}
+                                                                    className="text-sm text-red-300 hover:text-red-200"
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {(!editData.participants || editData.participants.length === 0) && (
+                                                    <p className="text-xs text-slate-400 mt-1">No participants listed.</p>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditData({
+                                                        ...editData,
+                                                        participants: [...(editData.participants || ['']), '']
+                                                    })}
+                                                    className="mt-2 text-blue-300 hover:text-blue-200 text-sm"
+                                                >
+                                                    + Add participant
+                                                </button>
+                                            </div>
+                                        )}
+
 
 
                                         <div>
@@ -737,6 +1150,28 @@ function Dashboard() {
                                             />
                                         </div>
 
+                                        {!isTryouts && (
+                                            <div>
+                                                <label className="block text-sm">Event End Date</label>
+                                                <DatePicker
+                                                    value={editData.event_end_date}
+                                                    onChange={(date) => setEditData({ ...editData, event_end_date: date })}
+                                                    placeholder="Select event end date"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {isTryouts && (
+                                            <div>
+                                                <label className="block text-sm">Registration End</label>
+                                                <DateTimePicker
+                                                    value={editData.registration_end_date}
+                                                    onChange={handleRegistrationEndDateChange}
+                                                    placeholder="Select registration end date"
+                                                />
+                                            </div>
+                                        )}
+
                                         <div className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -746,64 +1181,6 @@ function Dashboard() {
                                                 className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
                                             />
                                             <label htmlFor={`allow_bracketing_${editingEventId}`} className="text-sm">Allow Bracketing</label>
-                                        </div>
-
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <input
-                                                    type="checkbox"
-                                                    id="hasRequiredPlayers"
-                                                    checked={editData.has_required_players}
-                                                    onChange={(e) => {
-                                                        const hasPlayers = e.target.checked;
-                                                        setEditData({
-                                                            ...editData,
-                                                            has_required_players: hasPlayers,
-                                                            required_players: hasPlayers ? editData.required_players || '2' : ''
-                                                        });
-                                                    }}
-                                                    className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                                                />
-                                                <label htmlFor="hasRequiredPlayers" className="text-sm">Enable Required Players</label>
-                                            </div>
-                                            {editData.has_required_players && (
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={editData.required_players}
-                                                    onChange={e => setEditData({ ...editData, required_players: e.target.value })}
-                                                    className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    placeholder="Enter number of required players"
-                                                />
-                                            )}
-                                        </div>
-
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="has_registration_end_date"
-                                                    checked={editData.has_registration_end_date}
-                                                    onChange={(e) => setEditData(prev => ({
-                                                        ...prev,
-                                                        has_registration_end_date: e.target.checked,
-                                                        registration_end_date: e.target.checked ? (prev.registration_end_date || '') : ''
-                                                    }))}
-                                                    className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-600"
-                                                />
-                                                <label htmlFor="has_registration_end_date" className="text-sm text-gray-300">
-                                                    Enable Registration
-                                                </label>
-                                            </div>
-                                            {editData.has_registration_end_date && (
-                                                <div className="w-full">
-                                                    <DateTimePicker
-                                                        value={editData.registration_end_date}
-                                                        onChange={handleRegistrationDateTimeChange}
-                                                        placeholder="Select registration end date and time"
-                                                    />
-                                                </div>
-                                            )}
                                         </div>
 
                                         <div className="space-y-4">
@@ -956,6 +1333,18 @@ function Dashboard() {
                                                     </div>
                                                 </div>
 
+                                                {event.event_end_date && (
+                                                    <div className="flex items-start gap-2">
+                                                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8h18M3 12h18m-9 4h9" />
+                                                        </svg>
+                                                        <div>
+                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Event Ends</p>
+                                                            <p className="text-slate-200">{formatDateOnly(event.event_end_date)}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 <div className="flex items-start gap-2">
                                                     <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -986,6 +1375,27 @@ function Dashboard() {
                                                         <div>
                                                             <p className="text-xs uppercase tracking-wide text-slate-500">Required Players</p>
                                                             <p className="text-slate-200">{event.required_players} players</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {participants.length > 0 && (
+                                                    <div className="flex items-start gap-2">
+                                                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                        <div className="w-full">
+                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Participants</p>
+                                                            <div className="mt-1 flex flex-wrap gap-2">
+                                                                {participants.map((participant, idx) => (
+                                                                    <span
+                                                                        key={`${event.id}-participant-${idx}`}
+                                                                        className="inline-flex items-center rounded-full bg-slate-700/60 px-2.5 py-0.5 text-xs text-slate-200 border border-slate-600"
+                                                                    >
+                                                                        {participant}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}

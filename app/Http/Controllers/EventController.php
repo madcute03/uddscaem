@@ -19,10 +19,12 @@ class EventController extends Controller
             'title',
             'description',
             'coordinator_name',
+            'participants',
             'event_type',
             'category',
             'other_category',
             'event_date',
+            'event_end_date',
             'registration_end_date',
             'has_registration_end_date',
             'required_players',
@@ -32,7 +34,7 @@ class EventController extends Controller
             ->with('images')
             ->orderBy('event_date')
             ->get();
-            
+
         // Set has_registration_end_date based on whether registration_end_date is set
         $events->each(function ($event) {
             $event->has_registration_end_date = !is_null($event->registration_end_date);
@@ -60,6 +62,7 @@ class EventController extends Controller
             'title',
             'description',
             'coordinator_name',
+            'participants',
             'event_type',
             'event_date',
             'registration_end_date',
@@ -110,10 +113,13 @@ class EventController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'coordinator_name' => 'required|string|max:255',
+            'participants' => 'nullable|array',
+            'participants.*' => 'nullable|string|max:255',
             'category' => 'required|string|in:sport,culture,arts,intramurals,other',
             'other_category' => 'required_if:category,other|string|max:255|nullable',
             'event_type' => 'required|string|max:255',
             'event_date' => 'required|date',
+            'event_end_date' => 'nullable|date|after_or_equal:event_date',
             'has_registration_end_date' => 'sometimes|boolean',
             'registration_end_date' => 'nullable|date',
             'required_players' => 'nullable|integer|min:1|max:20',
@@ -139,15 +145,23 @@ class EventController extends Controller
             $category = $validated['other_category'];
         }
 
+        $participants = collect($request->input('participants', []))
+            ->map(fn ($participant) => is_string($participant) ? trim($participant) : '')
+            ->filter(fn ($participant) => $participant !== '')
+            ->values()
+            ->all();
+
         // Create the event
         $event = Event::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'coordinator_name' => $validated['coordinator_name'],
+            'participants' => $participants,
             'category' => $category,
             'other_category' => $validated['other_category'] ?? null,
             'event_type' => $eventType,
             'event_date' => $validated['event_date'],
+            'event_end_date' => $validated['event_end_date'] ?? null,
             'registration_end_date' => $validated['registration_end_date'] ?? null,
             'has_registration_end_date' => $validated['has_registration_end_date'] ?? false,
             'required_players' => $validated['required_players'] ?? null,
@@ -188,13 +202,14 @@ class EventController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
                 'coordinator_name' => 'required|string|max:255',
+                'participants' => 'nullable|array',
+                'participants.*' => 'nullable|string|max:255',
                 'category' => 'required|string|in:sport,culture,arts,intramurals,other',
                 'other_category' => 'required_if:category,other|string|max:255|nullable',
                 'event_type' => 'required|string|max:255',
                 'event_date' => 'required|date',
-                'event_time' => 'required|date_format:H:i',
+                'event_end_date' => 'nullable|date|after_or_equal:event_date',
                 'registration_end_date' => 'nullable|date',
-                'registration_end_time' => 'nullable|date_format:H:i',
                 'required_players' => 'nullable|integer|min:1|max:20',
                 'images' => 'nullable|array',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -227,16 +242,24 @@ class EventController extends Controller
             if ($category === 'other' && !empty($data['other_category'])) {
                 $category = $data['other_category'];
             }
-            
+
+            $participants = collect($request->input('participants', []))
+                ->map(fn ($participant) => is_string($participant) ? trim($participant) : '')
+                ->filter(fn ($participant) => $participant !== '')
+                ->values()
+                ->all();
+
             // Update the event
             $event->update([
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'coordinator_name' => $data['coordinator_name'],
+                'participants' => $participants,
                 'category' => $category,
                 'other_category' => $data['other_category'] ?? null,
                 'event_type' => $eventType,
                 'event_date' => $data['event_date'],
+                'event_end_date' => $data['event_end_date'] ?? null,
                 'registration_end_date' => $data['registration_end_date'] ?? null,
                 'required_players' => $data['required_players'] ?? null,
                 'allow_bracketing' => $data['allow_bracketing'] ?? false,

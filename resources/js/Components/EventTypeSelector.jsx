@@ -1,54 +1,62 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { router } from '@inertiajs/react';
 
 const EventTypeSelector = ({ value, onChange, error, onTypeSelect }) => {
-    const [showOtherInput, setShowOtherInput] = useState(false);
-    const [otherEventName, setOtherEventName] = useState('');
+    const [showOtherInput, setShowOtherInput] = useState((value?.event_type ?? '') === 'other');
+    const [otherEventName, setOtherEventName] = useState(value?.other_event_type ?? '');
+    const [isLoading, setIsLoading] = useState(false);
     const inputRef = useRef(null);
-    
+
     // Focus the input when it becomes visible
     useEffect(() => {
         if (showOtherInput && inputRef.current) {
             inputRef.current.focus();
         }
     }, [showOtherInput]);
+
+    useEffect(() => {
+        const isOther = (value?.event_type ?? '') === 'other';
+        setShowOtherInput(isOther);
+        if (isOther) {
+            setOtherEventName(value?.other_event_type ?? '');
+        }
+    }, [value?.event_type, value?.other_event_type]);
+
     const handleEventTypeChange = (e) => {
         const selectedValue = e.target.value;
-        
+
         // Show/hide other event name input
         setShowOtherInput(selectedValue === 'other');
-        
+        if (selectedValue !== 'other') {
+            setOtherEventName('');
+        }
+
         // Call the parent's onChange
         onChange({
             event_type: selectedValue,
             other_event_type: selectedValue === 'other' ? otherEventName : ''
         });
-        
+
+        if (onTypeSelect) {
+            onTypeSelect(selectedValue);
+        }
+
         // Handle navigation for non-other event types
         const routes = {
             'tryouts': '/dashboard/create-tryouts',
             'competition': '/dashboard/create-competition',
             'intramurals': '/dashboard/create-intramurals'
         };
-        
+
         if (routes[selectedValue]) {
-            window.location.href = window.location.origin + routes[selectedValue];
+            setIsLoading(true);
+            setTimeout(() => {
+                window.location.href = `${window.location.origin}${routes[selectedValue]}`;
+            }, 15);
+        } else {
+            setIsLoading(false);
         }
     };
-    
-    const handleOtherSubmit = (e) => {
-        e.preventDefault();
-        if (otherEventName.trim()) {
-            // Update the form with the entered event name
-            onChange({
-                event_type: 'other',
-                other_event_type: otherEventName
-            });
-            // Navigate to the other event page
-            window.location.href = `${window.location.origin}/dashboard/create-other-event?name=${encodeURIComponent(otherEventName)}`;
-        }
-    };
-    
+
     const handleOtherNameChange = (e) => {
         const newName = e.target.value;
         setOtherEventName(newName);
@@ -59,17 +67,16 @@ const EventTypeSelector = ({ value, onChange, error, onTypeSelect }) => {
         });
     };
 
-    const handleOtherTypeChange = (e) => {
-        const newValue = e.target.value;
-        setOtherEventName(newValue);
-        onChange({
-            ...value,
-            other_event_type: newValue
-        });
-    };
-
     return (
         <div className="mb-2">
+            {isLoading && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70">
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl px-8 py-6 shadow-2xl flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-blue-500/70 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-slate-200 text-sm font-medium">Loading, please wait...</p>
+                    </div>
+                </div>
+            )}
             <label className="block mb-1 text-slate-300">Event Type</label>
             <div className="space-y-2">
                 <select
