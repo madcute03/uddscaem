@@ -104,18 +104,18 @@ export default function CreateBracket({ events = [] }) {
     return (
         <AuthenticatedLayout>
             <Head title="Create Bracket" />
-            <div className="p-6">
+            <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-5xl mx-auto space-y-6">
                 <h1 className="text-2xl font-bold mb-4">
                     Select Event for Bracket
                 </h1>
                 {events.length === 0 ? (
-                    <p className="text-gray-600">No events available.</p>
+                    <p className="text-gray-400">No events available.</p>
                 ) : (
                     <div className="space-y-4">
                         {events.map((event) => (
                             <div
                                 key={event.id}
-                                className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                                className="border border-slate-700/70 bg-slate-900/50 rounded-xl p-5 shadow-sm hover:shadow-lg transition"
                             >
                                 <h2 className="py-2 text-lg font-semibold">
                                     {event.title}
@@ -186,8 +186,8 @@ export default function CreateBracket({ events = [] }) {
 
                 {/* Step 1: Choose Bracket Type */}
                 {selectedEvent && !bracketType && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
-                        <div className="bg-gray-800 text-white rounded-lg p-6 w-96 shadow-lg border border-gray-700">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-black/80 overflow-y-auto">
+                        <div className="w-full max-w-md bg-gray-800 text-white rounded-xl shadow-2xl border border-gray-700 p-5 sm:p-6">
                             <h2 className="text-xl font-bold mb-4 text-center">
                                 Choose Bracket Type for {selectedEvent.title}
                             </h2>
@@ -210,7 +210,7 @@ export default function CreateBracket({ events = [] }) {
 
                             <button
                                 onClick={() => setSelectedEvent(null)}
-                                className="mt-3 w-full bg-red-300 px-10 py-2 rounded hover:bg-red-400"
+                                className="mt-4 w-full bg-red-300 px-4 py-2 rounded hover:bg-red-400"
                             >
                                 Cancel
                             </button>
@@ -220,8 +220,8 @@ export default function CreateBracket({ events = [] }) {
 
                 {/* Step 2: Choose Number of Teams */}
                 {selectedEvent && bracketType && !teamCount && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
-                        <div className="bg-gray-800 text-white rounded-lg p-6 w-96 shadow-lg border border-gray-700">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-black/80 overflow-y-auto">
+                        <div className="w-full max-w-md bg-gray-800 text-white rounded-xl shadow-2xl border border-gray-700 p-5 sm:p-6">
                             <h2 className="text-xl font-bold mb-4 text-center">
                                 Select Number of Teams (
                                 {bracketType === "single" ? "Single" : "Double"}{" "}
@@ -229,33 +229,22 @@ export default function CreateBracket({ events = [] }) {
                             </h2>
 
                             <div className="grid grid-cols-2 gap-3">
-                                {bracketType === "single"
-                                    ? [2, 3, 4, 5, 6, 7, 8].map((count) => (
-                                          <button
-                                              key={count}
-                                              onClick={() =>
-                                                  handleTeamCountSelection(
-                                                      count
-                                                  )
-                                              }
-                                              className="block bg-green-600 text-white px-4 py-2 rounded text-center hover:bg-green-700"
-                                          >
-                                              {count} Teams
-                                          </button>
-                                      ))
-                                    : [3, 4, 5, 6, 7, 8].map((count) => (
-                                          <button
-                                              key={count}
-                                              onClick={() =>
-                                                  handleTeamCountSelection(
-                                                      count
-                                                  )
-                                              }
-                                              className="block bg-purple-600 text-white px-4 py-2 rounded text-center hover:bg-purple-700"
-                                          >
-                                              {count} Teams
-                                          </button>
-                                      ))}
+                                {(bracketType === "single"
+                                    ? [2, 3, 4, 5, 6, 7, 8]
+                                    : [3, 4, 5, 6, 7, 8]
+                                ).map((count) => (
+                                    <button
+                                        key={count}
+                                        onClick={() => handleTeamCountSelection(count)}
+                                        className={
+                                            bracketType === "single"
+                                                ? "block bg-green-600 text-white px-4 py-2 rounded text-center hover:bg-green-700"
+                                                : "block bg-purple-600 text-white px-4 py-2 rounded text-center hover:bg-purple-700"
+                                        }
+                                    >
+                                        {count} Teams
+                                    </button>
+                                ))}
                             </div>
 
                             <button
@@ -270,8 +259,8 @@ export default function CreateBracket({ events = [] }) {
 
                 {/* Render the selected bracket component */}
                 {SelectedBracket && selectedEvent && isBracketModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-                        <div className="relative bg-white rounded-lg shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+                    <div className="fixed inset-0 z-50 bg-black/80 overflow-y-auto">
+                        <div className="relative min-h-full w-full bg-white rounded-none sm:rounded-xl shadow-2xl">
                             <button
                                 onClick={handleCloseBracketModal}
                                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -279,15 +268,17 @@ export default function CreateBracket({ events = [] }) {
                             >
                                 ✕
                             </button>
-                            <div className="p-6 overflow-y-auto max-h-[90vh]">
+                            <div className="p-0 sm:p-6">
                                 <h2 className="text-2xl font-semibold mb-4 text-gray-800">
                                     {selectedEvent.title} Bracket
                                 </h2>
-                                <div className="overflow-auto bg-gray-100 rounded-lg p-4">
-                                    <SelectedBracket
-                                        eventId={selectedEvent.id}
-                                        teamCount={teamCount}
-                                    />
+                                <div className="bg-gray-100 w-full rounded-none sm:rounded-lg overflow-x-auto">
+                                    <div className="min-w-[1100px] sm:min-w-[1400px] p-0 sm:p-4">
+                                        <SelectedBracket
+                                            eventId={selectedEvent.id}
+                                            teamCount={teamCount}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

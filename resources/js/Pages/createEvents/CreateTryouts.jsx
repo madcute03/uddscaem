@@ -611,8 +611,8 @@ export default function CreateTryouts({ auth, events = [] }) {
         <AuthenticatedLayout user={auth.user}>
             <Head title="CreateEvent" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+            <div className="py-8 px-2 sm:px-4 md:px-8">
+                <div className="mx-auto max-w-4xl w-full space-y-6">
 
                     {/* Create Event Form */}
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
@@ -800,7 +800,8 @@ export default function CreateTryouts({ auth, events = [] }) {
                                     <input
                                         key={idx}
                                         type="file"
-                                        className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                        className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                        style={{width: '100%'}}
                                         onChange={e => {
                                             const newImages = [...data.images];
                                             newImages[idx] = e.target.files[0];

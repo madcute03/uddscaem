@@ -6,6 +6,8 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class EventController extends Controller
 {
@@ -17,10 +19,12 @@ class EventController extends Controller
             'title',
             'description',
             'coordinator_name',
+            'participants',
             'event_type',
             'category',
             'other_category',
             'event_date',
+            'event_end_date',
             'registration_end_date',
             'has_registration_end_date',
             'required_players',
@@ -30,15 +34,18 @@ class EventController extends Controller
             ->with('images')
             ->orderBy('event_date')
             ->get();
-            
+
         // Set has_registration_end_date based on whether registration_end_date is set
         $events->each(function ($event) {
             $event->has_registration_end_date = !is_null($event->registration_end_date);
         });
 
-        // Map image paths for frontend convenience
-        $events->transform(function ($event) {
-            $event->images_path = $event->images->pluck('image_path');
+        // Map image paths for frontend convenience (use absolute URLs matching request scheme/host)
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $events->transform(function ($event) use ($base) {
+            $event->images_path = $event->images->map(function ($img) use ($base) {
+                return $base . '/storage/' . ltrim($img->image_path, '/');
+            });
             return $event;
         });
 
@@ -55,6 +62,7 @@ class EventController extends Controller
             'title',
             'description',
             'coordinator_name',
+            'participants',
             'event_type',
             'event_date',
             'registration_end_date',
@@ -69,9 +77,12 @@ class EventController extends Controller
             ->orderBy('event_date')
             ->get();
 
-        // Map image paths for frontend
-        $events->transform(function ($event) {
-            $event->images_path = $event->images->pluck('image_path');
+        // Map image paths for frontend (use absolute URLs matching request scheme/host)
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $events->transform(function ($event) use ($base) {
+            $event->images_path = $event->images->map(function ($img) use ($base) {
+                return $base . '/storage/' . ltrim($img->image_path, '/');
+            });
             return $event;
         });
 
@@ -84,7 +95,10 @@ class EventController extends Controller
     public function show(Event $event)
     {
         $event->load('images');
-        $event->images_path = $event->images->pluck('image_path');
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $event->images_path = $event->images->map(function ($img) use ($base) {
+            return $base . '/storage/' . ltrim($img->image_path, '/');
+        });
 
         return Inertia::render('ShowEvent', [
             'event' => $event,
@@ -99,10 +113,13 @@ class EventController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'coordinator_name' => 'required|string|max:255',
+            'participants' => 'nullable|array',
+            'participants.*' => 'nullable|string|max:255',
             'category' => 'required|string|in:sport,culture,arts,intramurals,other',
             'other_category' => 'required_if:category,other|string|max:255|nullable',
             'event_type' => 'required|string|max:255',
             'event_date' => 'required|date',
+            'event_end_date' => 'nullable|date|after_or_equal:event_date',
             'has_registration_end_date' => 'sometimes|boolean',
             'registration_end_date' => 'nullable|date',
             'required_players' => 'nullable|integer|min:1|max:20',
@@ -128,15 +145,23 @@ class EventController extends Controller
             $category = $validated['other_category'];
         }
 
+        $participants = collect($request->input('participants', []))
+            ->map(fn ($participant) => is_string($participant) ? trim($participant) : '')
+            ->filter(fn ($participant) => $participant !== '')
+            ->values()
+            ->all();
+
         // Create the event
         $event = Event::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'coordinator_name' => $validated['coordinator_name'],
+            'participants' => $participants,
             'category' => $category,
             'other_category' => $validated['other_category'] ?? null,
             'event_type' => $eventType,
             'event_date' => $validated['event_date'],
+            'event_end_date' => $validated['event_end_date'] ?? null,
             'registration_end_date' => $validated['registration_end_date'] ?? null,
             'has_registration_end_date' => $validated['has_registration_end_date'] ?? false,
             'required_players' => $validated['required_players'] ?? null,
@@ -162,8 +187,8 @@ class EventController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            \Log::info('Update request received', $request->except('images'));
-            \Log::info('Files received:', array_map(function($file) {
+            Log::info('Update request received', $request->except('images'));
+            Log::info('Files received:', array_map(function($file) {
                 return [
                     'name' => $file->getClientOriginalName(),
                     'size' => $file->getSize(),
@@ -177,13 +202,14 @@ class EventController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
                 'coordinator_name' => 'required|string|max:255',
+                'participants' => 'nullable|array',
+                'participants.*' => 'nullable|string|max:255',
                 'category' => 'required|string|in:sport,culture,arts,intramurals,other',
                 'other_category' => 'required_if:category,other|string|max:255|nullable',
                 'event_type' => 'required|string|max:255',
                 'event_date' => 'required|date',
-                'event_time' => 'required|date_format:H:i',
+                'event_end_date' => 'nullable|date|after_or_equal:event_date',
                 'registration_end_date' => 'nullable|date',
-                'registration_end_time' => 'nullable|date_format:H:i',
                 'required_players' => 'nullable|integer|min:1|max:20',
                 'images' => 'nullable|array',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -192,10 +218,10 @@ class EventController extends Controller
                 'existing_images.*' => 'string',
             ];
 
-            $validator = \Validator::make($request->all(), $rules);
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
-                \Log::error('Validation failed', $validator->errors()->toArray());
+                Log::error('Validation failed', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
@@ -216,16 +242,24 @@ class EventController extends Controller
             if ($category === 'other' && !empty($data['other_category'])) {
                 $category = $data['other_category'];
             }
-            
+
+            $participants = collect($request->input('participants', []))
+                ->map(fn ($participant) => is_string($participant) ? trim($participant) : '')
+                ->filter(fn ($participant) => $participant !== '')
+                ->values()
+                ->all();
+
             // Update the event
             $event->update([
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'coordinator_name' => $data['coordinator_name'],
+                'participants' => $participants,
                 'category' => $category,
                 'other_category' => $data['other_category'] ?? null,
                 'event_type' => $eventType,
                 'event_date' => $data['event_date'],
+                'event_end_date' => $data['event_end_date'] ?? null,
                 'registration_end_date' => $data['registration_end_date'] ?? null,
                 'required_players' => $data['required_players'] ?? null,
                 'allow_bracketing' => $data['allow_bracketing'] ?? false,
@@ -233,39 +267,51 @@ class EventController extends Controller
 
             // Handle existing images
             $existingImages = $data['existing_images'] ?? [];
+
             if (!empty($existingImages)) {
-            $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
-                \Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
-                Storage::disk('public')->delete($image->image_path);
-                $image->delete();
-            });
-        } else {
-            // If no existing images are sent, remove all existing images
-            $event->images->each(function ($image) {
-                Storage::disk('public')->delete($image->image_path);
-                $image->delete();
-            });
-        }
+                $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
+                    Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
+                    Storage::disk('public')->delete($image->image_path);
+                    $image->delete();
+                });
+            } else {
+                // If no existing images are sent, remove all existing images
+                $event->images->each(function ($image) {
+                    Storage::disk('public')->delete($image->image_path);
+                    $image->delete();
+                });
+            }
 
         // Handle new image uploads
         if ($request->hasFile('images')) {
-            \Log::info('Processing new image uploads');
+            Log::info('Processing new image uploads');
             foreach ($request->file('images') as $file) {
                 if ($file->isValid()) {
                     $path = $file->store('events', 'public');
                     $event->images()->create(['image_path' => $path]);
-                    \Log::info('Uploaded new image:', ['path' => $path]);
+                    Log::info('Uploaded new image:', ['path' => $path]);
                 }
             }
         }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Event updated successfully.',
-                'event' => $event->fresh('images')
-            ]);
+            $event = $event->fresh('images');
+            $successMessage = 'Event updated successfully.';
+
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()->with('success', $successMessage);
+            }
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMessage,
+                    'event' => $event
+                ]);
+            }
+
+            return redirect()->back()->with('success', $successMessage);
         } catch (\Exception $e) {
-            \Log::error('Error updating event: ' . $e->getMessage(), [
+            Log::error('Error updating event: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
@@ -314,8 +360,11 @@ class EventController extends Controller
             ->orderBy('event_date')
             ->get();
 
-        $events->transform(function ($event) {
-            $event->images_path = $event->images->pluck('image_path');
+        $base = rtrim(request()->getSchemeAndHttpHost(), '/');
+        $events->transform(function ($event) use ($base) {
+            $event->images_path = $event->images->map(function ($img) use ($base) {
+                return $base . '/storage/' . ltrim($img->image_path, '/');
+            });
             return $event;
         });
 

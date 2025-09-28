@@ -9,8 +9,8 @@ export default function Edit({ mustVerifyEmail, status }) {
         <AuthenticatedLayout>
             <Head title="Profile" />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 p-6">
-                <div className="max-w-4xl mx-auto">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 p-4 sm:p-6 md:p-8">
+                <div className="max-w-4xl w-full mx-auto">
                     {/* Header Section */}
                     <div className="mb-6">
                         <h2 className="text-lg font-semibold">Profile Settings</h2>

@@ -5,6 +5,7 @@ import PublicLayout from "@/Layouts/PublicLayout";
 export default function ShowEvent({ event }) {
     const [showSuccess, setShowSuccess] = useState(false);
     const { flash } = usePage().props;
+    const { auth } = usePage().props;
 
     useEffect(() => {
         if (flash.success) {
@@ -43,11 +44,48 @@ export default function ShowEvent({ event }) {
 
     // Bracket Modal state
     const [showSoonModal, setShowSoonModal] = useState(false);
+    const [showAuthRequiredModal, setShowAuthRequiredModal] = useState(false);
 
-    const handleViewBracket = (e) => {
+    // Helper to check if target URL is publicly accessible
+    const tryOpenPublic = async (url) => {
+        try {
+            const resp = await fetch(url, { method: 'GET', credentials: 'same-origin', redirect: 'manual' });
+            // If server responds with 200 OK, open in new tab
+            if (resp.status === 200) {
+                window.open(url, '_blank', 'noopener');
+                return true;
+            }
+            // If manual redirect or other status, treat as protected
+            return false;
+        } catch (e) {
+            console.error('Error checking public access for', url, e);
+            return false;
+        }
+    };
+
+    const handleViewBracket = async (e, type = 'bracket') => {
+        // If bracket not configured, show coming soon modal
         if (!event.bracket_type || !event.teams) {
             e.preventDefault(); // stop redirect
-            setShowSoonModal(true); // show modal
+            setShowSoonModal(true);
+            return;
+        }
+
+        // If user is authenticated, allow the Inertia Link to proceed
+        if (auth && auth.user) {
+            return;
+        }
+
+        // For guests, prevent Inertia navigation and try to open the public page
+        e.preventDefault();
+        const url = type === 'bracket'
+            ? route('bracket.show', { event: event.id })
+            : route('standing.show', { event: event.id });
+
+        const ok = await tryOpenPublic(url);
+        if (!ok) {
+            // Show modal telling the user this page currently requires login on the server
+            setShowAuthRequiredModal(true);
         }
     };
 
@@ -61,7 +99,7 @@ export default function ShowEvent({ event }) {
                     </div>
                 </div>
             )}
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 px-2 sm:px-4 md:px-8 max-w-7xl mx-auto w-full py-8">
                 {/* Image Carousel */}
                 {event.images_path && event.images_path.length > 0 ? (
                     <div className="relative w-full h-screen overflow-hidden">
@@ -133,7 +171,7 @@ export default function ShowEvent({ event }) {
                                             href={route("bracket.show", {
                                                 event: event.id,
                                             })}
-                                            onClick={handleViewBracket}
+                                            onClick={(e) => handleViewBracket(e, 'bracket')}
                                             className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
                                                            transition duration-300 ease-in-out 
                                                            bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
@@ -148,7 +186,7 @@ export default function ShowEvent({ event }) {
                                             href={route("standing.show", {
                                                 event: event.id,
                                             })}
-                                            onClick={handleViewBracket}
+                                            onClick={(e) => handleViewBracket(e, 'standing')}
                                             className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
                                                            transition duration-300 ease-in-out 
                                                            bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
@@ -331,6 +369,29 @@ export default function ShowEvent({ event }) {
                             >
                                 Got it!
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal shown when server requires auth for bracket/standing */}
+                {showAuthRequiredModal && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
+                        <div className="bg-slate-900/95 border border-slate-700 p-6 rounded-2xl shadow-2xl max-w-md mx-4 text-center text-slate-100">
+                            <h2 className="text-2xl font-bold mb-4 text-blue-300">Authentication Required</h2>
+                            <p className="text-slate-300 mb-6">
+                                Viewing the bracket or standing currently requires signing in. We tried to open the public view but the server redirected to the login page.
+                            </p>
+                            <p className="text-slate-400 mb-6">If these views should be public, update the server routes to allow guest access (remove auth middleware) or provide a public endpoint.</p>
+                            <div className="flex justify-center gap-3">
+                                <button
+                                    onClick={() => setShowAuthRequiredModal(false)}
+                                    className="px-4 py-2 bg-gray-700 rounded text-white"
+                                >Close</button>
+                                <a
+                                    href={route('login')}
+                                    className="px-4 py-2 bg-blue-600 rounded text-white"
+                                >Login</a>
+                            </div>
                         </div>
                     </div>
                 )}

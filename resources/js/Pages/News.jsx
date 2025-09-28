@@ -10,7 +10,7 @@ export default function News({ news }) {
   return (
     <PublicLayout>
       <Head title="News" />
-      <div className="mx-auto max-w-7xl px-4 space-y-6">
+  <div className="mx-auto max-w-7xl px-2 sm:px-4 md:px-8 space-y-6 w-full py-8">
         <div className="flex items-center justify-between py-6">
           <h1 className="text-3xl font-bold">News</h1>
           

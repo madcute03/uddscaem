@@ -13,11 +13,13 @@ class Event extends Model
         'title',
         'description',
         'coordinator_name',
+        'participants',
         'category',
         'other_category',
         'event_type',
         'other_event_type',
         'event_date',
+        'event_end_date',
         'registration_end_date',
         'has_registration_end_date',
         'required_players',
@@ -30,7 +32,9 @@ class Event extends Model
         'allow_bracketing' => 'boolean',
         'has_registration_end_date' => 'boolean',
         'event_date' => 'datetime',
+        'event_end_date' => 'date',
         'registration_end_date' => 'datetime',
+        'participants' => 'array',
     ];
     
     protected $attributes = [
@@ -43,6 +47,7 @@ class Event extends Model
     
     protected $dates = [
         'event_date',
+        'event_end_date',
         'registration_end_date',
         'created_at',
         'updated_at',
