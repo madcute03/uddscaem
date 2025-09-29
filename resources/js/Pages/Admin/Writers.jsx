@@ -48,30 +48,30 @@ export default function Writers() {
       <Head title="Writers" />
 
       <div className="space-y-6 text-slate-100">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white">Writer Management</h1>
             <p className="text-sm text-slate-400">Manage contributors and invite new writers.</p>
           </div>
-          <SecondaryButton as={Link} href={route('admin.dashboard')}>
+          <SecondaryButton as={Link} href={route('admin.dashboard')} className="self-start sm:self-auto">
             Back
           </SecondaryButton>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/30 backdrop-blur">
-            <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-slate-100">
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-slate-100">
               <div>
                 <h2 className="text-xl font-semibold text-white">Writer roster</h2>
                 <p className="text-sm text-slate-400">Manage newsroom contributors and access.</p>
               </div>
-              <form method="get" className="flex items-center gap-2">
+              <form method="get" className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                 <input
                   type="search"
                   name="search"
                   defaultValue={filters?.search ?? ''}
                   placeholder="Search writers"
-                  className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 />
                 <button
                   type="submit"

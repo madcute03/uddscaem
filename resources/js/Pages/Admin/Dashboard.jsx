@@ -78,7 +78,7 @@ export default function Dashboard() {
       }
     >
       <Head title="News Dashboard" />
-      <div className="space-y-8">
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Drafts" value={stats.drafts} tone="bg-slate-900" />
           <StatCard label="Scheduled" value={stats.scheduled} tone="bg-amber-500" />
@@ -115,15 +115,15 @@ export default function Dashboard() {
           ))}
         </section>
 
-        <section className="rounded-lg border border-slate-800 bg-slate-900/80 shadow-lg backdrop-blur-sm space-y-4 p-6">
-          <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg backdrop-blur-sm sm:p-6">
+          <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-white">News</h2>
               <p className="text-sm text-slate-300">Manage content, scheduling, and prominence.</p>
             </div>
             <Link
               href={route('admin.articles.create')}
-              className="inline-flex items-center justify-center rounded-md bg-blue-500 text-white text-sm font-semibold px-4 py-2 transition hover:bg-blue-400"
+              className="inline-flex items-center justify-center rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-400"
             >
               New News
             </Link>
@@ -131,31 +131,21 @@ export default function Dashboard() {
 
           <Filters categories={categories} filters={filters} />
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-800 text-sm text-slate-200">
-              <thead className="bg-slate-800/60">
-                <tr>
-                  <Th>Title</Th>
-                  <Th>Status</Th>
-                  <Th>Category</Th>
-                  <Th>Author</Th>
-                  <Th className="text-center">Promote</Th>
-                  <Th className="text-right">Actions</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {articles.data.length ? (
-                  articles.data.map((article) => (
-                    <tr key={article.id}>
-                      <Td>
-                        <div className="space-y-1">
-                          <Link href={route('articles.show', article.slug)} className="font-semibold text-white hover:text-blue-400">
-                            {article.title}
-                          </Link>
-                          <p className="text-xs text-slate-400 line-clamp-1">{article.excerpt}</p>
-                        </div>
-                      </Td>
-                      <Td>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:hidden">
+              {articles.data.length ? (
+                articles.data.map((article) => (
+                  <article key={`card-${article.id}`} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 shadow-lg shadow-slate-950/30">
+                    <div className="space-y-3">
+                      <div>
+                        <Link href={route('articles.show', article.slug)} className="text-lg font-semibold text-white hover:text-blue-400">
+                          {article.title}
+                        </Link>
+                        <p className="mt-1 text-xs text-slate-400 line-clamp-2">{article.excerpt}</p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <label className="text-xs uppercase tracking-wide text-slate-400">Status</label>
                         <select
                           defaultValue={article.status}
                           onChange={(event) => handleStatusChange(article, event.target.value)}
@@ -169,16 +159,25 @@ export default function Dashboard() {
                             </option>
                           ))}
                         </select>
-                      </Td>
-                      <Td>{article.category?.name ?? '—'}</Td>
-                      <Td>{article.author?.name ?? 'Editorial Team'}</Td>
-                      <Td>
-                        <div className="flex items-center justify-center gap-2">
+                      </div>
+
+                      <div className="grid gap-1 text-sm text-slate-300">
+                        <p>
+                          <span className="text-slate-400">Category:</span> {article.category?.name ?? '—'}
+                        </p>
+                        <p>
+                          <span className="text-slate-400">Author:</span> {article.author?.name ?? 'Editorial Team'}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <span className="text-xs uppercase tracking-wide text-slate-400">Promote</span>
+                        <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
                             onClick={() => handleToggle(article, 'headline')}
-                            className={`px-2 py-1 rounded text-xs font-semibold border ${
-                              article.is_headline ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-300 text-slate-600'
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                              article.is_headline ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-300 text-slate-300'
                             }`}
                           >
                             Headline
@@ -186,8 +185,8 @@ export default function Dashboard() {
                           <button
                             type="button"
                             onClick={() => handleToggle(article, 'featured')}
-                            className={`px-2 py-1 rounded text-xs font-semibold border ${
-                              article.is_featured ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-300 text-slate-600'
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                              article.is_featured ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-300 text-slate-300'
                             }`}
                           >
                             Featured
@@ -195,39 +194,137 @@ export default function Dashboard() {
                           <button
                             type="button"
                             onClick={() => handleToggle(article, 'popular')}
-                            className={`px-2 py-1 rounded text-xs font-semibold border ${
-                              article.is_popular ? 'bg-amber-500 text-white border-amber-500' : 'border-slate-300 text-slate-600'
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                              article.is_popular ? 'bg-amber-500 text-white border-amber-500' : 'border-slate-300 text-slate-300'
                             }`}
                           >
                             Popular
                           </button>
                         </div>
-                      </Td>
-                      <Td>
-                        <div className="flex items-center justify-end gap-2">
-                          <Link href={route('articles.show', article.slug)} className="text-sm text-blue-600 hover:underline">
-                            View
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(article)}
-                            className="text-sm text-red-600 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </Td>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3 text-sm">
+                        <Link href={route('articles.show', article.slug)} className="text-blue-400 hover:underline">
+                          View
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(article)}
+                          className="text-red-400 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 text-center text-sm text-slate-400 shadow-lg shadow-slate-950/30">
+                  No news found.
+                </p>
+              )}
+            </div>
+
+            <div className="hidden md:block">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-800 text-sm text-slate-200">
+                  <thead className="bg-slate-800/60">
+                    <tr>
+                      <Th>Title</Th>
+                      <Th>Status</Th>
+                      <Th>Category</Th>
+                      <Th>Author</Th>
+                      <Th className="text-center">Promote</Th>
+                      <Th className="text-right">Actions</Th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <Td colSpan={6} className="text-center text-slate-500 py-10">
-                      No news found.
-                    </Td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {articles.data.length ? (
+                      articles.data.map((article) => (
+                        <tr key={article.id}>
+                          <Td>
+                            <div className="space-y-1">
+                              <Link href={route('articles.show', article.slug)} className="font-semibold text-white hover:text-blue-400">
+                                {article.title}
+                              </Link>
+                              <p className="text-xs text-slate-400 line-clamp-1">{article.excerpt}</p>
+                            </div>
+                          </Td>
+                          <Td>
+                            <select
+                              defaultValue={article.status}
+                              onChange={(event) => handleStatusChange(article, event.target.value)}
+                              className={`rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                statusBadges[article.status] ?? 'text-slate-700'
+                              }`}
+                            >
+                              {statusOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </Td>
+                          <Td>{article.category?.name ?? '—'}</Td>
+                          <Td>{article.author?.name ?? 'Editorial Team'}</Td>
+                          <Td>
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleToggle(article, 'headline')}
+                                className={`px-2 py-1 rounded text-xs font-semibold border ${
+                                  article.is_headline ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-300 text-slate-600'
+                                }`}
+                              >
+                                Headline
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggle(article, 'featured')}
+                                className={`px-2 py-1 rounded text-xs font-semibold border ${
+                                  article.is_featured ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-300 text-slate-600'
+                                }`}
+                              >
+                                Featured
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggle(article, 'popular')}
+                                className={`px-2 py-1 rounded text-xs font-semibold border ${
+                                  article.is_popular ? 'bg-amber-500 text-white border-amber-500' : 'border-slate-300 text-slate-600'
+                                }`}
+                              >
+                                Popular
+                              </button>
+                            </div>
+                          </Td>
+                          <Td>
+                            <div className="flex items-center justify-end gap-2">
+                              <Link href={route('articles.show', article.slug)} className="text-sm text-blue-600 hover:underline">
+                                View
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(article)}
+                                className="text-sm text-red-600 hover:underline"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </Td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <Td colSpan={6} className="text-center text-slate-500 py-10">
+                          No news found.
+                        </Td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           <Pagination links={articles.links} />
@@ -266,14 +363,14 @@ function Filters({ categories, filters }) {
   return (
     <form
       method="get"
-      className="grid gap-4 sm:grid-cols-5 rounded-lg border border-slate-800 bg-slate-900/70 p-4 text-slate-200 backdrop-blur"
+      className="grid gap-3 rounded-lg border border-slate-800 bg-slate-900/70 p-4 text-slate-200 backdrop-blur sm:grid-cols-5"
     >
       <input
         type="search"
         name="search"
         defaultValue={filters.search ?? ''}
         placeholder="Search title or excerpt..."
-        className="sm:col-span-2 rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none"
+        className="rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none sm:col-span-2"
       />
       <select
         name="status"

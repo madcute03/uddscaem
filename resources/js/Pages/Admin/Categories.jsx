@@ -74,51 +74,54 @@ export default function Categories() {
     <AuthenticatedLayout title="Manage Categories">
       <Head title="Manage Categories" />
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 text-slate-100">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Categories</h1>
-            <p className="text-sm text-slate-500">Organize news stories by managing your category list.</p>
+            <h1 className="text-2xl font-semibold text-white">Categories</h1>
+            <p className="text-sm text-slate-400">Organize news stories by managing your category list.</p>
           </div>
-          <SecondaryButton as={Link} href={route('admin.dashboard')}>
-            Back to dashboard
+          <SecondaryButton as={Link} href={route('admin.dashboard')} className="self-start sm:self-auto">
+            Back
           </SecondaryButton>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
-          <form onSubmit={handleCreate} className="space-y-4 rounded-lg bg-white p-6 shadow">
+          <form
+            onSubmit={handleCreate}
+            className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/30 backdrop-blur"
+          >
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Add category</h2>
-              <p className="text-sm text-slate-500">Create a category that writers can assign to their articles.</p>
+              <h2 className="text-lg font-semibold text-white">Add category</h2>
+              <p className="text-sm text-slate-400">Create a category that writers can assign to their articles.</p>
             </div>
             <div>
-              <InputLabel htmlFor="create-name" value="Name" />
+              <InputLabel htmlFor="create-name" value="Name" className="text-slate-300" />
               <TextInput
                 id="create-name"
                 value={createForm.data.name}
                 onChange={(e) => createForm.setData('name', e.target.value)}
-                className="mt-1 w-full"
+                className="mt-1 w-full border-slate-700 bg-slate-800 text-slate-100 focus:border-blue-500 focus:ring-blue-500"
                 required
               />
               <InputError message={createForm.errors.name} className="mt-2" />
             </div>
             <div>
-              <InputLabel htmlFor="create-description" value="Description" />
+              <InputLabel htmlFor="create-description" value="Description" className="text-slate-300" />
               <textarea
                 id="create-description"
                 value={createForm.data.description}
                 onChange={(e) => createForm.setData('description', e.target.value)}
                 rows={3}
-                className="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 w-full rounded-md border-slate-700 bg-slate-800 text-slate-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
               <InputError message={createForm.errors.description} className="mt-2" />
             </div>
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-200">
               <input
                 type="checkbox"
                 checked={createForm.data.is_active}
                 onChange={(e) => createForm.setData('is_active', e.target.checked)}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
               />
               Active category
             </label>
@@ -126,31 +129,31 @@ export default function Categories() {
             <PrimaryButton disabled={createForm.processing}>Create category</PrimaryButton>
           </form>
 
-          <div className="space-y-4 rounded-lg bg-white p-6 shadow">
-            <h2 className="text-lg font-semibold text-slate-900">Existing categories</h2>
-            <p className="text-sm text-slate-500">
+          <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/30 backdrop-blur">
+            <h2 className="text-lg font-semibold text-white">Existing categories</h2>
+            <p className="text-sm text-slate-400">
               Edit or remove categories below. Deactivating a category hides it from article creation.
             </p>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50">
+              <table className="min-w-full divide-y divide-slate-800 text-sm text-slate-200">
+                <thead className="bg-slate-900/80">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-500">Name</th>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-500">Description</th>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-500">Status</th>
-                    <th className="px-4 py-3 text-right font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-300">Name</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-300">Description</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wide text-slate-300">Status</th>
+                    <th className="px-4 py-3 text-right font-semibold uppercase tracking-wide text-slate-300">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-800">
                   {categories.length ? (
                     categories.map((category) => (
                       <tr key={category.id}>
-                        <td className="px-4 py-3 font-medium text-slate-900">{category.name}</td>
-                        <td className="px-4 py-3 text-slate-600">{category.description ?? '—'}</td>
+                        <td className="px-4 py-3 font-medium text-white">{category.name}</td>
+                        <td className="px-4 py-3 text-slate-300">{category.description ?? '—'}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              category.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                              category.is_active ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40' : 'bg-slate-700/40 text-slate-300 border border-slate-600/40'
                             }`}
                           >
                             {category.is_active ? 'Active' : 'Inactive'}
@@ -170,7 +173,7 @@ export default function Categories() {
                     ))
                   ) : (
                     <tr>
-                      <td className="px-4 py-6 text-center text-slate-500" colSpan={4}>
+                      <td className="px-4 py-6 text-center text-slate-400" colSpan={4}>
                         No categories yet. Create one using the form on the left.
                       </td>
                     </tr>
@@ -180,49 +183,56 @@ export default function Categories() {
             </div>
 
             {editing && (
-              <form onSubmit={handleUpdate} className="space-y-4 rounded-lg border border-slate-200 p-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-900">Edit category</h3>
+              <form onSubmit={handleUpdate} className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-base font-semibold text-white">Edit category</h3>
                   <SecondaryButton type="button" onClick={() => setEditing(null)}>
                     Close
                   </SecondaryButton>
                 </div>
                 <div>
-                  <InputLabel htmlFor="edit-name" value="Name" />
+                  <InputLabel htmlFor="edit-name" value="Name" className="text-slate-300" />
                   <TextInput
                     id="edit-name"
                     value={editForm.data.name}
                     onChange={(e) => editForm.setData('name', e.target.value)}
-                    className="mt-1 w-full"
+                    className="mt-1 w-full border-slate-700 bg-slate-800 text-slate-100 focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                   <InputError message={editForm.errors.name} className="mt-2" />
                 </div>
                 <div>
-                  <InputLabel htmlFor="edit-description" value="Description" />
+                  <InputLabel htmlFor="edit-description" value="Description" className="text-slate-300" />
                   <textarea
                     id="edit-description"
                     value={editForm.data.description ?? ''}
                     onChange={(e) => editForm.setData('description', e.target.value)}
                     rows={3}
-                    className="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 w-full rounded-md border-slate-700 bg-slate-800 text-slate-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                   <InputError message={editForm.errors.description} className="mt-2" />
                 </div>
-                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                <label className="inline-flex items-center gap-2 text-sm text-slate-200">
                   <input
                     type="checkbox"
                     checked={Boolean(editForm.data.is_active)}
                     onChange={(e) => editForm.setData('is_active', e.target.checked)}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
                   />
                   Active category
                 </label>
-                <div className="flex items-center justify-end gap-3">
-                  <SecondaryButton type="button" onClick={() => setEditing(null)} disabled={editForm.processing}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                  <SecondaryButton
+                    type="button"
+                    onClick={() => setEditing(null)}
+                    disabled={editForm.processing}
+                    className="justify-center"
+                  >
                     Cancel
                   </SecondaryButton>
-                  <PrimaryButton disabled={editForm.processing}>Update category</PrimaryButton>
+                  <PrimaryButton disabled={editForm.processing} className="justify-center">
+                    Update category
+                  </PrimaryButton>
                 </div>
               </form>
             )}

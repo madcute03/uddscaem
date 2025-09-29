@@ -46,22 +46,22 @@ export default function Create({ categories = [], statusOptions = [] }) {
       <Head title="Create News" />
 
       <div className="space-y-6 text-slate-100">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white">Create News</h1>
             <p className="text-sm text-slate-400">Publish new.</p>
           </div>
-          <SecondaryButton as={Link} href={route('admin.dashboard')}>
+          <SecondaryButton as={Link} href={route('admin.dashboard')} className="self-start sm:self-auto">
             Back
           </SecondaryButton>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="grid gap-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-blue-950/30"
+          className="grid gap-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-blue-950/30 sm:p-6"
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
+            <div className="md:col-span-2">
               <InputLabel htmlFor="title" value="Title" className="text-slate-300" />
               <TextInput
                 id="title"
@@ -72,7 +72,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
               />
               <InputError message={errors.title} className="mt-2" />
             </div>
-            <div>
+            <div className="md:col-span-2 lg:col-span-1">
               <InputLabel htmlFor="slug" value="Slug" className="text-slate-300" />
               <TextInput
                 id="slug"
@@ -83,7 +83,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
               />
               <InputError message={errors.slug} className="mt-2" />
             </div>
-            <div>
+            <div className="md:col-span-1">
               <InputLabel htmlFor="category_id" value="Category" className="text-slate-300" />
               <select
                 id="category_id"
@@ -104,7 +104,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
               </select>
               <InputError message={errors.category_id} className="mt-2" />
             </div>
-            <div>
+            <div className="md:col-span-1">
               <InputLabel htmlFor="status" value="Status" className="text-slate-300" />
               <select
                 id="status"
@@ -122,7 +122,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
               </select>
               <InputError message={errors.status} className="mt-2" />
             </div>
-            <div>
+            <div className="md:col-span-1">
               <InputLabel htmlFor="published_at" value="Publish date" className="text-slate-300" />
               <TextInput
                 id="published_at"
@@ -133,7 +133,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
               />
               <InputError message={errors.published_at} className="mt-2" />
             </div>
-            <div>
+            <div className="md:col-span-1">
               <InputLabel htmlFor="hero_image" value="image" className="text-slate-300" />
               <input
                 id="hero_image"
@@ -146,7 +146,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <InputLabel htmlFor="excerpt" value="Excerpt" className="text-slate-300" />
             <textarea
               id="excerpt"
@@ -159,7 +159,7 @@ export default function Create({ categories = [], statusOptions = [] }) {
             <InputError message={errors.excerpt} className="mt-2" />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <InputLabel htmlFor="body" value="Body" className="text-slate-300" />
             <textarea
               id="body"
@@ -203,11 +203,18 @@ export default function Create({ categories = [], statusOptions = [] }) {
             </label>
           </fieldset>
 
-          <div className="flex items-center justify-end gap-3">
-            <SecondaryButton type="button" onClick={() => window.history.back()} disabled={processing}>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <SecondaryButton
+              type="button"
+              onClick={() => window.history.back()}
+              disabled={processing}
+              className="justify-center"
+            >
               Cancel
             </SecondaryButton>
-            <PrimaryButton disabled={processing}>Save News</PrimaryButton>
+            <PrimaryButton disabled={processing} className="justify-center">
+              Save News
+            </PrimaryButton>
           </div>
         </form>
       </div>
