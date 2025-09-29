@@ -90,6 +90,9 @@ export default function CreateBracket({ events = [] }) {
         8: SEBracket8,
     };
 
+    // Only show events that allow bracketing
+    const visibleEvents = (events || []).filter((e) => e?.allow_bracketing);
+
     const SelectedBracket =
         bracketType === "double"
             ? teamCount
@@ -108,11 +111,11 @@ export default function CreateBracket({ events = [] }) {
                 <h1 className="text-2xl font-bold mb-4">
                     Select Event for Bracket
                 </h1>
-                {events.length === 0 ? (
+                {visibleEvents.length === 0 ? (
                     <p className="text-gray-400">No events available.</p>
                 ) : (
                     <div className="space-y-4">
-                        {events.map((event) => (
+                        {visibleEvents.map((event) => (
                             <div
                                 key={event.id}
                                 className="border border-slate-700/70 bg-slate-900/50 rounded-xl p-5 shadow-sm hover:shadow-lg transition"

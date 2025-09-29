@@ -737,7 +737,7 @@ export default function CreateCompetition({ auth, events = [] }) {
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                         <div className="flex flex-col space-y-4">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-lg font-semibold">Create Competitions</h2>
+                                
                                 <div className="flex items-center space-x-2">
                                     <span className="text-sm text-slate-300">Enable Bracketing</span>
                                     <label className="relative inline-flex items-center cursor-pointer">

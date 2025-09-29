@@ -15,7 +15,7 @@ export default function ShowNews({ news }) {
                     className="w-full max-h-[300px] sm:max-h-[400px] md:max-h-[500px] object-cover object-center rounded-b-xl"
                 />
             </section>
-            <div className="max-w-3xl w-full mx-auto px-2 sm:px-4 md:px-8 py-8">
+            <div className="mx-auto px-5 py-5">
                 <div className="py-6">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">{item.title}</h1>
                 </div>

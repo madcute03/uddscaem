@@ -22,9 +22,9 @@ export default function ShowEvent({ event }) {
     const isDone = event.is_done === 1 || today > event.event_date;
     const hasBracket = Boolean(event.bracket_type && event.teams);
 
-    const isRegistrationClosed = event.registration_end_date 
-        ? today > event.registration_end_date 
-        : true; // Consider registration closed if no end date is set
+    const isRegistrationClosed = event.has_registration_end_date
+        ? (today > event.registration_end_date)
+        : false; // If no explicit end date, keep registration open
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -41,6 +41,18 @@ export default function ShowEvent({ event }) {
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % totalImages);
     };
+
+    // Auto-advance images every 4 seconds when there are multiple images
+    useEffect(() => {
+        if (!event.images_path || event.images_path.length <= 1) return;
+
+        const intervalId = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev + 1) % event.images_path.length);
+        }, 4000);
+
+        return () => clearInterval(intervalId);
+        // Re-run if the images array reference changes or its length changes
+    }, [event.images_path]);
 
     // Bracket Modal state
     const [showSoonModal, setShowSoonModal] = useState(false);
@@ -90,8 +102,27 @@ export default function ShowEvent({ event }) {
     };
 
     return (
-        <PublicLayout>
+        <PublicLayout showNavbar={false}>
+
             <Head title={event.title} />
+            {/* Top cover image */}
+            {event.images_path && event.images_path.length > 0 && (
+                <section className="w-full overflow-hidden">
+                    <div
+                        className="flex transition-transform duration-700 ease-in-out will-change-transform"
+                        style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+                    >
+                        {event.images_path.map((src, idx) => (
+                            <img
+                                key={idx}
+                                src={src}
+                                alt={`${event.title} - ${idx + 1}`}
+                                className="min-w-full max-h-[300px] sm:max-h-[500px] md:max-h-[600px] object-cover object-center"
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
             {showSuccess && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
                     <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300">
@@ -99,142 +130,86 @@ export default function ShowEvent({ event }) {
                     </div>
                 </div>
             )}
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 px-2 sm:px-4 md:px-8 max-w-7xl mx-auto w-full py-8">
-                {/* Image Carousel */}
-                {event.images_path && event.images_path.length > 0 ? (
-                    <div className="relative w-full h-screen overflow-hidden">
-                        {/* Background Image with blur effect */}
-                        <div 
-                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                            style={{
-                                backgroundImage: `url('/storage/${event.images_path[currentImageIndex]}')`,
-                                filter: 'blur(4px)',
-                                transform: 'scale(1.02)'
-                            }}
-                        />
-                        
-                        {/* Dark overlay */}
-                        <div className="absolute inset-0 bg-black/60" />
-                        
-                        {/* Content */}
-                        <div className="relative z-10 h-full flex flex-col justify-center p-8 sm:p-16 text-center">
-                            <div className="max-w-4xl mx-auto space-y-8">
-                                <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-8 leading-tight">
-                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300">
-                                        {event.title}
-                                    </span>
-                                </h1>
-                                
-                                <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-slate-700">
-                                    <p className="text-2xl sm:text-3xl md:text-4xl mb-6 text-slate-100 leading-relaxed font-light">
+            {/* Image Carousel */}
+            {event.images_path && event.images_path.length > 0 ? (
+                <div>
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-8 leading-tight text-center py-8">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300">
+                                {event.title}
+                            </span>
+                    </h1>
+                    {/* Content */}
+                    <div className="relative py-1 ">
+                        <div className="max-w-8xl space-y-2">
+                                <div className="text-left ml-6 mr-5">
+                                    
+                                    <p className="text-xl  mb-8 text-slate-100 leading-relaxed font-light">
                                         {event.description}
-                                    </p>
-                                    <p className="text-xl sm:text-2xl text-slate-300 mb-6">
-                                        Organized by <span className="text-blue-300 font-semibold text-2xl">{event.coordinator_name}</span>
-                                    </p>
-                                    
-                                    <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl p-6 border border-blue-400/30">
-                                        <p className="text-2xl sm:text-3xl text-blue-200 font-medium">
-                                            Event Date
-                                        </p>
-                                        <p className="text-xl sm:text-2xl text-white font-bold mt-2">
-                                            {formatDate(event.event_date)}
-                                        </p>
+                                    </p>  
+                                </div>
+                            </div>
+
+                            <div className="w-full flex justify-center py-4">
+                                <div className="w-full max-w-3xl mx-4 bg-slate-900/60 border border-slate-700 rounded-2xl p-6 text-center shadow-lg">
+                                    <p className="text-sm uppercase tracking-wider text-blue-300">Event Start</p>
+                                    <p className="text-2xl text-white font-bold mt-1">{formatDate(event.event_date)}</p>
+
+                                    {event.event_type === 'competition' && Array.isArray(event.participants) && event.participants.length > 0 && (
+                                        <div className="mt-4 text-center">
+                                            <p className="text-sm uppercase tracking-wider text-blue-300">Participants</p>
+                                            <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                {event.participants.map((p, idx) => (
+                                                    <li key={idx} className="px-3 py-2 bg-slate-800/60 text-slate-100 rounded">
+                                                        {p}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {event.event_type === 'tryouts' && (
+                                        <div className="mt-4">
+                                            <p className="text-sm uppercase tracking-wider text-blue-300">Registration Period</p>
+                                            {event.registration_end_date && (
+                                                <p className="text-lg text-slate-100 mt-1">
+                                                    {`Until ${formatDate(event.registration_end_date)}`}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+                                        {event.event_type === 'tryouts' && (
+                                            isUpcoming && !isRegistrationClosed ? (
+                                                <Link
+                                                    href={route("events.register", event.id)}
+                                                    className="px-6 py-2 rounded-[12px] cursor-pointer transition duration-300 ease-in-out bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 bg-[#2e8eff]/20 text-white hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                                >
+                                                    Register
+                                                </Link>
+                                            ) : (
+                                                <span className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
+                                                    Registration Closed
+                                                </span>
+                                            )
+                                        )}
+
+                                        {event.event_type !== 'competition' && (hasBracket || isOngoing || isDone) && (
+                                            <Link
+                                                href={route("bracket.show", { event: event.id })}
+                                                onClick={(e) => handleViewBracket(e, 'bracket')}
+                                                className="px-6 py-2 rounded-[12px] cursor-pointer transition duration-300 ease-in-out bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 bg-[#2e8eff]/20 text-white hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                            >
+                                                View Bracket
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-3 justify-center py-4">
-                                {event.registration_end_date && isUpcoming && (
-                                    isRegistrationClosed ? (
-                                        <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
-                                            Registration Closed
-                                        </p>
-                                    ) : (
-                                        <Link
-                                            href={route("events.register", event.id)}
-                                            className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
-                                                           transition duration-300 ease-in-out 
-                                                           bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                           bg-[#2e8eff]/20 flex items-center justify-center 
-                                                           hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                                                           focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                        >
-                                            Register
-                                        </Link>
-                                    )
-                                )}
-
-                                {(hasBracket || isOngoing || isDone) && (
-                                    <>
-                                        <Link
-                                            href={route("bracket.show", {
-                                                event: event.id,
-                                            })}
-                                            onClick={(e) => handleViewBracket(e, 'bracket')}
-                                            className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
-                                                           transition duration-300 ease-in-out 
-                                                           bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                           bg-[#2e8eff]/20 flex items-center justify-center 
-                                                           hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                                                           focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                        >
-                                            View Bracket
-                                        </Link>
-
-                                        <Link
-                                            href={route("standing.show", {
-                                                event: event.id,
-                                            })}
-                                            onClick={(e) => handleViewBracket(e, 'standing')}
-                                            className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
-                                                           transition duration-300 ease-in-out 
-                                                           bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                           bg-[#2e8eff]/20 flex items-center justify-center 
-                                                           hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                                                           focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                        >
-                                            View Standing
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Image navigation */}
-                            {event.images_path.length > 1 && (
-                                <div className="mt-8 flex items-center justify-center gap-4">
-                                    <button 
-                                        onClick={() => setCurrentImageIndex(prev => (prev - 1 + event.images_path.length) % event.images_path.length)}
-                                        className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-                                        aria-label="Previous image"
-                                    >
-                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                    </button>
+                            
                                     
-                                    <div className="flex gap-2">
-                                        {event.images_path.map((_, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => setCurrentImageIndex(index)}
-                                                className={`w-3 h-3 rounded-full transition-colors ${currentImageIndex === index ? 'bg-white' : 'bg-white/50'}`}
-                                                aria-label={`Go to image ${index + 1}`}
-                                            />
-                                        ))}
-                                    </div>
-                                    
-                                    <button 
-                                        onClick={() => setCurrentImageIndex(prev => (prev + 1) % event.images_path.length)}
-                                        className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-                                        aria-label="Next image"
-                                    >
-                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            )}
+                               
                             
                             <div className="mt-12">
                                 <Link
@@ -395,7 +370,6 @@ export default function ShowEvent({ event }) {
                         </div>
                     </div>
                 )}
-            </div>
         </PublicLayout>
     );
 }
