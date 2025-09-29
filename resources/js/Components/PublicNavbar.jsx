@@ -40,14 +40,14 @@ export default function PublicNavbar({
                     </div>
 
                     {/* Right - Navigation links */}
-                    <div className="hidden md:flex space-x-6">
+                    <div className="hidden md:flex items-center space-x-6">
                         <Link
                             href="/"
                             className={
                                 "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
                                 (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide"
-                                    : "text-xl border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700") +
+                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
+                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
                                 className
                             }
                         >
@@ -58,8 +58,8 @@ export default function PublicNavbar({
                             className={
                                 "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
                                 (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide"
-                                    : "text-xl border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700") +
+                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
+                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
                                 className
                             }
                         >
@@ -70,12 +70,24 @@ export default function PublicNavbar({
                             className={
                                 "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
                                 (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide"
-                                    : "text-xl border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700") +
+                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
+                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
                                 className
                             }
                         >
                             Complaints
+                        </Link>
+                        <Link
+                            href={route('articles.index')}
+                            className={
+                                "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
+                                (active
+                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
+                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
+                                className
+                            }
+                        >
+                            News
                         </Link>
                     </div>
                 </div>
@@ -85,24 +97,31 @@ export default function PublicNavbar({
                 <div className="md:hidden px-4 pb-4 pt-2 space-y-2 bg-slate-900 border-b border-slate-800">
                     <Link
                         href="/"
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-blue-400"
+                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
                         onClick={() => setMobileOpen(false)}
                     >
                         Events
                     </Link>
                     <Link
                         href={route("news.index")}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-blue-400"
+                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
                         onClick={() => setMobileOpen(false)}
                     >
                         News
                     </Link>
                     <Link
                         href={route('complaints.index')}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-blue-400"
+                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
                         onClick={() => setMobileOpen(false)}
                     >
                         Complaints
+                    </Link>
+                    <Link
+                        href={route('articles.index')}
+                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
+                        onClick={() => setMobileOpen(false)}
+                    >
+                        Browse News
                     </Link>
                 </div>
             )}
