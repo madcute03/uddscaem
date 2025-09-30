@@ -550,7 +550,7 @@ export default function CreateCompetition({ auth, events = [] }) {
             return;
         }
 
-        // If date is valid, proceed with submission
+        // Proceed with submission
         handleSubmit();
     };
 

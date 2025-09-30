@@ -231,13 +231,13 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
                             ))}
                         </svg>
 
-                        <div className="flex gap-4 sm:gap-6 w-full">
+                        <div className="flex gap-16 sm:gap-20 md:gap-24 w-full">
                         {/* Left Column - Brackets */}
                         <div className="w-3/4">
                             {/* Upper Bracket */}
                             <div className="mb-8">
                                 <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
-                                <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
+                                <div className="flex gap-12 sm:gap-14 md:gap-16 lg:gap-20">
                                     <div className="space-y-2 sm:space-y-3">
                                         {renderMatch("UB1")}
                                         {renderMatch("UB2")}
@@ -251,7 +251,7 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
                             {/* Lower Bracket */}
                             <div>
                                 <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
-                                <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
+                                <div className="flex gap-12 sm:gap-14 md:gap-16 lg:gap-20">
                                     <div className="space-y-2 sm:space-y-3">
                                         <div className="h-8"></div>
                                         {renderMatch("LB1")}

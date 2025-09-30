@@ -6,6 +6,17 @@ export default function ShowEvent({ event }) {
     const [showSuccess, setShowSuccess] = useState(false);
     const { flash } = usePage().props;
     const { auth } = usePage().props;
+    
+    // Debug log to check event data
+    useEffect(() => {
+        console.log('Event data:', {
+            type: event.event_type,
+            registrationEndDate: event.registration_end_date,
+            requiredPlayers: event.required_players,
+            isUpcoming: new Date(event.event_date) > new Date(),
+            isRegistrationClosed: event.has_registration_end_date && (new Date() > new Date(event.registration_end_date))
+        });
+    }, [event]);
 
     useEffect(() => {
         if (flash.success) {
@@ -170,9 +181,13 @@ export default function ShowEvent({ event }) {
                                     {event.event_type === 'tryouts' && (
                                         <div className="mt-4">
                                             <p className="text-sm uppercase tracking-wider text-blue-300">Registration Period</p>
-                                            {event.registration_end_date && (
+                                            {event.registration_end_date ? (
                                                 <p className="text-lg text-slate-100 mt-1">
                                                     {`Until ${formatDate(event.registration_end_date)}`}
+                                                </p>
+                                            ) : (
+                                                <p className="text-lg text-slate-100 mt-1">
+                                                    Open until event starts
                                                 </p>
                                             )}
                                         </div>
@@ -180,18 +195,31 @@ export default function ShowEvent({ event }) {
 
                                     <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
                                         {event.event_type === 'tryouts' && (
-                                            isUpcoming && !isRegistrationClosed ? (
-                                                <Link
-                                                    href={route("events.register", event.id)}
-                                                    className="px-6 py-2 rounded-[12px] cursor-pointer transition duration-300 ease-in-out bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 bg-[#2e8eff]/20 text-white hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                                >
-                                                    Register
-                                                </Link>
-                                            ) : (
-                                                <span className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
-                                                    Registration Closed
-                                                </span>
-                                            )
+                                            (() => {
+                                                const showRegister = 
+                                                    isUpcoming && 
+                                                    !isRegistrationClosed && 
+                                                    event.registration_end_date && 
+                                                    (event.required_players === null || event.required_players > 0);
+                                                
+                                                if (showRegister) {
+                                                    return (
+                                                        <Link
+                                                            href={route("events.register", event.id)}
+                                                            className="px-6 py-2 rounded-[12px] cursor-pointer transition duration-300 ease-in-out bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 bg-[#2e8eff]/20 text-white hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                                        >
+                                                            Register
+                                                        </Link>
+                                                    );
+                                                } else if (isRegistrationClosed || (event.required_players !== null && event.required_players <= 0)) {
+                                                    return (
+                                                        <span className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
+                                                            Registration Closed
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()
                                         )}
 
                                         {event.event_type !== 'competition' && (hasBracket || isOngoing || isDone) && (
@@ -263,14 +291,14 @@ export default function ShowEvent({ event }) {
                         </div>
 
                         <div className="flex flex-wrap gap-3 mt-4 justify-center">
-                            {isUpcoming && !isRegistrationClosed ? (
+                            {event.event_type === 'tryouts' && isUpcoming && !isRegistrationClosed ? (
                                 <Link
                                     href={route("events.register", event.id)}
                                     className="inline-block btn-blue-glow"
                                 >
                                     Register
                                 </Link>
-                            ) : isUpcoming && isRegistrationClosed ? (
+                            ) : event.event_type === 'tryouts' && isUpcoming && isRegistrationClosed ? (
                                 <p className="inline-block bg-slate-700 text-slate-200 px-6 py-2 rounded-full font-semibold text-sm sm:text-lg">
                                     Registration Closed
                                 </p>

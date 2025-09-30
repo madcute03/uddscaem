@@ -119,10 +119,10 @@ class EventController extends Controller
             'other_category' => 'required_if:category,other|string|max:255|nullable',
             'event_type' => 'required|string|max:255',
             'event_date' => 'required|date',
-            'event_end_date' => 'nullable|date|after_or_equal:event_date',
+            'event_end_date' => 'nullable|date',
             'has_registration_end_date' => 'sometimes|boolean',
-            'registration_end_date' => 'nullable|date',
-            'required_players' => 'nullable|integer|min:1|max:20',
+            'registration_end_date' => 'required_if:event_type,tryouts|nullable|date',
+            'required_players' => 'required_if:event_type,tryouts|nullable|integer|min:1|max:20',
             'allow_bracketing' => 'sometimes|boolean',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -327,17 +327,23 @@ class EventController extends Controller
     // ADMIN: Delete an event
     public function destroy($id)
     {
-        $event = Event::findOrFail($id);
+        try {
+            $event = Event::findOrFail($id);
+            
+            // The model's booted() method will handle image deletion through the deleting event
+            $event->delete();
 
-        // Delete all images from storage
-        $event->images()->each(function ($img) {
-            Storage::disk('public')->delete($img->image_path);
-            $img->delete();
-        });
-
-        $event->delete();
-
-        return redirect()->back()->with('success', 'Event deleted successfully.');
+            return redirect()->back()->with('success', 'Event deleted successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error deleting event: ' . $e->getMessage(), [
+                'event_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Failed to delete event. Please try again.');
+        }
     }
 
     // PUBLIC: Welcome page (list all events)

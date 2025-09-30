@@ -218,7 +218,7 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
             <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full max-w-[1800px] mx-auto overflow-x-auto">
                 <h1 className="text-xl font-bold text-center mb-4">{teamCount}-Team Double Elimination Bracket</h1>
 
-            <div className="flex gap-2 sm:gap-4 justify-center mb-4 sm:mb-6 flex-wrap">
+            <div className="flex gap-3 justify-center mb-6 flex-wrap">
                 {teamsInput.map((team, i) => (
                     <input
                         key={i}
@@ -226,33 +226,19 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                         value={team}
                         onChange={(e) => handleTeamChange(i, e.target.value)}
                         placeholder={`Team ${i + 1}`}
-                        className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-auto"
+                        className="w-28 sm:w-32 px-2 py-1 rounded-md border border-slate-600 bg-slate-800 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                     />
                 ))}
-                <div className="flex gap-2 w-full sm:w-auto justify-center mt-2 sm:mt-0">
-                    <button 
-                        onClick={applyTeams} 
-                        className="px-3 sm:px-4 py-1 bg-blue-600 rounded text-white font-bold text-sm sm:text-base"
-                    >
-                        Apply Teams
-                    </button>
-                    <button 
-                        onClick={() => {
-                            setMatches(defaultMatches);
-                            setTeamsInput(Array(teamCount).fill(""));
-                            setChampion(null);
-                        }}
-                        className="px-3 sm:px-4 py-1 bg-red-600 rounded text-white font-bold text-sm sm:text-base"
-                    >
-                        Reset
-                    </button>
-                    <button 
-                        onClick={handleSave} 
-                        className="px-3 sm:px-4 py-1 bg-green-600 rounded text-white font-bold text-sm sm:text-base"
-                    >
-                        Save Bracket
-                    </button>
-                </div>
+                <button onClick={applyTeams} className="px-3 py-1 bg-blue-600 rounded-md text-white text-sm font-semibold hover:bg-blue-500 transition">Apply Teams</button>
+                <button
+                    onClick={() => {
+                        setMatches(defaultMatches);
+                        setTeamsInput(Array(teamCount).fill(""));
+                        setChampion(null);
+                    }}
+                    className="px-3 py-1 bg-red-600 rounded-md text-white text-sm font-semibold hover:bg-red-500 transition"
+                >Reset</button>
+                <button onClick={handleSave} className="px-3 py-1 bg-green-600 rounded-md text-white text-sm font-semibold hover:bg-green-500 transition">Save Bracket</button>
             </div>
 
             <div id="bracket-container" className="relative w-full">

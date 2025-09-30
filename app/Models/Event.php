@@ -4,10 +4,37 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Event extends Model
 {
     use HasFactory;
+    
+    /**
+     * The "booting" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($event) {
+            // Delete all associated images from storage and database
+            $event->images->each(function ($image) {
+                try {
+                    if (Storage::disk('public')->exists($image->image_path)) {
+                        Storage::disk('public')->delete($image->image_path);
+                    }
+                    $image->delete();
+                } catch (\Exception $e) {
+                    // Log the error but don't stop the deletion process
+                    \Log::error('Error deleting event image: ' . $e->getMessage(), [
+                        'image_id' => $image->id,
+                        'event_id' => $event->id
+                    ]);
+                }
+            });
+        });
+    }
 
     protected $fillable = [
         'title',

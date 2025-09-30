@@ -34,21 +34,22 @@ export default function ShowFiveTeamBracket({ eventId }) {
         return (
             <div
                 id={id}
-                ref={(el) => (boxRefs.current[id] = el)}
-                className="p-3 border rounded-lg bg-gray-800 text-white mb-12 w-44 relative"
+                ref={el => (boxRefs.current[id] = el)}
+                className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-2 text-center">{label}</p>
-                {["p1", "p2"].map((k) => (
-                    <div
-                        key={k}
-                        className={`flex justify-between items-center mb-2 px-2 py-1 rounded ${m.winner === m[k]?.name ? "bg-green-600" : "bg-gray-700"
-                            }`}
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs text-center">{label}</p>
+                {["p1", "p2"].map(k => (
+                    <div 
+                        key={k} 
+                        className={`flex justify-between items-center mb-0.5 text-[10px] sm:text-xs ${m.winner === m[k]?.name ? "bg-green-600" : "bg-gray-700"} px-1.5 py-1 sm:py-0.5 rounded`}
                     >
                         <span>{m[k]?.name ?? "TBD"}</span>
-                        <span>{m[k]?.score || "-"}</span>
+                        <span className="ml-2">{m[k]?.score || "-"}</span>
                     </div>
                 ))}
-                {m.winner && <p className="text-green-400 text-sm mt-1">Winner: {m.winner}</p>}
+                {m.winner && m.winner !== "TBD" && (
+                    <p className="text-green-400 text-[10px] mt-0.5 text-center">🏆 {m.winner} 🏆</p>
+                )}
             </div>
         );
     };
@@ -86,37 +87,43 @@ export default function ShowFiveTeamBracket({ eventId }) {
 
     return (
         <PublicLayout>
-        <div className="bg-gray-900 min-h-screen p-6 text-white">
-            <h1 className="text-2xl font-bold text-center mb-6">5-Team Bracket Result</h1>
+            <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full overflow-x-auto">
+                <h1 className="text-xl font-bold text-center mb-4">5-Team Single Elimination Bracket</h1>
 
-            <div id="bracket-container" className="relative flex justify-center items-start gap-24">
-                {/* Round 1 */}
-                <div className="flex flex-col gap-48">{renderMatch("R1", "Round 1")}</div>
+                <div id="bracket-container" className="relative">
+                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                        {lines.map((d, i) => (
+                            <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
+                        ))}
+                    </svg>
 
-                {/* Semi-Finals */}
-                <div className="flex flex-col gap-24 mt-12">
-                    {renderMatch("SF1", "Semi-Final 1")}
-                    {renderMatch("SF2", "Semi-Final 2")}
-                </div>
-
-                {/* Grand Final */}
-                <div className="relative mt-24 ml-12">
-                    {renderMatch("GF", "Grand Final")}
-                    {champion && (
-                        <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-6">
-                            <h2 className="text-3xl font-bold text-yellow-400">🏆 {champion}</h2>
+                    <div className="flex flex-col gap-6 min-w-max">
+                        <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">
+                            <div className="space-y-6 sm:space-y-8 md:space-y-10">
+                                {renderMatch("R1", "Round 1")}
+                            </div>
+                            <div className="mt-12 space-y-24 sm:space-y-28 md:space-y-32">
+                                <div className="pt-8">
+                                    {renderMatch("SF1", "Semi-Final 1")}
+                                </div>
+                                <div className="pt-8">
+                                    {renderMatch("SF2", "Semi-Final 2")}
+                                </div>
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <div>
+                                    {renderMatch("GF", "Grand Final")}
+                                    {champion && (
+                                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                            🏆 {champion} 🏆
+                                        </h2>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    )}
+                    </div>
                 </div>
-
-                {/* Lines */}
-                <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                    {lines.map((d, i) => (
-                        <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
-                    ))}
-                </svg>
             </div>
-        </div>
         </PublicLayout>
     );
 }

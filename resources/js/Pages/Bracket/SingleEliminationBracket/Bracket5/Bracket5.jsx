@@ -189,7 +189,7 @@ export default function FiveTeamBracketVerticalSF({ eventId }) {
                         value={t}
                         onChange={e => handleTeamChange(i, e.target.value)}
                         placeholder={`Team ${i + 1}`}
-                        className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-28"
+                        className="w-28 sm:w-32 px-2 py-1 rounded-md border border-slate-600 bg-slate-800 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                     />
                 ))}
                 <button
@@ -218,21 +218,27 @@ export default function FiveTeamBracketVerticalSF({ eventId }) {
                 </svg>
 
                 <div className="flex flex-col gap-6 min-w-max">
-                    <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-                        <div className="space-y-4 sm:space-y-6">
+                    <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">
+                        <div className="space-y-6 sm:space-y-8 md:space-y-10">
                             {renderMatch("R1", "Round 1")}
                         </div>
-                        <div className="mt-8 space-y-16 sm:space-y-20 md:space-y-24">
-                            {renderMatch("SF1", "Semi-Final 1")}
-                            {renderMatch("SF2", "Semi-Final 2")}
+                        <div className="mt-12 space-y-24 sm:space-y-28 md:space-y-32">
+                            <div className="pt-8">
+                                {renderMatch("SF1", "Semi-Final 1")}
+                            </div>
+                            <div className="pt-8">
+                                {renderMatch("SF2", "Semi-Final 2")}
+                            </div>
                         </div>
-                        <div className="mt-16">
-                            {renderMatch("GF", "Grand Final")}
-                            {champion && (
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
-                                    🏆 {champion} 🏆
-                                </h2>
-                            )}
+                        <div className="flex flex-col justify-center">
+                            <div>
+                                {renderMatch("GF", "Grand Final")}
+                                {champion && (
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                        🏆 {champion} 🏆
+                                    </h2>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

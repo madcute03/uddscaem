@@ -149,7 +149,7 @@ export default function TwoTeamBracket({ eventId }) {
                         value={t}
                         onChange={e => handleTeamChange(i, e.target.value)}
                         placeholder={`Team ${i + 1}`}
-                        className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-28"
+                        className="w-28 sm:w-32 px-2 py-1 rounded-md border border-slate-600 bg-slate-800 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                     />
                 ))}
                 <button

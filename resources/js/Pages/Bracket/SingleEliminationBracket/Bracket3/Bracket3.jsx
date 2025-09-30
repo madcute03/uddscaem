@@ -171,7 +171,7 @@ export default function ThreeTeamBracket({ eventId }) {
                         value={t}
                         onChange={e => handleTeamChange(i, e.target.value)}
                         placeholder={`Team ${i + 1}`}
-                        className="px-2 py-1 rounded text-black text-sm sm:text-base w-24 sm:w-28"
+                        className="w-28 sm:w-32 px-2 py-1 rounded-md border border-slate-600 bg-slate-800 text-white text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                     />
                 ))}
                 <button
@@ -200,17 +200,19 @@ export default function ThreeTeamBracket({ eventId }) {
                 </svg>
 
                 <div className="flex flex-col gap-6 min-w-max">
-                    <div className="flex gap-4 sm:gap-6 md:gap-10 lg:gap-12">
+                    <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">
                         <div className="flex flex-col gap-16 sm:gap-20 md:gap-24">
                             {renderMatch("SF", "Semi-Final")}
                         </div>
-                        <div className="mt-16">
-                            {renderMatch("GF", "Grand Final")}
-                            {champion && (
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
-                                    🏆 {champion} 🏆
-                                </h2>
-                            )}
+                        <div className="flex flex-col justify-center">
+                            <div>
+                                {renderMatch("GF", "Grand Final")}
+                                {champion && (
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                        🏆 {champion} 🏆
+                                    </h2>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

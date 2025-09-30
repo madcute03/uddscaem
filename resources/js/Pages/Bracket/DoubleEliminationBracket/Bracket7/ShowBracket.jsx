@@ -32,15 +32,25 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
             <div
                 id={id}
                 ref={el => (boxRefs.current[id] = el)}
-                className="p-3 border rounded-lg bg-gray-800 text-white mb-6 w-44 relative"
+                className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-1">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
                 {["p1", "p2"].map(key => (
-                    <div key={key} className={`flex justify-between items-center w-full px-2 py-1 mb-1 rounded text-left ${m.winner === m[key].name ? "bg-green-600" : "bg-gray-700"}`}>
-                        <span>{m[key].name}</span>
-                        <span className="ml-2 px-2 py-1 bg-gray-900 rounded border border-white w-8 text-center">{m[key].score}</span>
+                    <div 
+                        key={key} 
+                        className={`flex justify-between items-center mb-0.5 text-[10px] sm:text-xs ${
+                            m.winner === m[key]?.name ? "bg-green-600" : "bg-gray-700"
+                        } px-1.5 py-1 sm:py-0.5 rounded`}
+                    >
+                        <span>{m[key]?.name ?? "TBD"}</span>
+                        <span className="ml-2">{m[key]?.score || "-"}</span>
                     </div>
                 ))}
+                
+                {/* Show Winner only if valid */}
+                {m.winner && m.winner !== "TBD" && (
+                    <p className="text-green-400 text-[10px] mt-0.5">🏆 {m.winner}</p>
+                )}
             </div>
         );
     };
@@ -84,43 +94,43 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
     return (
         <PublicLayout>
             <Head />
-            <div className="bg-gray-900 min-h-screen p-4 text-white">
-                <h1 className="text-2xl font-bold text-center mb-6">{teamCount}-Team Double Elimination Bracket</h1>
+            <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full overflow-x-auto overflow-y-visible">
+                <h1 className="text-xl font-bold text-center mb-4">{teamCount}-Team Double Elimination Bracket</h1>
 
-                <div id="bracket-container" className="relative">
-                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <div id="bracket-container" className="relative overflow-visible">
+                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-visible">
                         {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                     </svg>
 
-                    {/* Upper Bracket */}
-                    <div className="mb-10">
-                        <h2 className="font-bold mb-2">Upper Bracket</h2>
-                        <div className="flex gap-12">
-                            {/* Round 1: UB1–UB3 */}
-                            <div>{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}</div>
-
-                            {/* Round 2: UB5 & UB6 */}
-                            <div className="mt-12">{renderMatch("UB5")}{renderMatch("UB6")}</div>
-
-                            {/* Final: UB7 */}
-                            <div className="mt-24">{renderMatch("UB7")}</div>
+                    <div className="flex flex-col gap-4 sm:gap-6 min-w-max pr-[500px] overflow-visible">
+                        <div className="mb-6">
+                            <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
+                            <div className="flex gap-24 sm:gap-32 md:gap-40 lg:gap-48">
+                                <div className="space-y-2 sm:space-y-3">{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}</div>
+                                <div className="mt-8">
+                                    {renderMatch("UB5")}
+                                    {renderMatch("UB6")}
+                                </div>
+                                <div className="mt-16">{renderMatch("UB7")}</div>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Lower Bracket */}
-                    <div className="mb-10">
-                        <h2 className="font-bold mb-2">Lower Bracket</h2>
-                        <div className="flex gap-12">
-                            <div>{renderMatch("LB1")}{renderMatch("LB2")}</div>
-                            <div>{renderMatch("LB3")}{renderMatch("LB4")}</div>
-                            <div>{renderMatch("LB5")}</div>
+                        <div>
+                            <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
+                            <div className="flex gap-24 sm:gap-32 md:gap-40 lg:gap-48">
+                                <div className="space-y-2 sm:space-y-3">
+                                    <div className="h-8"></div>
+                                    {renderMatch("LB1")}{renderMatch("LB2")}
+                                </div>
+                                <div className="mt-8 space-y-10">{renderMatch("LB3")}{renderMatch("LB4")}</div>
+                                <div className="mt-16">{renderMatch("LB5")}</div>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Grand Final */}
-                    <div className="absolute left-2/3 top-1/2 transform -translate-y-1/2">
-                        {renderMatch("GF")}
-                        {champion && <h2 className="text-3xl font-bold text-yellow-400 mt-4">🏆 Champion: {champion}</h2>}
+                        <div className="absolute left-[900px] top-1/2 transform -translate-y-1/2">
+                            {renderMatch("GF")}
+                            {champion && <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">🏆 {champion} 🏆</h2>}
+                        </div>
                     </div>
                 </div>
             </div>
