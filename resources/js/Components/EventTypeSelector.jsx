@@ -84,11 +84,11 @@ const EventTypeSelector = ({ value, onChange, error, onTypeSelect }) => {
                     value={value.event_type || ''}
                     onChange={handleEventTypeChange}
                 >
-                    <option value="">Select event type</option>
+                    
                     <option value="competition">Competition</option>
                     <option value="tryouts">Tryouts</option>
                     <option value="intramurals">Intramurals</option>
-                    <option value="other">{value.other_event_type || 'Other (please specify)'}</option>                </select>
+                </select>
                 
                 {showOtherInput && (
                     <div className="flex space-x-2">

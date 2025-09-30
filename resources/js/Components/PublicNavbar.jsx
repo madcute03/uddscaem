@@ -54,18 +54,6 @@ export default function PublicNavbar({
                             Events
                         </Link>
                         <Link
-                            href={route("news.index")}
-                            className={
-                                "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
-                                (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
-                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
-                                className
-                            }
-                        >
-                            News
-                        </Link>
-                        <Link
                             href={route('complaints.index')}
                             className={
                                 "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
@@ -75,19 +63,7 @@ export default function PublicNavbar({
                                 className
                             }
                         >
-                            Complaints
-                        </Link>
-                        <Link
-                            href={route('articles.index')}
-                            className={
-                                "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
-                                (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
-                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
-                                className
-                            }
-                        >
-                            News
+                            Protest
                         </Link>
                     </div>
                 </div>
@@ -103,25 +79,11 @@ export default function PublicNavbar({
                         Events
                     </Link>
                     <Link
-                        href={route("news.index")}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        News
-                    </Link>
-                    <Link
                         href={route('complaints.index')}
                         className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
                         onClick={() => setMobileOpen(false)}
                     >
                         Complaints
-                    </Link>
-                    <Link
-                        href={route('articles.index')}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        Browse News
                     </Link>
                 </div>
             )}

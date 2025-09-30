@@ -10,8 +10,7 @@ export default function RegisterEvent({ event, requiredPlayers }) {
             email: '',
             department: '',
             age: '',
-            player_image: null,
-            whiteform_image: null,
+            gdrive_link: '',
         })),
     });
 
@@ -22,8 +21,7 @@ export default function RegisterEvent({ event, requiredPlayers }) {
             email: '',
             department: '',
             age: '',
-            player_image: null,
-            whiteform_image: null,
+            gdrive_link: '',
         })));
     }, [requiredPlayers]);
 
@@ -45,21 +43,20 @@ export default function RegisterEvent({ event, requiredPlayers }) {
             }
         }
 
-        const formData = new FormData();
-        if (requiredPlayers > 1) formData.append('team_name', data.team_name);
+        // Use plain payload now that we're sending a text link (no files)
+        const payload = {
+            team_name: requiredPlayers > 1 ? data.team_name : undefined,
+            players: data.players.map((p) => ({
+                student_id: p.student_id,
+                name: p.name,
+                email: p.email,
+                department: p.department,
+                age: p.age,
+                gdrive_link: p.gdrive_link,
+            })),
+        };
 
-        data.players.forEach((player, i) => {
-            formData.append(`players[${i}][student_id]`, player.student_id);
-            formData.append(`players[${i}][name]`, player.name);
-            formData.append(`players[${i}][email]`, player.email);
-            formData.append(`players[${i}][department]`, player.department);
-            formData.append(`players[${i}][age]`, player.age);
-            formData.append(`players[${i}][player_image]`, player.player_image);
-            formData.append(`players[${i}][whiteform_image]`, player.whiteform_image);
-        });
-
-        post(route('eventregistrations.store', event.id), formData, {
-            forceFormData: true,
+        post(route('eventregistrations.store', event.id), payload, {
             onSuccess: () => {
                 router.visit(route('events.show', event.id), {
                     only: ['event'],
@@ -98,7 +95,7 @@ export default function RegisterEvent({ event, requiredPlayers }) {
 
                         {data.players.map((player, index) => (
                             <div key={index} className="border border-white/20 rounded p-4 space-y-3 bg-white/5">
-                                <h2 className="font-bold">Player {index + 1}</h2>
+                                
 
                                 <input
                                     type="text"
@@ -151,26 +148,21 @@ export default function RegisterEvent({ event, requiredPlayers }) {
                                 />
 
                                 <div>
-                                    <label className="block mb-1 text-slate-200">Player Image *</label>
+                                    <label className="block mb-1 text-slate-200">Google Drive link (Whiteform/PDS/Medical in one folder)</label>
                                     <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handlePlayerChange(index, 'player_image', e.target.files[0])}
-                                        className="w-full text-slate-100"
+                                        type="url"
+                                        placeholder="https://drive.google.com/..."
+                                        value={player.gdrive_link}
+                                        onChange={(e) => handlePlayerChange(index, 'gdrive_link', e.target.value)}
+                                        className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                        pattern="https?://.+"
+                                        title="Enter a valid link (include https://)"
                                         required
                                     />
+                                    <p className="text-xs text-slate-300 mt-1">Make sure the sharing is set to Anyone with the link can view.</p>
                                 </div>
 
-                                <div>
-                                    <label className="block mb-1 text-slate-200">Whiteform Image *</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handlePlayerChange(index, 'whiteform_image', e.target.files[0])}
-                                        className="w-full text-slate-100"
-                                        required
-                                    />
-                                </div>
+                                
                             </div>
                         ))}
 

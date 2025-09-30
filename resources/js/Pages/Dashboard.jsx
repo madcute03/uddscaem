@@ -550,7 +550,27 @@ function Dashboard() {
     const user = auth.user;
     const [currentSlide, setCurrentSlide] = useState({});
 
+    const defaultEventForm = {
+        title: '',
+        description: '',
+        event_type: 'competition',
+        category: 'sport',
+        other_category: '',
+        coordinator_name: '',
+        participants: [''],
+        event_date: '',
+        event_end_date: '',
+        registration_end_date: '',
+        has_registration_end_date: false,
+        required_players: '',
+        has_required_players: false,
+        allow_bracketing: false,
+        images: [],
+    };
+
     const [editingEventId, setEditingEventId] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [eventForm, setEventForm] = useState({ ...defaultEventForm });
     const [editData, setEditData] = useState({
         id: '',
         title: '',
@@ -567,10 +587,14 @@ function Dashboard() {
         images: [],
         existingImages: [],
         allow_bracketing: false,
+        has_registration_end_date: false,
+        required_players: '',
+        has_required_players: false,
     });
 
     const [successMessage, setSuccessMessage] = useState(null);
     const [errorMessage, setErrorMessage] = useState(null);
+    const [validationErrors, setValidationErrors] = useState({});
 
     // Ensure images is always an array
     const safeImages = Array.isArray(editData.images) ? editData.images : [];
@@ -771,6 +795,25 @@ function Dashboard() {
         }));
     };
 
+    const handleCreateEventDateChange = (dateTimeString) => {
+        setEventForm(prev => ({
+            ...prev,
+            event_date: dateTimeString
+        }));
+    };
+
+    const handleCreateRegistrationEndChange = (dateTimeString) => {
+        setEventForm(prev => ({
+            ...prev,
+            registration_end_date: dateTimeString
+        }));
+    };
+
+    const normalizeDateTimeForOutput = (value) => {
+        if (!value) return '';
+        return value.length === 16 ? `${value}:00` : value;
+    };
+
     // Handle date time change for the registration end date
     const normalizeDateTimeForInput = (value) => {
         if (!value) return '';
@@ -828,6 +871,7 @@ function Dashboard() {
         const registrationEndDateValue = normalizeDateTimeForInput(event.registration_end_date);
         const eventEndDateValue = normalizeDateOnlyForInput(event.event_end_date);
         setEditingEventId(event.id);
+        setIsCreating(false);
         setEditData({
             id: event.id,
             title: event.title || '',
@@ -846,6 +890,83 @@ function Dashboard() {
             images: [],
             existingImages: buildExistingImages(event),
             allow_bracketing: !!event.allow_bracketing,
+            has_registration_end_date: !!event.registration_end_date,
+            required_players: event.required_players ? String(event.required_players) : '',
+            has_required_players: !!event.required_players,
+        });
+    };
+
+    const resetCreateState = () => {
+        setEventForm({ ...defaultEventForm });
+        setIsCreating(false);
+        setValidationErrors({});
+    };
+
+    const startCreate = () => {
+        setEditingEventId(null);
+        setIsCreating(true);
+        setValidationErrors({});
+        setEventForm({ ...defaultEventForm });
+    };
+
+    const handleCreateSubmit = (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+
+        formData.append('title', eventForm.title);
+        formData.append('description', eventForm.description);
+        formData.append('coordinator_name', eventForm.coordinator_name);
+        formData.append('event_type', eventForm.event_type);
+        formData.append('category', eventForm.category);
+        formData.append('other_category', eventForm.other_category || '');
+        formData.append('allow_bracketing', eventForm.allow_bracketing ? '1' : '0');
+
+        if (eventForm.event_date) {
+            formData.append('event_date', normalizeDateTimeForOutput(eventForm.event_date));
+        }
+
+        if (eventForm.event_end_date) {
+            formData.append('event_end_date', eventForm.event_end_date);
+        }
+
+        formData.append('has_registration_end_date', eventForm.has_registration_end_date ? '1' : '0');
+        if (eventForm.has_registration_end_date && eventForm.registration_end_date) {
+            formData.append('registration_end_date', normalizeDateTimeForOutput(eventForm.registration_end_date));
+        }
+
+        formData.append('has_required_players', eventForm.has_required_players ? '1' : '0');
+        if (eventForm.has_required_players && eventForm.required_players) {
+            formData.append('required_players', eventForm.required_players);
+        }
+
+        (eventForm.participants || [])
+            .map((participant) => (typeof participant === 'string' ? participant.trim() : ''))
+            .filter(Boolean)
+            .forEach((participant, index) => {
+                formData.append(`participants[${index}]`, participant);
+            });
+
+        if (eventForm.images && eventForm.images.length > 0) {
+            eventForm.images.forEach((file) => {
+                if (file instanceof File) {
+                    formData.append('images[]', file);
+                }
+            });
+        }
+
+        setValidationErrors({});
+        setErrorMessage(null);
+
+        router.post('/events', formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                resetCreateState();
+            },
+            onError: (errors) => {
+                setValidationErrors(errors || {});
+                setErrorMessage('Please review the form for errors.');
+            },
         });
     };
 
@@ -977,8 +1098,14 @@ function Dashboard() {
                 </div>
             )}
             {errorMessage && (
-                <div className="mb-4 rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-rose-200">
-                    {errorMessage}
+                <div className="mb-4 rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-rose-200 space-y-1">
+                    <div>{errorMessage}</div>
+                    {Object.entries(validationErrors).map(([field, messages]) => (
+                        <div key={field} className="text-xs text-rose-200/80">
+                            <span className="font-semibold capitalize">{field.replace(/_/g, ' ')}:</span>{' '}
+                            {Array.isArray(messages) ? messages.join(' ') : messages}
+                        </div>
+                    ))}
                 </div>
             )}
            

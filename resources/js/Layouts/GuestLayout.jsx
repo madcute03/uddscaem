@@ -1,12 +1,18 @@
-import { Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 
-export default function GuestLayout({ children }) {
+export default function GuestLayout({ title, children }) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 pt-6 sm:justify-center sm:pt-0">
-            {/* Main content */}
-            <div className="w-full px-4 sm:px-0 flex justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 to-slate-900 flex flex-col">
+            {title && (
+                <Head>
+                    <title>{`${title} | Your App Name`}</title>
+                    <meta name="description" content="Your app description" />
+                </Head>
+            )}
+
+            <main className="flex-1 flex items-center justify-center p-4">
                 {children}
-            </div>
+            </main>
         </div>
     );
 }

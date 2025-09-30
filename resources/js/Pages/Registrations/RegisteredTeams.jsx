@@ -143,16 +143,16 @@ export default function RegisteredTeams({ registrations: initialRegistrations, e
                 <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-semibold">Registered Teams{event?.title ? ` — ${event.title}` : ''}</h1>
-                            <p className="text-slate-300">{teams_count ?? registrations.length} team(s) registered</p>
+                            <h1 className="text-2xl font-semibold">Registered Players{event?.title ? ` — ${event.title}` : ''}</h1>
+                            <p className="text-slate-300">{teams_count ?? registrations.length} player(s) registered</p>
                         </div>
                         <div className="w-full sm:w-80">
-                            <label className="block text-sm mb-1 text-slate-300">Search teams or players</label>
+                            <label className="block text-sm mb-1 text-slate-300">Search name</label>
                             <input
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search by team, name, email or student ID"
+                                placeholder="Search by name, email or student ID"
                                 className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                             />
                         </div>
@@ -165,9 +165,7 @@ export default function RegisteredTeams({ registrations: initialRegistrations, e
                             <div className="space-y-8">
                                 {filteredRegistrations.map((reg) => (
                                     <div key={reg.id} className="border border-white/15 rounded bg-white/5 p-4">
-                                        <h2 className="font-bold text-lg mb-3">
-                                            Team: {reg.team_name || `Team of ${reg.players.map(p => p.name).join(', ')}`}
-                                        </h2>
+                                        
 
                                         <div className="overflow-x-auto rounded border border-white/10">
                                             <table className="w-full table-auto">
@@ -179,8 +177,7 @@ export default function RegisteredTeams({ registrations: initialRegistrations, e
                                                         <th className="px-3 py-2 text-left text-sm font-semibold">Student ID</th>
                                                         <th className="px-3 py-2 text-left text-sm font-semibold">Department</th>
                                                         <th className="px-3 py-2 text-left text-sm font-semibold">Age</th>
-                                                        <th className="px-3 py-2 text-left text-sm font-semibold">Player Image</th>
-                                                        <th className="px-3 py-2 text-left text-sm font-semibold">Whiteform Image</th>
+                                                        <th className="px-3 py-2 text-left text-sm font-semibold">Documents Link</th>
                                                         <th className="px-3 py-2 text-center text-sm font-semibold">Status</th>
                                                         <th className="px-3 py-2 text-center text-sm font-semibold">Actions</th>
                                                     </tr>
@@ -195,24 +192,27 @@ export default function RegisteredTeams({ registrations: initialRegistrations, e
                                                             <td className="px-3 py-2 align-middle">{player.department}</td>
                                                             <td className="px-3 py-2 align-middle">{player.age}</td>
                                                             <td className="px-3 py-2 align-middle text-center">
-                                                                {player.player_image && (
-                                                                    <img
-                                                                        src={`data:image/*;base64,${player.player_image}`}
-                                                                        alt="Player"
-                                                                        className="h-16 w-16 object-cover rounded cursor-pointer hover:scale-110 transition"
-                                                                        onClick={() => setSelectedImage(`data:image/jpeg;base64,${player.player_image}`)}
-                                                                    />
-                                                                )}
-                                                            </td>
-                                                            <td className="px-3 py-2 align-middle text-center">
-                                                                {player.whiteform_image && (
-                                                                    <img
-                                                                        src={`data:image/*;base64,${player.whiteform_image}`}
-                                                                        alt="Whiteform"
-                                                                        className="h-16 w-16 object-cover rounded cursor-pointer hover:scale-110 transition"
-                                                                        onClick={() => setSelectedImage(`data:image/jpeg;base64,${player.whiteform_image}`)}
-                                                                    />
-                                                                )}
+                                                                {(() => {
+                                                                    const value = player.player_image || player.whiteform_image;
+                                                                    if (!value) return null;
+                                                                    return /^https?:\/\//.test(value) ? (
+                                                                        <a
+                                                                            href={value}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-blue-300 hover:underline"
+                                                                        >
+                                                                            Open link
+                                                                        </a>
+                                                                    ) : (
+                                                                        <img
+                                                                            src={`data:image/*;base64,${value}`}
+                                                                            alt="Document"
+                                                                            className="h-16 w-16 object-cover rounded cursor-pointer hover:scale-110 transition"
+                                                                            onClick={() => setSelectedImage(`data:image/jpeg;base64,${value}`)}
+                                                                        />
+                                                                    );
+                                                                })()}
                                                             </td>
                                                             <td className="px-3 py-2 align-middle text-center">
                                                                 <span className={statusBadge(player.status)}>{player.status || 'Pending'}</span>

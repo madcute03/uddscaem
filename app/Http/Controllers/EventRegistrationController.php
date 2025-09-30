@@ -15,7 +15,8 @@ class EventRegistrationController extends Controller
     {
         return Inertia::render('RegisterEvent', [
             'event' => $event,
-            'requiredPlayers' => $event->required_players,
+            // Default to 1 if not configured to avoid empty form
+            'requiredPlayers' => $event->required_players ?? 1,
         ]);
     }
 
@@ -29,8 +30,7 @@ class EventRegistrationController extends Controller
             'players.*.email' => 'required|email|ends_with:@cdd.edu.ph',
             'players.*.department' => 'required|string|max:255',
             'players.*.age' => 'required|integer',
-            'players.*.player_image' => 'required|image',
-            'players.*.whiteform_image' => 'required|image',
+            'players.*.gdrive_link' => 'required|url',
         ]);
 
         // Create event registration
@@ -40,8 +40,8 @@ class EventRegistrationController extends Controller
         ]);
 
         foreach ($validated['players'] as $player) {
-            $playerImageBase64 = base64_encode(file_get_contents($player['player_image']->getRealPath()));
-            $whiteformImageBase64 = base64_encode(file_get_contents($player['whiteform_image']->getRealPath()));
+            // Reuse existing DB columns to store the link to avoid a migration right now
+            $gdriveLink = $player['gdrive_link'];
 
             $registration->players()->create([
                 'student_id' => $player['student_id'],
@@ -49,8 +49,8 @@ class EventRegistrationController extends Controller
                 'email' => $player['email'],
                 'department' => $player['department'],
                 'age' => $player['age'],
-                'player_image' => $playerImageBase64, // ✅ save base64 to DB
-                'whiteform_image' => $whiteformImageBase64, // ✅ save base64 to DB
+                'player_image' => $gdriveLink,
+                'whiteform_image' => $gdriveLink,
             ]);
         }
 
