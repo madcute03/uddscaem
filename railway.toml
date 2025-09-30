@@ -9,5 +9,4 @@ dependsOn = ["build"]
 command = "php artisan storage:link --force && php artisan migrate --force"
 
 [start]
-# Start the PHP built-in server for Laravel
-command = "php artisan storage:link --force && php -S 0.0.0.0:$PORT -t public"
+command = "php artisan migrate --force && php -S 0.0.0.0:$PORT -t public"
