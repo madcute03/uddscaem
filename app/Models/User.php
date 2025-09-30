@@ -10,7 +10,6 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     public const ROLE_ADMIN = 'admin';
@@ -63,9 +62,16 @@ class User extends Authenticatable
         return $this->role === self::ROLE_ADMIN;
     }
 
-    public function isWriter(): bool
+    public function news()
     {
-        return $this->role === self::ROLE_WRITER;
+        return $this->hasMany(News::class, 'writer_id');
     }
 
+    public function writerProfile()
+    {
+        return $this->hasOne(Writer::class);
+    }
+    
 }
+
+
