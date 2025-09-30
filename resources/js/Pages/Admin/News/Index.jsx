@@ -7,12 +7,20 @@ export default function NewsIndex({ news, stats }) {
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="font-semibold text-xl text-gray-800 leading-tight">News Management</h2>
-                    <Link
-                        href={route('admin.news.create')}
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                        Create News
-                    </Link>
+                    <div className="space-x-4">
+                        <Link
+                            href={route('admin.writers.create')}
+                            className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            Create Writer
+                        </Link>
+                        <Link
+                            href={route('admin.news.create')}
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            Create News
+                        </Link>
+                    </div>
                 </div>
             }
         >

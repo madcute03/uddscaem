@@ -6,6 +6,7 @@ use Inertia\Inertia;
 
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\WriterController;
+use App\Http\Controllers\EventController;
 use App\Models\Event;
 
 // ============================================

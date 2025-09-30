@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -14,7 +14,6 @@ export default function CreateNews({ categories }) {
 
     const [preview, setPreview] = useState(null);
     const quillRef = useRef(null);
-    const editorRef = useRef(null);
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -39,7 +38,7 @@ export default function CreateNews({ categories }) {
     // Image manipulation functionality
     useEffect(() => {
         const setupImageManipulation = () => {
-            if (!quillRef.current) return;
+            if (!quillRef.current) return () => {};
 
             // Use a timeout to avoid the findDOMNode warning during initial render
             const timeoutId = setTimeout(() => {
@@ -90,9 +89,9 @@ export default function CreateNews({ categories }) {
 
                         // Check if clicking on resize handle (corners) - larger tolerance area
                         const isTopLeft = e.clientX >= rect.left - 10 && e.clientX <= rect.left + handleSize - 10 &&
-                                         e.clientY >= rect.top - 10 && e.clientY <= rect.top + handleSize - 10;
+                                        e.clientY >= rect.top - 10 && e.clientY <= rect.top + handleSize - 10;
                         const isBottomRight = e.clientX >= rect.right - handleSize - 10 && e.clientX <= rect.right + 10 &&
-                                             e.clientY >= rect.bottom - handleSize - 10 && e.clientY <= rect.bottom + 10;
+                                            e.clientY >= rect.bottom - handleSize - 10 && e.clientY <= rect.bottom + 10;
 
                         if (isTopLeft || isBottomRight) {
                             e.preventDefault();
@@ -109,7 +108,7 @@ export default function CreateNews({ categories }) {
                             // Prevent text selection during resize
                             e.preventDefault();
 
-                            const handleMouseMove = (e) => {
+                            const handleResizeMouseMove = (e) => {
                                 if (isResizing && selectedImage) {
                                     const deltaX = e.clientX - startX;
                                     const deltaY = e.clientY - startY;
@@ -139,17 +138,17 @@ export default function CreateNews({ categories }) {
                                 }
                             };
 
-                            const handleMouseUp = () => {
+                            const handleResizeMouseUp = () => {
                                 if (isResizing && selectedImage) {
                                     selectedImage.classList.remove('resizing');
                                 }
                                 isResizing = false;
-                                document.removeEventListener('mousemove', handleMouseMove);
-                                document.removeEventListener('mouseup', handleMouseUp);
+                                document.removeEventListener('mousemove', handleResizeMouseMove);
+                                document.removeEventListener('mouseup', handleResizeMouseUp);
                             };
 
-                            document.addEventListener('mousemove', handleMouseMove);
-                            document.addEventListener('mouseup', handleMouseUp);
+                            document.addEventListener('mousemove', handleResizeMouseMove);
+                            document.addEventListener('mouseup', handleResizeMouseUp);
                         } else if (e.target === selectedImage) {
                             // Start dragging - make it easier to grab the image
                             e.preventDefault();
@@ -159,7 +158,7 @@ export default function CreateNews({ categories }) {
 
                             selectedImage.classList.add('dragging');
 
-                            const handleMouseMove = (e) => {
+                            const handleDragMouseMove = (e) => {
                                 if (isDragging && selectedImage) {
                                     const deltaX = e.clientX - startX;
                                     const deltaY = e.clientY - startY;
@@ -171,19 +170,19 @@ export default function CreateNews({ categories }) {
                                 }
                             };
 
-                            const handleMouseUp = () => {
+                            const handleDragMouseUp = () => {
                                 if (isDragging && selectedImage) {
                                     selectedImage.classList.remove('dragging');
                                     // Reset transform after dragging
                                     selectedImage.style.transform = '';
                                 }
                                 isDragging = false;
-                                document.removeEventListener('mousemove', handleMouseMove);
-                                document.removeEventListener('mouseup', handleMouseUp);
+                                document.removeEventListener('mousemove', handleDragMouseMove);
+                                document.removeEventListener('mouseup', handleDragMouseUp);
                             };
 
-                            document.addEventListener('mousemove', handleMouseMove);
-                            document.addEventListener('mouseup', handleMouseUp);
+                            document.addEventListener('mousemove', handleDragMouseMove);
+                            document.addEventListener('mouseup', handleDragMouseUp);
                         }
                     };
 
@@ -191,16 +190,12 @@ export default function CreateNews({ categories }) {
                     editorContainer.addEventListener('click', handleImageClick);
                     editor.root.addEventListener('click', handleEditorClick);
                     document.addEventListener('mousedown', handleMouseDown);
-                    document.addEventListener('mousemove', handleMouseMove);
-                    document.addEventListener('mouseup', handleMouseUp);
 
                     // Cleanup function
                     return () => {
                         editorContainer.removeEventListener('click', handleImageClick);
                         editor.root.removeEventListener('click', handleEditorClick);
                         document.removeEventListener('mousedown', handleMouseDown);
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
                     };
                 } catch (error) {
                     console.warn('Editor not ready for image manipulation setup:', error);
@@ -211,7 +206,6 @@ export default function CreateNews({ categories }) {
         };
 
         const cleanup = setupImageManipulation();
-
         return cleanup;
     }, []);
 
@@ -235,135 +229,68 @@ export default function CreateNews({ categories }) {
                     max-width: 100%;
                     height: auto;
                     cursor: pointer;
-                    border: 2px solid transparent;
-                    border-radius: 4px;
                     transition: all 0.2s ease;
-                    position: relative;
-                    display: inline-block;
-                    user-select: none;
                 }
-
-                .image-resize-editor .ql-editor img:hover {
-                    border: 2px solid #3b82f6;
-                    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-                }
-
                 .image-resize-editor .ql-editor img.selected {
-                    border: 2px solid #3b82f6;
-                    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+                    outline: 2px solid #3b82f6;
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
                 }
-
-                /* Larger, more visible resize handles */
-                .image-resize-editor .ql-editor img.selected::after {
-                    content: '';
-                    position: absolute;
-                    bottom: -8px;
-                    right: -8px;
-                    width: 16px;
-                    height: 16px;
-                    background: #3b82f6;
-                    border: 3px solid white;
-                    border-radius: 50%;
-                    cursor: nw-resize;
-                    opacity: 1;
-                    transition: all 0.2s ease;
-                    z-index: 10;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-
-                .image-resize-editor .ql-editor img.selected::before {
-                    content: '';
-                    position: absolute;
-                    top: -8px;
-                    left: -8px;
-                    width: 16px;
-                    height: 16px;
-                    background: #3b82f6;
-                    border: 3px solid white;
-                    border-radius: 50%;
-                    cursor: nw-resize;
-                    opacity: 1;
-                    transition: all 0.2s ease;
-                    z-index: 10;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
-
-                /* Add resize handles on all corners for easier access */
-                .image-resize-editor .ql-editor img.selected {
-                    position: relative;
-                }
-
-                .image-resize-editor .ql-editor img.selected {
-                    outline: 2px dashed #3b82f6;
-                    outline-offset: 4px;
-                }
-
-                /* Top-right handle */
-                .image-resize-editor .ql-editor img.selected {
-                    position: relative;
-                }
-
-                .image-resize-editor .ql-editor img.selected::after {
-                    bottom: -8px;
-                    right: -8px;
-                }
-
-                /* Larger clickable areas for resize handles */
-                .image-resize-editor .ql-editor img.selected {
-                    padding: 8px;
-                    margin: -8px;
-                }
-
-                /* Image manipulation states */
                 .image-resize-editor .ql-editor img.resizing {
-                    transition: none;
-                    z-index: 1000;
-                    cursor: nw-resize !important;
+                    opacity: 0.8;
                 }
-
                 .image-resize-editor .ql-editor img.dragging {
                     opacity: 0.8;
-                    transform: rotate(2deg);
+                    cursor: move;
+                }
+                .image-resize-handle {
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    background-color: #3b82f6;
+                    border: 2px solid white;
+                    border-radius: 50%;
                     z-index: 1000;
-                    cursor: move !important;
                 }
-
-                /* Better visual feedback */
-                .image-resize-editor .ql-editor img.selected:hover::after,
-                .image-resize-editor .ql-editor img.selected:hover::before {
-                    background: #1d4ed8;
-                    transform: scale(1.1);
+                .image-resize-handle.tl {
+                    top: -5px;
+                    left: -5px;
+                    cursor: nwse-resize;
                 }
-
-                /* Image toolbar for actions */
-                .image-resize-editor .image-toolbar {
+                .image-resize-handle.tr {
+                    top: -5px;
+                    right: -5px;
+                    cursor: nesw-resize;
+                }
+                .image-resize-handle.bl {
+                    bottom: -5px;
+                    left: -5px;
+                    cursor: nesw-resize;
+                }
+                .image-resize-handle.br {
+                    bottom: -5px;
+                    right: -5px;
+                    cursor: nwse-resize;
+                }
+                .image-toolbar {
                     position: absolute;
                     background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 6px;
-                    padding: 8px;
-                    display: none;
-                    z-index: 1000;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                }
-
-                .image-resize-editor .image-toolbar.show {
-                    display: block;
-                }
-
-                .image-resize-editor .image-toolbar button {
-                    background: none;
-                    border: none;
-                    padding: 4px 8px;
-                    margin: 0 2px;
+                    border: 1px solid #e2e8f0;
                     border-radius: 4px;
+                    padding: 4px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                    z-index: 1000;
+                    display: flex;
+                    gap: 4px;
+                }
+                .image-toolbar button {
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 2px;
+                    padding: 4px 8px;
                     cursor: pointer;
                     font-size: 12px;
-                    color: #374151;
-                    transition: background-color 0.2s ease;
                 }
-
-                .image-resize-editor .image-toolbar button:hover {
+                .image-toolbar button:hover {
                     background-color: #f3f4f6;
                 }
             `}</style>
@@ -382,11 +309,11 @@ export default function CreateNews({ categories }) {
                                         type="text"
                                         id="title"
                                         value={data.title}
-                                        onChange={(e) => setData('title', e.target.value)}
-                                        className="mt-1 block w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-blue-600/50 focus:border-blue-600/50 px-3 py-2"
-                                        required
+                                        onChange={e => setData('title', e.target.value)}
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter news title"
                                     />
-                                    {errors.title && <div className="text-red-400 text-sm mt-1">{errors.title}</div>}
+                                    {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
                                 </div>
 
                                 {/* Category */}
@@ -397,90 +324,91 @@ export default function CreateNews({ categories }) {
                                     <select
                                         id="category"
                                         value={data.category}
-                                        onChange={(e) => setData('category', e.target.value)}
-                                        className="mt-1 block w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-blue-600/50 focus:border-blue-600/50 px-3 py-2"
-                                        required
+                                        onChange={e => setData('category', e.target.value)}
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         <option value="">Select a category</option>
                                         {categories.map((category) => (
-                                            <option key={category} value={category}>
-                                                {category}
+                                            <option key={category.id} value={category.id}>
+                                                {category.name}
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.category && <div className="text-red-400 text-sm mt-1">{errors.category}</div>}
+                                    {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
                                 </div>
 
-                                {/* Image */}
+                                {/* Image Upload */}
                                 <div>
-                                    <label htmlFor="image" className="block text-sm font-medium text-slate-300 mb-2">
-                                        Image
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Featured Image
                                     </label>
-                                    <input
-                                        type="file"
-                                        id="image"
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                        className="mt-1 block w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-blue-600/50 focus:border-blue-600/50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700"
-                                        required
-                                    />
-                                    {errors.image && <div className="text-red-400 text-sm mt-1">{errors.image}</div>}
-
-                                    {/* Image Preview */}
-                                    {preview && (
-                                        <div className="mt-4">
-                                            <img
-                                                src={preview}
-                                                alt="Preview"
-                                                className="max-w-xs max-h-48 object-cover rounded-lg border border-slate-600"
-                                            />
-                                        </div>
-                                    )}
+                                    <div className="mt-1 flex items-center">
+                                        <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-slate-700">
+                                            {preview ? (
+                                                <img
+                                                    src={preview}
+                                                    alt="Preview"
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <svg
+                                                    className="h-full w-full text-slate-400"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.67 0 8.997 1.701 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                </svg>
+                                            )}
+                                        </span>
+                                        <label
+                                            htmlFor="image-upload"
+                                            className="ml-5 bg-slate-800 py-2 px-3 border border-slate-700 rounded-md shadow-sm text-sm leading-4 font-medium text-slate-300 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                                        >
+                                            Change
+                                        </label>
+                                        <input
+                                            id="image-upload"
+                                            name="image-upload"
+                                            type="file"
+                                            className="sr-only"
+                                            onChange={handleImageChange}
+                                            accept="image/*"
+                                        />
+                                    </div>
+                                    {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
                                 </div>
 
-                                {/* Description with Rich Text Editor */}
+                                {/* Description */}
                                 <div>
                                     <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-2">
                                         Description
                                     </label>
-                                    <ReactQuill
-                                        ref={quillRef}
-                                        theme="snow"
-                                        value={data.description}
-                                        onChange={(value) => setData('description', value)}
-                                        modules={{
-                                            toolbar: [
-                                                [{ 'header': [1, 2, 3, false] }],
-                                                ['bold', 'italic', 'underline', 'strike'],
-                                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                                ['link', 'image'],
-                                                [{ 'color': [] }, { 'background': [] }],
-                                                ['clean']
-                                            ],
-                                        }}
-                                        formats={[
-                                            'header', 'bold', 'italic', 'underline', 'strike',
-                                            'list', 'bullet', 'link', 'image', 'color', 'background'
-                                        ]}
-                                        className="bg-slate-800 border border-slate-600 text-slate-100 image-resize-editor"
-                                        style={{ minHeight: '200px' }}
-                                        placeholder="Write your news article here..."
-                                    />
-                                    {errors.description && <div className="text-red-400 text-sm mt-1">{errors.description}</div>}
+                                    <div className="image-resize-editor">
+                                        <ReactQuill
+                                            ref={quillRef}
+                                            value={data.description}
+                                            onChange={value => setData('description', value)}
+                                            modules={{
+                                                toolbar: [
+                                                    [{ 'header': [1, 2, 3, false] }],
+                                                    ['bold', 'italic', 'underline', 'strike'],
+                                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                                    ['link', 'image'],
+                                                    ['clean']
+                                                ],
+                                            }}
+                                            className="bg-slate-800 text-slate-100 rounded-b-md"
+                                            theme="snow"
+                                        />
+                                    </div>
+                                    {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
                                 </div>
 
-                                {/* Submit Button */}
-                                <div className="flex justify-end space-x-3 pt-4">
-                                    <Link
-                                        href={route('admin.news.index')}
-                                        className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 px-4 rounded border border-slate-600"
-                                    >
-                                        Cancel
-                                    </Link>
+                                <div className="flex justify-end">
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         {processing ? 'Creating...' : 'Create News'}
                                     </button>

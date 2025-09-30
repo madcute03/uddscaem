@@ -98,24 +98,44 @@ class WriterController extends Controller
     {
         $this->authorize('update', $writer);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$writer->id],
             'bio' => ['nullable', 'string', 'max:1000'],
             'specialization' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'in:active,inactive'],
+            'password' => ['nullable', 'confirmed', 'min:8'],
+            'status' => ['sometimes', 'required', 'in:active,inactive'],
         ]);
 
-        $writer->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
+        // Update user data
+        $userData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ];
 
-        $writer->writerProfile()->update([
-            'bio' => $request->bio,
-            'specialization' => $request->specialization,
-            'status' => $request->status,
-        ]);
+        // Only update password if it's provided
+        if (!empty($validated['password'])) {
+            $userData['password'] = bcrypt($validated['password']);
+        }
+
+        $writer->update($userData);
+
+        // Update or create writer profile
+        $writerProfileData = [
+            'bio' => $validated['bio'] ?? null,
+            'specialization' => $validated['specialization'] ?? null,
+        ];
+
+        // Only update status if it's provided (for admin)
+        if (isset($validated['status'])) {
+            $writerProfileData['status'] = $validated['status'];
+        }
+
+        if ($writer->writerProfile) {
+            $writer->writerProfile()->update($writerProfileData);
+        } else {
+            $writer->writerProfile()->create($writerProfileData);
+        }
 
         return redirect()->route('admin.writers.index')->with('success', 'Writer updated successfully!');
     }
@@ -123,9 +143,12 @@ class WriterController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(User $writer)
     {
-        $this->authorize('delete', $writer);
+        $this->authorize('deleteWriter', $writer);
 
         // Delete writer profile
         $writer->writerProfile()->delete();
@@ -138,17 +161,32 @@ class WriterController extends Controller
 
     /**
      * Toggle writer status.
+     *
+     * @param  \App\Models\User  $writer
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function toggleStatus(User $writer)
     {
         $this->authorize('update', $writer);
-
+        
+        // Check if writer profile exists, if not create one
+        if (!$writer->writerProfile) {
+            $writer->writerProfile()->create([
+                'status' => 'active', // Default status
+                'bio' => '',
+                'specialization' => '',
+            ]);
+            
+            return redirect()->back()->with('success', 'Writer profile created and set to active!');
+        }
+        
+        // Toggle the status
         $newStatus = $writer->writerProfile->status === 'active' ? 'inactive' : 'active';
-
+        
         $writer->writerProfile()->update([
             'status' => $newStatus,
         ]);
-
+        
         return redirect()->back()->with('success', 'Writer status updated successfully!');
     }
 }

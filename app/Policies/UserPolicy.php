@@ -23,11 +23,23 @@ class UserPolicy
 
     public function updateWriter(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->id === $model->id;
     }
 
     public function deleteWriter(User $user, User $model): bool
     {
         return $user->isAdmin() && $user->id !== $model->id;
+    }
+    
+    public function update(User $user, User $model): bool
+    {
+        // Allow admins to update any user, or users to update their own profile
+        return $user->isAdmin() || $user->id === $model->id;
+    }
+    
+    public function toggleStatus(User $user, User $model): bool
+    {
+        // Only admins can toggle user status
+        return $user->isAdmin();
     }
 }
