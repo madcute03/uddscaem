@@ -8,9 +8,9 @@ import EventTypeSelector from '@/Components/EventTypeSelector';
 const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
     const [dateValue, setDateValue] = useState(value ? value.split('T')[0] : '');
     const [timeValue, setTimeValue] = useState(value ? value.split('T')[1]?.substring(0, 5) || '00:00' : '00:00');
-    const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
+    const [showModal, setShowModal] = useState(false);
 
     const formatDateTime = (date) => {
         if (!date) return '';
@@ -112,10 +112,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         <div className="relative">
             <div
                 className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
-                onClick={() => {
-                    setIsOpen(!isOpen);
-                    setActiveTab('date');
-                }}
+                onClick={() => setShowModal(true)}
             >
                 <span className={value ? 'text-slate-100' : 'text-slate-400'}>
                     {value ? formatDateTime(value) : placeholder}
@@ -125,119 +122,130 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                 </svg>
             </div>
 
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
-                    {/* Tabs */}
-                    <div className="flex border-b border-slate-700 mb-4">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('date')}
-                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            Date
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('time')}
-                            className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            Time
-                        </button>
-                    </div>
-
-                    {activeTab === 'date' && (
-                        <>
-                            {/* Calendar Header */}
-                            <div className="flex items-center justify-between mb-4">
-                                <button
-                                    type="button"
-                                    onClick={() => navigateMonth(-1)}
-                                    className="p-1 hover:bg-slate-700 rounded"
-                                >
-                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                                <h3 className="text-slate-100 font-medium">{monthYear}</h3>
-                                <button
-                                    type="button"
-                                    onClick={() => navigateMonth(1)}
-                                    className="p-1 hover:bg-slate-700 rounded"
-                                >
-                                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            {/* Days of Week */}
-                            <div className="grid grid-cols-7 gap-1 mb-2">
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                    <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
-                                        {day}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Calendar Days */}
-                            <div className="grid grid-cols-7 gap-1">
-                                {days.map((date, index) => (
-                                    <button
-                                        key={index}
-                                        type="button"
-                                        onClick={() => handleDateSelect(date)}
-                                        disabled={!date}
-                                        className={`
-                                            h-8 text-sm rounded transition-colors
-                                            ${!date ? 'invisible' : ''}
-                                            ${isSelected(date)
-                                                ? 'bg-blue-600 text-white'
-                                                : isToday(date)
-                                                    ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
-                                                    : 'text-slate-300 hover:bg-slate-700'
-                                            }
-                                        `}
-                                    >
-                                        {date?.getDate()}
-                                    </button>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {activeTab === 'time' && (
-                        <div className="py-2">
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
-                                </label>
-                                <input
-                                    type="time"
-                                    value={timeValue}
-                                    onChange={handleTimeChange}
-                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOpen(false)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-                                >
-                                    Done
-                                </button>
-                            </div>
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl w-full max-w-md">
+                        <div className="p-4 border-b border-slate-700">
+                            <h3 className="text-lg font-medium text-slate-100">Select Date and Time</h3>
                         </div>
-                    )}
-                </div>
-            )}
+                        <div className="p-4">
+                            {/* Tabs */}
+                            <div className="flex border-b border-slate-700 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('date')}
+                                    className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                >
+                                    Date
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('time')}
+                                    className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                                >
+                                    Time
+                                </button>
+                            </div>
 
-            {/* Overlay to close calendar when clicking outside */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[55]"
-                    onClick={() => setIsOpen(false)}
-                />
+                            {activeTab === 'date' && (
+                                <div>
+                                    {/* Calendar Header */}
+                                    <div className="flex items-center justify-between mb-4 px-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigateMonth(-1)}
+                                            className="p-1 hover:bg-slate-700 rounded-full"
+                                        >
+                                            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <h3 className="text-slate-100 font-medium text-lg">{monthYear}</h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => navigateMonth(1)}
+                                            className="p-1 hover:bg-slate-700 rounded-full"
+                                        >
+                                            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    {/* Days of Week */}
+                                    <div className="grid grid-cols-7 gap-1 mb-2">
+                                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                            <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
+                                                {day}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Calendar Days */}
+                                    <div className="grid grid-cols-7 gap-1">
+                                        {days.map((date, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => {
+                                                    handleDateSelect(date);
+                                                    setActiveTab('time');
+                                                }}
+                                                disabled={!date}
+                                                className={`
+                                                    h-8 text-sm rounded transition-colors
+                                                    ${!date ? 'invisible' : ''}
+                                                    ${isSelected(date)
+                                                        ? 'bg-blue-600 text-white'
+                                                        : isToday(date)
+                                                            ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
+                                                            : 'text-slate-300 hover:bg-slate-700'
+                                                    }
+                                                `}
+                                            >
+                                                {date?.getDate()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'time' && (
+                                <div className="py-2">
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={timeValue}
+                                            onChange={handleTimeChange}
+                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                        />
+                                    </div>
+                                    <div className="flex justify-end space-x-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowModal(false)}
+                                            className="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowModal(false);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                                        >
+                                            Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -328,23 +336,23 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
             {isOpen && (
                 <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
                     {/* Calendar Header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4 px-2">
                         <button
                             type="button"
                             onClick={() => navigateMonth(-1)}
-                            className="p-1 hover:bg-slate-700 rounded"
+                            className="p-1 hover:bg-slate-700 rounded-full"
                         >
-                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        <h3 className="text-slate-100 font-medium">{monthYear}</h3>
+                        <h3 className="text-slate-100 font-medium text-lg">{monthYear}</h3>
                         <button
                             type="button"
                             onClick={() => navigateMonth(1)}
-                            className="p-1 hover:bg-slate-700 rounded"
+                            className="p-1 hover:bg-slate-700 rounded-full"
                         >
-                            <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </button>

@@ -7,8 +7,14 @@ use Inertia\Inertia;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\WriterController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CreateBracketController;
 use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\EventRegistrationController;
+use App\Http\Controllers\DoubleEliminationController;
+use App\Http\Controllers\SingleEliminationController;
+use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Event;
 
 // ============================================
