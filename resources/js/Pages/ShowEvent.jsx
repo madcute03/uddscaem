@@ -239,26 +239,7 @@ export default function ShowEvent({ event }) {
                                     
                                
                             
-                            <div className="mt-12">
-                                <Link
-                                    href={route("home")}
-                                    className="relative
-                                            text-[14px] font-extrabold font-inherit uppercase
-                                            text-[#e1e1e1]
-                                            cursor-pointer bg-none border-0
-                                            transition-colors duration-400 [transition-timing-function:cubic-bezier(0.25,0.8,0.25,1)]
-                                            hover:text-white focus:text-white
-                                            after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2
-                                            after:w-0 after:h-[2px] after:bg-white
-                                            after:transition-[width,left] after:duration-400 [after:transition-timing-function:cubic-bezier(0.25,0.8,0.25,1)]
-                                            hover:after:w-full hover:after:left-0
-                                            focus:after:w-full focus:after:left-0
-                                            h-15 px-2 mt-10"
-                                >
-                                    <span>←</span>
-                                    Back to Events
-                                </Link>
-                            </div>
+                            
                         </div>
                     </div>
                 ) : (

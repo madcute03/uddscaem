@@ -8,12 +8,33 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Carbon;
 
 class EventController extends Controller
 {
+    /**
+     * Ensure events that have passed their end date (or start date if no end) are marked done.
+     */
+    protected function updateCompletedEvents(): void
+    {
+        $today = now()->toDateString();
+        // Events with end date in the past
+        Event::whereNotNull('event_end_date')
+            ->whereDate('event_end_date', '<', $today)
+            ->where('is_done', false)
+            ->update(['is_done' => true]);
+
+        // Events without end date: mark done if start date in the past
+        Event::whereNull('event_end_date')
+            ->whereDate('event_date', '<', $today)
+            ->where('is_done', false)
+            ->update(['is_done' => true]);
+    }
     // ADMIN: Dashboard (list all events)
     public function dashboard()
     {
+        // Auto-mark completed events before fetching
+        $this->updateCompletedEvents();
         $events = Event::select(
             'id',
             'title',
@@ -57,6 +78,8 @@ class EventController extends Controller
     // ADMIN: Show CreateEvent page
     public function index()
     {
+        // Auto-mark completed events before fetching
+        $this->updateCompletedEvents();
         $events = Event::select(
             'id',
             'title',
@@ -94,6 +117,8 @@ class EventController extends Controller
     // PUBLIC: View a single event
     public function show(Event $event)
     {
+        // Ensure up-to-date done status when viewing an event
+        $this->updateCompletedEvents();
         $event->load('images');
         $base = rtrim(request()->getSchemeAndHttpHost(), '/');
         $event->images_path = $event->images->map(function ($img) use ($base) {
@@ -349,6 +374,8 @@ class EventController extends Controller
     // PUBLIC: Welcome page (list all events)
     public function welcome()
     {
+        // Auto-mark completed events before fetching
+        $this->updateCompletedEvents();
         $events = Event::select(
             'id',
             'title',

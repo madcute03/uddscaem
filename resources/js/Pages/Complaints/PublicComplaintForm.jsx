@@ -5,7 +5,6 @@ import PublicLayout from '@/Layouts/PublicLayout';
 export default function PublicComplaintForm({ events }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
-        block: '',
         department: '',
         complaint_letter: '',
         event_id: ''
@@ -27,7 +26,7 @@ export default function PublicComplaintForm({ events }) {
             
             <div className="max-w-2xl mx-auto">
                 <div className="bg-slate-900/60 border border-slate-800 rounded-xl shadow-xl p-6">
-                    <h1 className="text-2xl font-bold mb-6">File a Complaint</h1>
+                    <h1 className="text-2xl font-bold mb-6">File a Protest</h1>
                     
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -42,19 +41,6 @@ export default function PublicComplaintForm({ events }) {
                                 />
                                 {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Block</label>
-                                <input
-                                    type="text"
-                                    value={data.block}
-                                    onChange={e => setData('block', e.target.value)}
-                                    className="w-full bg-slate-800/50 border border-slate-700 text-slate-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    required
-                                />
-                                {errors.block && <p className="text-red-400 text-sm mt-1">{errors.block}</p>}
-                            </div>
-
                             <div>
                                 <label className="block text-sm font-medium mb-1">Department</label>
                                 <input
@@ -87,7 +73,7 @@ export default function PublicComplaintForm({ events }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Complaint Details</label>
+                            <label className="block text-sm font-medium mb-1">Protest Details</label>
                             <textarea
                                 value={data.complaint_letter}
                                 onChange={e => setData('complaint_letter', e.target.value)}
@@ -105,7 +91,7 @@ export default function PublicComplaintForm({ events }) {
                                 disabled={processing}
                                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
                             >
-                                {processing ? 'Submitting...' : 'Submit Complaint'}
+                                {processing ? 'Submitting...' : 'Submit Protest'}
                             </button>
                         </div>
                     </form>

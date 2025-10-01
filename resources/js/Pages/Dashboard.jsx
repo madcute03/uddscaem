@@ -1110,7 +1110,7 @@ function Dashboard() {
             )}
            
 
-            <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
+            <div>
                 <h2 className="text-2xl font-bold mb-6 text-white">Events</h2>
                 {events.length === 0 && (
                     <div className="text-center py-8">
@@ -1118,7 +1118,7 @@ function Dashboard() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2  gap-6">
                     {events.map(event => {
                         const statusInfo = getEventStatus(event);
                         const cardImages = (() => {
@@ -1575,28 +1575,6 @@ function Dashboard() {
                                         </div>
 
                                         <div className="mt-4 pt-4 border-t border-slate-700 flex justify-end gap-4">
-                                            {!event.is_done ? (
-                                                <button
-                                                    onClick={() => handleMarkDone(event.id)}
-                                                    className="text-gray-400 hover:text-green-500 transition-colors"
-                                                    title="Mark as done"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleMarkUndone(event.id)}
-                                                    className="text-gray-400 hover:text-amber-500 transition-colors"
-                                                    title="Mark as not done"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            )}
-
                                             {event.registration_end_date ? (
                                                 <Link
                                                     href={route('events.registrations', event.id)}

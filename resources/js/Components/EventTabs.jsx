@@ -6,14 +6,34 @@ import { useState } from "react";
 export default function EventTabs({ events }) {
     const today = dayjs();
 
-    // Separate by category
-    const upcomingEvents = events.filter(
-        (e) => dayjs(e.event_date).isAfter(today) && !e.is_done
-    );
-    const ongoingEvents = events.filter(
-        (e) => dayjs(e.event_date).isSame(today, "day") && !e.is_done
-    );
-    const recentEvents = events.filter((e) => e.is_done);
+    // Classify by dates (do not rely on is_done)
+    const isRecent = (e) => {
+        const start = dayjs(e.event_date);
+        const end = e.event_end_date ? dayjs(e.event_end_date) : null;
+        return end ? end.isBefore(today, 'day') : start.isBefore(today, 'day');
+    };
+
+    const isOngoing = (e) => {
+        const start = dayjs(e.event_date);
+        const end = e.event_end_date ? dayjs(e.event_end_date) : null;
+        // Ongoing if today is the start day
+        if (start.isSame(today, 'day')) return true;
+        if (end) {
+            // Ongoing if today is between start and end inclusive of end day
+            return (start.isBefore(today, 'day') || start.isSame(today, 'day')) &&
+                   (end.isAfter(today, 'day') || end.isSame(today, 'day'));
+        }
+        return false;
+    };
+
+    const isUpcoming = (e) => {
+        const start = dayjs(e.event_date);
+        return start.isAfter(today, 'day');
+    };
+
+    const upcomingEvents = events.filter(isUpcoming);
+    const ongoingEvents = events.filter(isOngoing);
+    const recentEvents = events.filter(isRecent);
 
     const EventCard = ({ event }) => {
         const [index, setIndex] = useState(0);
@@ -112,7 +132,7 @@ export default function EventTabs({ events }) {
         <div className="space-y-20 md:space-y-24 w-full">
             {/* Upcoming Section */}
             <section className="w-full">
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-blue-300 text-center">
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
                     Upcoming Events
                 </h2>
                 <div>{renderEvents(upcomingEvents)}</div>
@@ -120,7 +140,7 @@ export default function EventTabs({ events }) {
 
             {/* Ongoing Section */}
             <section className="w-full">
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-green-300 text-center">
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
                     Ongoing Events
                 </h2>
                 <div>{renderEvents(ongoingEvents)}</div>
