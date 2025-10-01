@@ -7,6 +7,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\WriterController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\CreateBracketController;
+use App\Http\Controllers\ComplaintController;
 use App\Models\Event;
 
 // ============================================
