@@ -37,12 +37,28 @@ export default function ShowEvent({ event }) {
         ? (today > event.registration_end_date)
         : false; // If no explicit end date, keep registration open
 
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
+    const formatDate = (dateString, includeTime = false) => {
+        if (!dateString) return '';
+        
+        // Create date object and adjust for Philippine Time (UTC+8)
+        const date = new Date(dateString);
+        const phTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+        
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: 'UTC'  // We've already adjusted the time, so use UTC to prevent double-adjustment
+        };
+        
+        if (includeTime) {
+            options.hour = '2-digit';
+            options.minute = '2-digit';
+            options.hour12 = true;
+            return phTime.toLocaleString('en-US', options);
+        }
+        
+        return phTime.toLocaleDateString('en-US', options);
     };
 
     // Carousel state
