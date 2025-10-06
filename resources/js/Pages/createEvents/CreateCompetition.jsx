@@ -7,10 +7,33 @@ import EventTypeSelector from '@/Components/EventTypeSelector';
 // Custom DateTime Picker Component
 const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
     const [dateValue, setDateValue] = useState(value ? value.split('T')[0] : '');
-    const [timeValue, setTimeValue] = useState(value ? value.split('T')[1]?.substring(0, 5) || '00:00' : '00:00');
+    const [timeValue, setTimeValue] = useState(value ? value.split('T')[1]?.substring(0, 5) || '12:00' : '12:00');
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
+    
+    // Parse time into hours, minutes, and AM/PM
+    const parseTime = (timeStr) => {
+        if (!timeStr) return { hour: 12, minute: 0, period: 'AM' };
+        
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        let hour = hours % 12;
+        if (hour === 0) hour = 12; // Convert 0 to 12 for 12-hour format
+        
+        return {
+            hour: hour,
+            minute: minutes || 0,
+            period: period
+        };
+    };
+    
+    const [time, setTime] = useState(parseTime(timeValue));
+    
+    // Generate time options
+    const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+    const minutes = Array.from({ length: 60 }, (_, i) => i); // 0 to 59
+    const periods = ['AM', 'PM'];
 
     const parseDateTimeValue = (dateTimeValue) => {
         if (!dateTimeValue) return null;
@@ -67,10 +90,21 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         }
     };
 
-    const handleTimeChange = (e) => {
-        const newTime = e.target.value;
-        setTimeValue(newTime);
-        updateDateTime(dateValue, newTime);
+    const handleTimeChange = (field, value) => {
+        const newTime = { ...time, [field]: value };
+        setTime(newTime);
+        
+        // Convert to 24-hour format for storage
+        let hour24 = newTime.hour;
+        if (newTime.period === 'PM' && hour24 < 12) {
+            hour24 += 12;
+        } else if (newTime.period === 'AM' && hour24 === 12) {
+            hour24 = 0;
+        }
+        
+        const formattedTime = `${String(hour24).padStart(2, '0')}:${String(newTime.minute).padStart(2, '0')}`;
+        setTimeValue(formattedTime);
+        updateDateTime(dateValue, formattedTime);
     };
 
     const updateDateTime = (date, time) => {
@@ -261,12 +295,53 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                         <label className="block text-sm font-medium text-slate-300 mb-2">
                                             Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
                                         </label>
-                                        <input
-                                            type="time"
-                                            value={timeValue}
-                                            onChange={handleTimeChange}
-                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                        />
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">Hour</label>
+                                                <select
+                                                    value={time.hour}
+                                                    onChange={(e) => handleTimeChange('hour', parseInt(e.target.value))}
+                                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                >
+                                                    {hours.map(h => (
+                                                        <option key={h} value={h}>
+                                                            {String(h).padStart(2, '0')}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">Minute</label>
+                                                <select
+                                                    value={time.minute}
+                                                    onChange={(e) => handleTimeChange('minute', parseInt(e.target.value))}
+                                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                >
+                                                    {minutes.map(m => (
+                                                        <option key={m} value={m}>
+                                                            {String(m).padStart(2, '0')}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">AM/PM</label>
+                                                <select
+                                                    value={time.period}
+                                                    onChange={(e) => handleTimeChange('period', e.target.value)}
+                                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                >
+                                                    {periods.map(p => (
+                                                        <option key={p} value={p}>
+                                                            {p}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 text-xs text-slate-400">
+                                            Selected time: {time.hour.toString().padStart(2, '0')}:{time.minute.toString().padStart(2, '0')} {time.period}
+                                        </div>
                                     </div>
                                 </div>
                             )}

@@ -4,6 +4,21 @@ import { usePage, Link, router } from '@inertiajs/react'
 
 // Custom DateTime Picker Component
 const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
+    const parseTime = (timeStr) => {
+        if (!timeStr) return { hour: 12, minute: 0, period: 'AM' };
+        
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const period = hours >= 12 ? 'PM' : 'AM';
+        let hour = hours % 12;
+        if (hour === 0) hour = 12; // Convert 0 to 12 for 12-hour format
+        
+        return {
+            hour: hour,
+            minute: minutes || 0,
+            period: period
+        };
+    };
+
     const parseDateTimeValue = (dateTimeValue) => {
         if (!dateTimeValue) return null;
 
@@ -38,46 +53,20 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         : '';
     const initialTime = parsedInitial
         ? `${String(parsedInitial.getHours()).padStart(2, '0')}:${String(parsedInitial.getMinutes()).padStart(2, '0')}`
-        : '00:00';
+        : '12:00';
 
     const [dateValue, setDateValue] = useState(initialDate);
     const [timeValue, setTimeValue] = useState(initialTime);
+    const [time, setTime] = useState(parseTime(initialTime));
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
-    const [isAm, setIsAm] = useState(parsedInitial ? parsedInitial.getHours() < 12 : true);
     const [isMobile, setIsMobile] = useState(false);
     
-    // Convert 24h time to 12h format for display
-    const to12HourFormat = (time24) => {
-        if (!time24) return { hours: '12', minutes: '00', isAm: true };
-        const [h, m] = time24.split(':');
-        const hours = parseInt(h, 10);
-        const isAm = hours < 12;
-        const displayHours = hours % 12 || 12;
-        return {
-            hours: String(displayHours).padStart(2, '0'),
-            minutes: m || '00',
-            isAm
-        };
-    };
-    
-    // Convert 12h time to 24h format for storage
-    const to24HourFormat = (hours, minutes, isAm) => {
-        let h = parseInt(hours, 10);
-        if (!isAm && h < 12) h += 12;
-        if (isAm && h === 12) h = 0;
-        return `${String(h).padStart(2, '0')}:${minutes}`;
-    };
-    
-    // Initialize display time in 12h format
-    const [displayTime, setDisplayTime] = useState(() => {
-        const time12h = to12HourFormat(initialTime);
-        return {
-            hours: time12h.hours,
-            minutes: time12h.minutes
-        };
-    });
+    // Generate time options
+    const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+    const minutes = Array.from({ length: 60 }, (_, i) => i); // 0 to 59
+    const periods = ['AM', 'PM'];
 
     useEffect(() => {
         const checkIfMobile = () => {
@@ -120,47 +109,21 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         }
     };
 
-    const convertTo24Hour = (time12h, isAm) => {
-        const [hours, minutes] = time12h.split(':').map(Number);
-        let hours24 = hours % 12;
-        if (!isAm) {
-            hours24 += 12;
-        }
-        return `${String(hours24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    };
-
     const handleTimeChange = (field, value) => {
-        const newDisplayTime = {
-            ...displayTime,
-            [field]: value
-        };
+        const newTime = { ...time, [field]: value };
+        setTime(newTime);
         
-        // Update display
-        setDisplayTime(newDisplayTime);
+        // Convert to 24-hour format for storage
+        let hour24 = newTime.hour;
+        if (newTime.period === 'PM' && hour24 < 12) {
+            hour24 += 12;
+        } else if (newTime.period === 'AM' && hour24 === 12) {
+            hour24 = 0;
+        }
         
-        // Convert to 24h format and update the actual time value
-        if (dateValue) {
-            const time24 = to24HourFormat(
-                newDisplayTime.hours,
-                newDisplayTime.minutes,
-                isAm
-            );
-            setTimeValue(time24);
-            updateDateTime(dateValue, time24);
-        }
-    };
-
-    const handleAmPmToggle = (newIsAm) => {
-        setIsAm(newIsAm);
-        if (dateValue && displayTime.hours && displayTime.minutes) {
-            const time24 = to24HourFormat(
-                displayTime.hours,
-                displayTime.minutes,
-                newIsAm
-            );
-            setTimeValue(time24);
-            updateDateTime(dateValue, time24);
-        }
+        const formattedTime = `${String(hour24).padStart(2, '0')}:${String(newTime.minute).padStart(2, '0')}`;
+        setTimeValue(formattedTime);
+        updateDateTime(dateValue, formattedTime);
     };
 
     const updateDateTime = (date, time) => {
@@ -357,60 +320,52 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                         <label className="block text-sm font-medium text-slate-300 mb-2">
                                             Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
                                         </label>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1 flex items-center gap-2">
-                                                    <div className="relative flex-1">
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="12"
-                                                            value={displayTime.hours}
-                                                            onChange={(e) => {
-                                                                let val = parseInt(e.target.value, 10);
-                                                                if (val > 12) val = 12;
-                                                                if (val < 1) val = 1;
-                                                                handleTimeChange('hours', String(val).padStart(2, '0'));
-                                                            }}
-                                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                                        />
-                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">H</span>
-                                                    </div>
-                                                    <span className="text-slate-300">:</span>
-                                                    <div className="relative flex-1">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="59"
-                                                            value={displayTime.minutes}
-                                                            onChange={(e) => {
-                                                                let val = parseInt(e.target.value, 10);
-                                                                if (val > 59) val = 59;
-                                                                if (val < 0) val = 0;
-                                                                handleTimeChange('minutes', String(val).padStart(2, '0'));
-                                                            }}
-                                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                                        />
-                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">M</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex border border-slate-600 rounded-md overflow-hidden">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAmPmToggle(true)}
-                                                        className={`px-3 py-2 text-sm font-medium ${isAm ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-                                                    >
-                                                        AM
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAmPmToggle(false)}
-                                                        className={`px-3 py-2 text-sm font-medium ${!isAm ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-                                                    >
-                                                        PM
-                                                    </button>
-                                                </div>
+                                        <div className="grid grid-cols-3 gap-2 mb-3">
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">Hour</label>
+                                                <select
+                                                    value={time.hour}
+                                                    onChange={(e) => handleTimeChange('hour', parseInt(e.target.value))}
+                                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                >
+                                                    {hours.map(h => (
+                                                        <option key={h} value={h}>
+                                                            {String(h).padStart(2, '0')}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">Minute</label>
+                                                <select
+                                                    value={time.minute}
+                                                    onChange={(e) => handleTimeChange('minute', parseInt(e.target.value))}
+                                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                >
+                                                    {minutes.map(m => (
+                                                        <option key={m} value={m}>
+                                                            {String(m).padStart(2, '0')}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">AM/PM</label>
+                                                <select
+                                                    value={time.period}
+                                                    onChange={(e) => handleTimeChange('period', e.target.value)}
+                                                    className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                >
+                                                    {periods.map(p => (
+                                                        <option key={p} value={p}>
+                                                            {p}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm text-slate-300 text-center">
+                                            Selected time: {time.hour.toString().padStart(2, '0')}:{time.minute.toString().padStart(2, '0')} {time.period}
                                         </div>
                                     </div>
                                 </div>
