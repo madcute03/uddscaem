@@ -549,6 +549,17 @@ function Dashboard() {
     const { auth, events = [], flash = {} } = usePage().props;
     const user = auth.user;
     const [currentSlide, setCurrentSlide] = useState({});
+    
+    // Effect to update event statuses in real-time
+    useEffect(() => {
+        // Update event statuses every minute
+        const intervalId = setInterval(() => {
+            // Force a re-render to update statuses
+            setCurrentSlide(prev => ({ ...prev }));
+        }, 60000); // Check every minute
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     const defaultEventForm = {
         title: '',
@@ -655,38 +666,123 @@ function Dashboard() {
     };
 
     const getEventStatus = (event) => {
-        if (event.is_done) {
-            return null;
-        }
-
-        if (!event.event_date) {
-            return {
-                label: 'PENDING',
-                className: 'bg-slate-500 text-white'
-            };
-        }
-
-        const eventStart = new Date(event.event_date);
+        console.log('--- Event Status Check ---');
+        console.log('Event ID:', event.id);
+        
+        // Get current time in local timezone
         const now = new Date();
+        console.log('Current local time:', now.toString());
+        console.log('Current UTC time:', now.toISOString());
+        
+        if (event.is_done) {
+            console.log('Event is marked as DONE');
+            return {
+                label: 'DONE',
+                className: 'bg-green-500 text-white'
+            };
+        }
 
-        if (Number.isNaN(eventStart.getTime())) {
+        let eventStart, eventEnd;
+        
+        console.log('Event data:', {
+            event_date: event.event_date,
+            event_end_date: event.event_end_date,
+            is_done: event.is_done
+        });
+
+        try {
+            // Parse event start date
+            if (event.event_date) {
+                // Parse the date string and adjust for local timezone
+                const [datePart, timePart] = event.event_date.split('T');
+                const [year, month, day] = datePart.split('-').map(Number);
+                let hours = 0, minutes = 0;
+                
+                if (timePart) {
+                    const [timeStr] = timePart.split('.'); // Remove milliseconds if present
+                    [hours, minutes] = timeStr.split(':').map(Number);
+                }
+                
+                // Create date in local timezone
+                eventStart = new Date(year, month - 1, day, hours, minutes);
+                
+                if (isNaN(eventStart.getTime())) {
+                    throw new Error('Invalid start date');
+                }
+                
+                console.log('Parsed event start (local):', eventStart.toString());
+            }
+
+            // Parse event end date if it exists
+            if (event.event_end_date) {
+                const [datePart, timePart] = event.event_end_date.split('T');
+                const [year, month, day] = datePart.split('-').map(Number);
+                let hours = 23, minutes = 59; // Default to end of day if no time specified
+                
+                if (timePart) {
+                    const [timeStr] = timePart.split('.'); // Remove milliseconds if present
+                    [hours, minutes] = timeStr.split(':').map(Number);
+                }
+                
+                // Create date in local timezone
+                eventEnd = new Date(year, month - 1, day, hours, minutes);
+                
+                if (isNaN(eventEnd.getTime())) {
+                    console.warn('Invalid end date, ignoring');
+                    eventEnd = null;
+                } else {
+                    console.log('Parsed event end (local):', eventEnd.toString());
+                }
+            }
+
+            // If no start date, show as pending
+            if (!eventStart) {
+                return {
+                    label: 'PENDING',
+                    className: 'bg-slate-500 text-white'
+                };
+            }
+
+            // If current time is before event start time
+            console.log('Event start time:', eventStart.toISOString());
+            console.log('Current time is before start time?', now < eventStart);
+            
+            if (now < eventStart) {
+                console.log('Status: UPCOMING');
+                return {
+                    label: 'UPCOMING',
+                    className: 'bg-amber-500 text-white'
+                };
+            }
+
+            // If there's an end date and we're past it
+            if (eventEnd) {
+                console.log('Event end time:', eventEnd.toISOString());
+                console.log('Current time is after end time?', now > eventEnd);
+                
+                if (now > eventEnd) {
+                    console.log('Status: COMPLETED');
+                    return {
+                        label: 'COMPLETED',
+                        className: 'bg-green-500 text-white'
+                    };
+                }
+            }
+
+            // If we're between start and end time, or if there's no end time and we're past start time
+            console.log('Status: ONGOING');
+            return {
+                label: 'ONGOING',
+                className: 'bg-emerald-500 text-white'
+            };
+
+        } catch (error) {
+            console.error('Error parsing event dates:', error);
             return {
                 label: 'PENDING',
                 className: 'bg-slate-500 text-white'
             };
         }
-
-        if (eventStart.getTime() > now.getTime()) {
-            return {
-                label: 'UPCOMING',
-                className: 'bg-amber-500 text-white'
-            };
-        }
-
-        return {
-            label: 'ONGOING',
-            className: 'bg-emerald-500 text-white'
-        };
     };
 
     // Category color mapping

@@ -1,39 +1,90 @@
 // EventTabs.jsx
 import { Link } from "@inertiajs/react";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const getEventStatus = (event) => {
+    // Get current time in local timezone
+    const now = new Date();
+    
+    if (event.is_done) {
+        return 'DONE';
+    }
+
+    let eventStart, eventEnd;
+    
+    // Parse event start date
+    if (event.event_date) {
+        const [datePart, timePart] = event.event_date.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        let hours = 0, minutes = 0;
+        
+        if (timePart) {
+            const [timeStr] = timePart.split('.'); // Remove milliseconds if present
+            [hours, minutes] = timeStr.split(':').map(Number);
+        }
+        
+        // Create date in local timezone
+        eventStart = new Date(year, month - 1, day, hours, minutes);
+    }
+
+    // Parse event end date if it exists
+    if (event.event_end_date) {
+        const [datePart, timePart] = event.event_end_date.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        let hours = 23, minutes = 59; // Default to end of day if no time specified
+        
+        if (timePart) {
+            const [timeStr] = timePart.split('.'); // Remove milliseconds if present
+            [hours, minutes] = timeStr.split(':').map(Number);
+        }
+        
+        // Create date in local timezone
+        eventEnd = new Date(year, month - 1, day, hours, minutes);
+        
+        if (isNaN(eventEnd.getTime())) {
+            eventEnd = null;
+        }
+    }
+
+    // If no start date, show as pending
+    if (!eventStart || isNaN(eventStart.getTime())) {
+        return 'PENDING';
+    }
+
+    // If current time is before event start time
+    if (now < eventStart) {
+        return 'UPCOMING';
+    }
+
+    // If there's an end date and we're past it
+    if (eventEnd && now > eventEnd) {
+        return 'COMPLETED';
+    }
+
+    // If we're between start and end time, or if there's no end time and we're past start time
+    return 'ONGOING';
+};
 
 export default function EventTabs({ events }) {
-    const today = dayjs();
-
-    // Classify by dates (do not rely on is_done)
-    const isRecent = (e) => {
-        const start = dayjs(e.event_date);
-        const end = e.event_end_date ? dayjs(e.event_end_date) : null;
-        return end ? end.isBefore(today, 'day') : start.isBefore(today, 'day');
-    };
-
-    const isOngoing = (e) => {
-        const start = dayjs(e.event_date);
-        const end = e.event_end_date ? dayjs(e.event_end_date) : null;
-        // Ongoing if today is the start day
-        if (start.isSame(today, 'day')) return true;
-        if (end) {
-            // Ongoing if today is between start and end inclusive of end day
-            return (start.isBefore(today, 'day') || start.isSame(today, 'day')) &&
-                   (end.isAfter(today, 'day') || end.isSame(today, 'day'));
-        }
-        return false;
-    };
-
-    const isUpcoming = (e) => {
-        const start = dayjs(e.event_date);
-        return start.isAfter(today, 'day');
-    };
-
-    const upcomingEvents = events.filter(isUpcoming);
-    const ongoingEvents = events.filter(isOngoing);
-    const recentEvents = events.filter(isRecent);
+    const [currentTime, setCurrentTime] = useState(new Date());
+    
+    // Update current time every minute to refresh statuses
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000); // Update every minute
+        
+        return () => clearInterval(interval);
+    }, []);
+    
+    // Categorize events based on status
+    const upcomingEvents = events.filter(event => getEventStatus(event) === 'UPCOMING');
+    const ongoingEvents = events.filter(event => getEventStatus(event) === 'ONGOING');
+    const recentEvents = events.filter(event => {
+        const status = getEventStatus(event);
+        return status === 'COMPLETED' || status === 'DONE';
+    });
 
     const EventCard = ({ event }) => {
         const [index, setIndex] = useState(0);
@@ -85,16 +136,27 @@ export default function EventTabs({ events }) {
                                     e.preventDefault();
                                     prevImage();
                                 }}
-                                className="absolute top-1/2 left-3 -translate-y-1/2 bg-black/40 text-white text-lg p-2 rounded-full hover:bg-black/60"
+                                className="absolute top-1/2 left-3 -translate-y-1/2 bg-black/40 text-white text-lg p-2 rounded-full hover:bg-black/60 z-10"
                             >
                                 ‹
                             </button>
+                            <span
+                                className={`absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium z-10 ${
+                                    getEventStatus(event) === 'DONE' || getEventStatus(event) === 'COMPLETED'
+                                        ? "bg-green-100 text-green-800"
+                                        : getEventStatus(event) === 'ONGOING'
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-blue-100 text-blue-800"
+                                }`}
+                            >
+                                {getEventStatus(event)}
+                            </span>
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
                                     nextImage();
                                 }}
-                                className="absolute top-1/2 right-3 -translate-y-1/2 bg-black/40 text-white text-lg p-2 rounded-full hover:bg-black/60"
+                                className="absolute top-1/2 right-3 -translate-y-1/2 bg-black/40 text-white text-lg p-2 rounded-full hover:bg-black/60 z-10"
                             >
                                 ›
                             </button>

@@ -29,6 +29,15 @@ export default function CreateBracket({ events = [] }) {
     const [isBracketModalOpen, setIsBracketModalOpen] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [pendingEvent, setPendingEvent] = useState(null);
+    const [showEventStatusWarning, setShowEventStatusWarning] = useState(false);
+    const [pendingAction, setPendingAction] = useState(null);
+
+    // Check if an event is ongoing
+    const isEventOngoing = (event) => {
+        if (!event) return false;
+        const today = new Date().toISOString().split('T')[0];
+        return today >= event.event_date && !event.is_done;
+    };
 
     const handleTeamCountSelection = async (count) => {
         if (!selectedEvent || !bracketType) {
@@ -150,6 +159,13 @@ export default function CreateBracket({ events = [] }) {
                                     <div className="flex flex-col space-y-3">
                                         <button
                                             onClick={() => {
+                                                if (!isEventOngoing(event)) {
+                                                    setPendingEvent(event);
+                                                    setPendingAction('create');
+                                                    setShowEventStatusWarning(true);
+                                                    return;
+                                                }
+                                                
                                                 if (event.bracket_type) {
                                                     setPendingEvent(event);
                                                     setShowConfirmation(true);
@@ -170,6 +186,13 @@ export default function CreateBracket({ events = [] }) {
                                         </button>
                                         <button
                                             onClick={() => {
+                                                if (!isEventOngoing(event)) {
+                                                    setPendingEvent(event);
+                                                    setPendingAction('view');
+                                                    setShowEventStatusWarning(true);
+                                                    return;
+                                                }
+                                                
                                                 if (event.bracket_type && event.teams) {
                                                     const isCurrentEventActive = selectedEvent?.id === event.id && isBracketModalOpen;
                                                     if (isCurrentEventActive) {
@@ -254,6 +277,82 @@ export default function CreateBracket({ events = [] }) {
                                                     }}
                                                 >
                                                     Yes, Reset Bracket
+                                                </button>
+                                            </div>
+                                        </Dialog.Panel>
+                                    </Transition.Child>
+                                </div>
+                            </div>
+                        </Dialog>
+                    </Transition>
+
+                    {/* Event Status Warning Dialog */}
+                    <Transition appear show={showEventStatusWarning} as={Fragment}>
+                        <Dialog as="div" className="relative z-50" onClose={() => setShowEventStatusWarning(false)}>
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0"
+                                enterTo="opacity-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100"
+                                leaveTo="opacity-0"
+                            >
+                                <div className="fixed inset-0 bg-black/50" />
+                            </Transition.Child>
+
+                            <div className="fixed inset-0 overflow-y-auto">
+                                <div className="flex min-h-full items-center justify-center p-4 text-center">
+                                    <Transition.Child
+                                        as={Fragment}
+                                        enter="ease-out duration-300"
+                                        enterFrom="opacity-0 scale-95"
+                                        enterTo="opacity-100 scale-100"
+                                        leave="ease-in duration-200"
+                                        leaveFrom="opacity-100 scale-100"
+                                        leaveTo="opacity-0 scale-95"
+                                    >
+                                        <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-yellow-900/90 p-6 text-left align-middle shadow-xl transition-all border border-yellow-700">
+                                            <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-yellow-100">
+                                                ⚠️ Event Not Ongoing
+                                            </Dialog.Title>
+                                            <div className="mt-2">
+                                                <p className="text-sm text-yellow-200">
+                                                    This event is not currently ongoing. Are you sure you want to {pendingAction === 'create' ? 'create a bracket' : 'view the bracket'}?
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-6 flex justify-end space-x-3">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex justify-center rounded-md border border-yellow-600 px-4 py-2 text-sm font-medium text-yellow-100 hover:bg-yellow-800/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+                                                    onClick={() => setShowEventStatusWarning(false)}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex justify-center rounded-md border border-transparent bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+                                                    onClick={() => {
+                                                        setShowEventStatusWarning(false);
+                                                        if (pendingAction === 'create') {
+                                                            if (pendingEvent.bracket_type) {
+                                                                setShowConfirmation(true);
+                                                            } else {
+                                                                setSelectedEvent(pendingEvent);
+                                                                setBracketType(null);
+                                                                setTeamCount(null);
+                                                                setIsBracketModalOpen(false);
+                                                            }
+                                                        } else {
+                                                            setSelectedEvent(pendingEvent);
+                                                            setBracketType(pendingEvent.bracket_type);
+                                                            setTeamCount(pendingEvent.teams);
+                                                            setIsBracketModalOpen(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    Continue Anyway
                                                 </button>
                                             </div>
                                         </Dialog.Panel>
