@@ -852,23 +852,55 @@ function Dashboard() {
         return new Date(year, month, day, hour, minute, 0);
     };
 
-    // Format date and time for display
-    const formatDateTime = (dateTimeString) => {
+    // Format date and time for display with AM/PM
+    const formatDateTime = (dateTimeString, includeTime = true) => {
         const parsed = parseDateTimeValue(dateTimeString);
         if (!parsed) return '';
-        return parsed.toLocaleString('en-US', {
+        
+        const options = {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
             hour12: true
-        });
+        };
+        
+        if (includeTime) {
+            options.hour = '2-digit';
+            options.minute = '2-digit';
+        }
+        
+        // For mobile view, always include time in 12-hour format with AM/PM
+        const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+        
+        if (isMobile || includeTime) {
+            options.hour = '2-digit';
+            options.minute = '2-digit';
+            options.hour12 = true;
+        }
+        
+        return parsed.toLocaleString('en-US', options);
     };
 
     const formatDateOnly = (dateString) => {
         const parsed = parseDateTimeValue(`${dateString ?? ''}T00:00`);
         if (!parsed) return '';
+        
+        // Check if we're on mobile
+        const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+        
+        // For mobile, include time in 12-hour format with AM/PM
+        if (isMobile) {
+            return parsed.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+        
+        // For desktop, just show the date
         return parsed.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
