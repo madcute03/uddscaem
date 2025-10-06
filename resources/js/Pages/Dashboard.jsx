@@ -45,6 +45,54 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
+    const [isAm, setIsAm] = useState(parsedInitial ? parsedInitial.getHours() < 12 : true);
+    const [isMobile, setIsMobile] = useState(false);
+    
+    // Convert 24h time to 12h format for display
+    const to12HourFormat = (time24) => {
+        if (!time24) return { hours: '12', minutes: '00', isAm: true };
+        const [h, m] = time24.split(':');
+        const hours = parseInt(h, 10);
+        const isAm = hours < 12;
+        const displayHours = hours % 12 || 12;
+        return {
+            hours: String(displayHours).padStart(2, '0'),
+            minutes: m || '00',
+            isAm
+        };
+    };
+    
+    // Convert 12h time to 24h format for storage
+    const to24HourFormat = (hours, minutes, isAm) => {
+        let h = parseInt(hours, 10);
+        if (!isAm && h < 12) h += 12;
+        if (isAm && h === 12) h = 0;
+        return `${String(h).padStart(2, '0')}:${minutes}`;
+    };
+    
+    // Initialize display time in 12h format
+    const [displayTime, setDisplayTime] = useState(() => {
+        const time12h = to12HourFormat(initialTime);
+        return {
+            hours: time12h.hours,
+            minutes: time12h.minutes
+        };
+    });
+
+    useEffect(() => {
+        const checkIfMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        // Initial check
+        checkIfMobile();
+        
+        // Add event listener for window resize
+        window.addEventListener('resize', checkIfMobile);
+        
+        // Cleanup
+        return () => window.removeEventListener('resize', checkIfMobile);
+    }, []);
 
     const formatDateTime = (dateTime) => {
         const parsed = parseDateTimeValue(dateTime);
@@ -72,12 +120,46 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         }
     };
 
-    const handleTimeChange = (e) => {
-        const newTime = e.target.value;
-        setTimeValue(newTime);
-        // Only update the date time if we have a date value
+    const convertTo24Hour = (time12h, isAm) => {
+        const [hours, minutes] = time12h.split(':').map(Number);
+        let hours24 = hours % 12;
+        if (!isAm) {
+            hours24 += 12;
+        }
+        return `${String(hours24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    };
+
+    const handleTimeChange = (field, value) => {
+        const newDisplayTime = {
+            ...displayTime,
+            [field]: value
+        };
+        
+        // Update display
+        setDisplayTime(newDisplayTime);
+        
+        // Convert to 24h format and update the actual time value
         if (dateValue) {
-            updateDateTime(dateValue, newTime);
+            const time24 = to24HourFormat(
+                newDisplayTime.hours,
+                newDisplayTime.minutes,
+                isAm
+            );
+            setTimeValue(time24);
+            updateDateTime(dateValue, time24);
+        }
+    };
+
+    const handleAmPmToggle = (newIsAm) => {
+        setIsAm(newIsAm);
+        if (dateValue && displayTime.hours && displayTime.minutes) {
+            const time24 = to24HourFormat(
+                displayTime.hours,
+                displayTime.minutes,
+                newIsAm
+            );
+            setTimeValue(time24);
+            updateDateTime(dateValue, time24);
         }
     };
 
@@ -275,12 +357,61 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                         <label className="block text-sm font-medium text-slate-300 mb-2">
                                             Selected Date: {dateValue ? formatDate(dateValue) : 'No date selected'}
                                         </label>
-                                        <input
-                                            type="time"
-                                            value={timeValue}
-                                            onChange={handleTimeChange}
-                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                        />
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 flex items-center gap-2">
+                                                    <div className="relative flex-1">
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="12"
+                                                            value={displayTime.hours}
+                                                            onChange={(e) => {
+                                                                let val = parseInt(e.target.value, 10);
+                                                                if (val > 12) val = 12;
+                                                                if (val < 1) val = 1;
+                                                                handleTimeChange('hours', String(val).padStart(2, '0'));
+                                                            }}
+                                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                        />
+                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">H</span>
+                                                    </div>
+                                                    <span className="text-slate-300">:</span>
+                                                    <div className="relative flex-1">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            max="59"
+                                                            value={displayTime.minutes}
+                                                            onChange={(e) => {
+                                                                let val = parseInt(e.target.value, 10);
+                                                                if (val > 59) val = 59;
+                                                                if (val < 0) val = 0;
+                                                                handleTimeChange('minutes', String(val).padStart(2, '0'));
+                                                            }}
+                                                            className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-md px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                        />
+                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">M</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex border border-slate-600 rounded-md overflow-hidden">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAmPmToggle(true)}
+                                                        className={`px-3 py-2 text-sm font-medium ${isAm ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                                    >
+                                                        AM
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAmPmToggle(false)}
+                                                        className={`px-3 py-2 text-sm font-medium ${!isAm ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                                    >
+                                                        PM
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
