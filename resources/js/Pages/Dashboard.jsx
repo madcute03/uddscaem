@@ -1651,8 +1651,6 @@ function Dashboard() {
                                                 </div>
                                             </div>
 
-                                            <p className="text-gray-300 mb-3">{event.description}</p>
-
                                             <div className="text-sm text-gray-400 space-y-3 mb-4">
                                                 <div className="flex items-start gap-2">
                                                     <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1690,7 +1688,7 @@ function Dashboard() {
                                                     <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
-                                                    <div>
+                                                    <div className="py-4">
                                                         <p className="text-xs uppercase tracking-wide text-slate-500">Coordinator</p>
                                                         <p className="text-slate-200">{event.coordinator_name || 'TBD'}</p>
                                                     </div>
@@ -1732,7 +1730,7 @@ function Dashboard() {
                                             </div>
 
                                             {cardImages.length > 0 && (
-                                                <div className="mt-3 relative h-32 overflow-hidden rounded-lg bg-slate-700/30 group">
+                                                <div className="mt-3 relative h-60 overflow-hidden rounded-lg bg-slate-700/30 group">
                                                     <div className="absolute inset-0 flex transition-transform duration-300 ease-in-out"
                                                         style={{ transform: `translateX(-${currentSlide[event.id] || 0}%)` }}>
                                                         {cardImages.map((imgPath, idx) => (
@@ -1746,44 +1744,6 @@ function Dashboard() {
                                                         ))}
                                                     </div>
 
-                                                    {/* Navigation Buttons */}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const current = currentSlide[event.id] || 0;
-                                                            const newSlide = current > 0 ? current - 100 : (cardImages.length - 1) * 100;
-                                                            setCurrentSlide({ ...currentSlide, [event.id]: newSlide });
-                                                        }}
-                                                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black/70"
-                                                    >
-                                                        ❮
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const current = currentSlide[event.id] || 0;
-                                                            const newSlide = current < (cardImages.length - 1) * 100 ? current + 100 : 0;
-                                                            setCurrentSlide({ ...currentSlide, [event.id]: newSlide });
-                                                        }}
-                                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black/70"
-                                                    >
-                                                        ❯
-                                                    </button>
-
-                                                    {/* Dots Indicator */}
-                                                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                                                        {cardImages.map((_, idx) => (
-                                                            <button
-                                                                key={idx}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setCurrentSlide({ ...currentSlide, [event.id]: idx * 100 });
-                                                                }}
-                                                                className={`w-2 h-2 rounded-full transition-all duration-300 ${(currentSlide[event.id] || 0) / 100 === idx ? 'bg-white w-4' : 'bg-white/30'}`}
-                                                                aria-label={`Go to slide ${idx + 1}`}
-                                                            />
-                                                        ))}
-                                                    </div>
                                                 </div>
                                             )}
                                         </div>
