@@ -7,6 +7,7 @@ const getEventStatus = (event) => {
     // Get current time in local timezone
     const now = new Date();
     
+    // If event is marked as done, return DONE
     if (event.is_done) {
         return 'DONE';
     }
@@ -28,6 +29,16 @@ const getEventStatus = (event) => {
         eventStart = new Date(year, month - 1, day, hours, minutes);
     }
 
+    // If no valid start date, consider it as DONE
+    if (!eventStart || isNaN(eventStart.getTime())) {
+        return 'DONE';
+    }
+
+    // If current time is before event start time
+    if (now < eventStart) {
+        return 'UPCOMING';
+    }
+
     // Parse event end date if it exists
     if (event.event_end_date) {
         const [datePart, timePart] = event.event_end_date.split('T');
@@ -41,25 +52,11 @@ const getEventStatus = (event) => {
         
         // Create date in local timezone
         eventEnd = new Date(year, month - 1, day, hours, minutes);
-        
-        if (isNaN(eventEnd.getTime())) {
-            eventEnd = null;
-        }
     }
 
-    // If no start date, show as pending
-    if (!eventStart || isNaN(eventStart.getTime())) {
-        return 'PENDING';
-    }
-
-    // If current time is before event start time
-    if (now < eventStart) {
-        return 'UPCOMING';
-    }
-
-    // If there's an end date and we're past it
-    if (eventEnd && now > eventEnd) {
-        return 'COMPLETED';
+    // If there's a valid end date and we're past it, mark as DONE
+    if (eventEnd && !isNaN(eventEnd.getTime()) && now > eventEnd) {
+        return 'DONE';
     }
 
     // If we're between start and end time, or if there's no end time and we're past start time
@@ -140,17 +137,6 @@ export default function EventTabs({ events }) {
                             >
                                 ‹
                             </button>
-                            <span
-                                className={`absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium z-10 ${
-                                    getEventStatus(event) === 'DONE' || getEventStatus(event) === 'COMPLETED'
-                                        ? "bg-green-100 text-green-800"
-                                        : getEventStatus(event) === 'ONGOING'
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-blue-100 text-blue-800"
-                                }`}
-                            >
-                                {getEventStatus(event)}
-                            </span>
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
