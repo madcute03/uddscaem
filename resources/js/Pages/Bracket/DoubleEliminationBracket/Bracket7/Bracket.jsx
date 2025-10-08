@@ -248,23 +248,24 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                     ))}
                 </svg>
 
-                <div className="flex gap-4 sm:gap-6 min-w-max w-full">
+                <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full pr-[1200px] overflow-visible">
                     {/* Left Column - Brackets */}
                     <div className="w-3/4">
                         {/* Upper Bracket */}
                         <div className="mb-8">
                             <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
-                            <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-                                <div className="space-y-2 sm:space-y-3">
+                            <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
+                                <div className="space-y-3 sm:space-y-4">
                                     {renderMatch("UB1")}
                                     {renderMatch("UB2")}
                                     {renderMatch("UB3")}
                                 </div>
-                                <div className="mt-8">
+                                <div className="mt-10">
                                     {renderMatch("UB5")}
+                                    <div className="h-24"></div>
                                     {renderMatch("UB6")}
                                 </div>
-                                <div className="mt-16">
+                                <div className="mt-12">
                                     {renderMatch("UB7")}
                                 </div>
                             </div>
@@ -273,17 +274,17 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                         {/* Lower Bracket */}
                         <div>
                             <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
-                            <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-                                <div className="space-y-2 sm:space-y-3">
+                            <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
+                                <div className="space-y-3 sm:space-y-4">
                                     <div className="h-8"></div>
                                     {renderMatch("LB1")}
                                     {renderMatch("LB2")}
                                 </div>
-                                <div className="mt-8">
+                                <div className="mt-10 space-y-10">
                                     {renderMatch("LB3")}
                                     {renderMatch("LB4")}
                                 </div>
-                                <div className="mt-16">
+                                <div className="mt-12">
                                     {renderMatch("LB5")}
                                 </div>
                             </div>
@@ -291,7 +292,7 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                     </div>
 
                     {/* Right Column - Grand Final */}
-                    <div className="w-1/4 flex items-center">
+                    <div className="absolute left-[850px] sm:left-[1100px] md:left-[1100px] lg:left-[1100px] top-1/2 transform -translate-y-1/2">
                         <div className="w-full">
                             <h2 className="font-bold text-sm mb-3 text-center">Grand Final</h2>
                             {renderMatch("GF")}
