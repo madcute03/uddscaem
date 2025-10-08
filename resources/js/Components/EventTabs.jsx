@@ -179,28 +179,41 @@ export default function EventTabs({ events }) {
     return (
         <div className="space-y-20 md:space-y-24 w-full">
             {/* Upcoming Section */}
-            <section className="w-full">
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
-                    Upcoming Events
-                </h2>
-                <div>{renderEvents(upcomingEvents)}</div>
-            </section>
+            {upcomingEvents.length > 0 && (
+                <section className="w-full">
+                    <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
+                        Upcoming Events
+                    </h2>
+                    <div>{renderEvents(upcomingEvents)}</div>
+                </section>
+            )}
 
             {/* Ongoing Section */}
-            <section className="w-full">
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
-                    Ongoing Events
-                </h2>
-                <div>{renderEvents(ongoingEvents)}</div>
-            </section>
+            {ongoingEvents.length > 0 && (
+                <section className="w-full">
+                    <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
+                        Ongoing Events
+                    </h2>
+                    <div>{renderEvents(ongoingEvents)}</div>
+                </section>
+            )}
 
             {/* Recent Section */}
-            <section className="w-full">
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
-                    Recent Events
-                </h2>
-                <div>{renderEvents(recentEvents)}</div>
-            </section>
+            {recentEvents.length > 0 && (
+                <section className="w-full">
+                    <h2 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-10 text-cyan-300 text-center">
+                        Recent Events
+                    </h2>
+                    <div>{renderEvents(recentEvents)}</div>
+                </section>
+            )}
+
+            {/* Show message if no events at all */}
+            {upcomingEvents.length === 0 && ongoingEvents.length === 0 && recentEvents.length === 0 && (
+                <div className="text-center py-12">
+                    <p className="text-xl text-slate-400">No events available at the moment. Please check back later.</p>
+                </div>
+            )}
         </div>
     );
 }
