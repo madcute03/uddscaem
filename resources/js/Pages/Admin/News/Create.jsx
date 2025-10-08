@@ -25,14 +25,25 @@ const modules = {
 ReactQuill.Quill.register('modules/imageResize', ImageResize);
 
 export default function CreateNews({ existingCategories }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors = {} } = useForm({
         title: '',
         description: '',
         image: null,
         category: '',
         newCategory: '',
         showNewCategoryInput: false,
+        errors: {}
     });
+    
+    // Ensure we have default values to prevent undefined errors
+    const formData = {
+        title: data.title || '',
+        description: data.description || '',
+        image: data.image || null,
+        category: data.category || '',
+        newCategory: data.newCategory || '',
+        showNewCategoryInput: data.showNewCategoryInput || false
+    };
 
     const [preview, setPreview] = useState(null);
     const quillRef = useRef(null);
@@ -52,20 +63,46 @@ export default function CreateNews({ existingCategories }) {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Client-side validation with null/undefined check
+        const title = (data.title || '').trim();
+        if (!title) {
+            setData('errors', { ...errors, title: 'The title field is required.' });
+            return;
+        }
+        
+        // Clear any previous errors
+        const newErrors = {};
         
         // Prepare form data with the appropriate category
         const formData = new FormData();
-        formData.append('title', data.title);
-        formData.append('description', data.description);
-        formData.append('image', data.image);
+        formData.append('title', title);
+        formData.append('description', data.description || '');
         
-        // If showing new category input, use newCategory, otherwise use the selected category
-        if (data.showNewCategoryInput && data.newCategory) {
-            formData.append('newCategory', data.newCategory);
+        if (data.image) {
+            formData.append('image', data.image);
+        }
+        
+        // Category validation
+        if (data.showNewCategoryInput) {
+            const newCategory = (data.newCategory || '').trim();
+            if (!newCategory) {
+                newErrors.category = 'Please enter a category name.';
+            } else {
+                formData.append('newCategory', newCategory);
+            }
+        } else if (!data.category) {
+            newErrors.category = 'Please select a category.';
         } else {
             formData.append('category', data.category);
+        }
+        
+        // If there are validation errors, update state and return
+        if (Object.keys(newErrors).length > 0) {
+            setData('errors', { ...errors, ...newErrors });
+            return;
         }
         
         post(route('admin.news.store'), formData, {
@@ -267,6 +304,7 @@ export default function CreateNews({ existingCategories }) {
                     </Link>
                 </div>
             }
+            suppressHydrationWarning={true}
         >
             <Head title="Create News" />
             <style>{`
@@ -348,15 +386,16 @@ export default function CreateNews({ existingCategories }) {
                                 {/* Title */}
                                 <div>
                                     <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-2">
-                                        Title
+                                        Title <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         id="title"
-                                        value={data.title}
+                                        value={formData.title}
                                         onChange={e => setData('title', e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Enter news title"
+                                        required
                                     />
                                     {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
                                 </div>
@@ -368,18 +407,21 @@ export default function CreateNews({ existingCategories }) {
                                     </label>
                                     
                                     <select
-                                        value={data.showNewCategoryInput ? 'new' : data.category}
+                                        value={formData.showNewCategoryInput ? 'new' : formData.category}
                                         onChange={(e) => {
                                             if (e.target.value === 'new') {
                                                 setData({
+                                                    ...data,
                                                     showNewCategoryInput: true,
                                                     category: '',
                                                     newCategory: ''
                                                 });
                                             } else {
                                                 setData({
+                                                    ...data,
                                                     showNewCategoryInput: false,
-                                                    category: e.target.value
+                                                    category: e.target.value,
+                                                    errors: { ...errors, category: '' }
                                                 });
                                             }
                                         }}
@@ -394,14 +436,14 @@ export default function CreateNews({ existingCategories }) {
                                         <option value="new">+New Category</option>
                                     </select>
 
-                                    {data.showNewCategoryInput && (
+                                    {formData.showNewCategoryInput && (
                                         <input
                                             type="text"
-                                            value={data.newCategory}
+                                            value={formData.newCategory}
                                             onChange={e => setData('newCategory', e.target.value)}
-                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-3 py-2 mt-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Enter new category name"
-                                            autoFocus
+                                            required={formData.showNewCategoryInput}
                                         />
                                     )}
                                     {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
@@ -457,11 +499,12 @@ export default function CreateNews({ existingCategories }) {
                                         <ReactQuill
                                             ref={quillRef}
                                             theme="snow"
-                                            value={data.description}
+                                            value={formData.description}
                                             onChange={(value) => setData('description', value)}
                                             className="bg-slate-800 text-slate-100 rounded-b-md"
                                             placeholder="Write news description here..."
                                             modules={modules}
+                                            style={{ minHeight: '200px' }}
                                         />
                                     </div>
                                     {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}

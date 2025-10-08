@@ -102,32 +102,41 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
                         {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                     </svg>
 
-                    <div className="flex flex-col gap-4 sm:gap-6 min-w-max pr-[500px] overflow-visible">
+                    <div className="flex flex-col gap-20 sm:gap-16 min-w-max pr-[1200px] overflow-visible">
                         <div className="mb-6">
                             <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
-                            <div className="flex gap-24 sm:gap-32 md:gap-40 lg:gap-48">
-                                <div className="space-y-2 sm:space-y-3">{renderMatch("UB1")}{renderMatch("UB2")}{renderMatch("UB3")}</div>
-                                <div className="mt-8">
+                            <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
+                                <div className="space-y-3 sm:space-y-4">
+                                    {renderMatch("UB1")}
+                                    {renderMatch("UB2")}
+                                    {renderMatch("UB3")}
+                                </div>
+                                <div className="mt-10">
                                     {renderMatch("UB5")}
+                                    <div className="h-24"></div>
                                     {renderMatch("UB6")}
                                 </div>
-                                <div className="mt-16">{renderMatch("UB7")}</div>
+                                <div className="mt-12">{renderMatch("UB7")}</div>
                             </div>
                         </div>
 
                         <div>
                             <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
-                            <div className="flex gap-24 sm:gap-32 md:gap-40 lg:gap-48">
-                                <div className="space-y-2 sm:space-y-3">
+                            <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
+                                <div className="space-y-3 sm:space-y-4">
                                     <div className="h-8"></div>
-                                    {renderMatch("LB1")}{renderMatch("LB2")}
+                                    {renderMatch("LB1")}
+                                    {renderMatch("LB2")}
                                 </div>
-                                <div className="mt-8 space-y-10">{renderMatch("LB3")}{renderMatch("LB4")}</div>
-                                <div className="mt-16">{renderMatch("LB5")}</div>
+                                <div className="mt-10 space-y-10">
+                                    {renderMatch("LB3")}
+                                    {renderMatch("LB4")}
+                                </div>
+                                <div className="mt-12">{renderMatch("LB5")}</div>
                             </div>
                         </div>
 
-                        <div className="absolute left-[900px] top-1/2 transform -translate-y-1/2">
+                        <div className="absolute left-[850px] sm:left-[1100px] md:left-[1100px] lg:left-[1100px] top-1/2 transform -translate-y-1/2">
                             {renderMatch("GF")}
                             {champion && <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">🏆 {champion} 🏆</h2>}
                         </div>

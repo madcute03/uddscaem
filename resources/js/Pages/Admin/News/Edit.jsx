@@ -118,7 +118,7 @@ export default function EditNews({ news, categories }) {
             formData.append('category', data.category);
         }
         
-        post(route('admin.news.update', news.id), formData, {
+        put(route('admin.news.update', news.id), formData, {
             forceFormData: true,
             onError: (errors) => {
                 // Handle errors if needed
@@ -278,19 +278,22 @@ export default function EditNews({ news, categories }) {
                     };
 
                     // Add event listeners
-                    editorContainer.addEventListener('click', handleImageClick);
-                    editor.root.addEventListener('click', handleEditorClick);
-                    document.addEventListener('mousedown', handleMouseDown);
-                    document.addEventListener('mousemove', handleMouseMove);
-                    document.addEventListener('mouseup', handleMouseUp);
+                    const eventListeners = [
+                        { target: editorContainer, type: 'click', handler: handleImageClick },
+                        { target: editor.root, type: 'click', handler: handleEditorClick },
+                        { target: document, type: 'mousedown', handler: handleMouseDown },
+                    ];
+
+                    // Add event listeners
+                    eventListeners.forEach(({ target, type, handler }) => {
+                        target.addEventListener(type, handler);
+                    });
 
                     // Cleanup function
                     return () => {
-                        editorContainer.removeEventListener('click', handleImageClick);
-                        editor.root.removeEventListener('click', handleEditorClick);
-                        document.removeEventListener('mousedown', handleMouseDown);
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
+                        eventListeners.forEach(({ target, type, handler }) => {
+                            target.removeEventListener(type, handler);
+                        });
                     };
                 } catch (error) {
                     console.warn('Editor not ready for image manipulation setup:', error);
@@ -304,6 +307,15 @@ export default function EditNews({ news, categories }) {
 
         return cleanup;
     }, []);
+
+    // Fix ReactQuill findDOMNode warning by using a custom wrapper
+    const QuillWrapper = ({ forwardedRef, ...props }) => {
+        const { enabled = true } = props;
+        if (enabled) {
+            return <ReactQuill ref={forwardedRef} {...props} />;
+        }
+        return <div ref={forwardedRef} className="hidden" />;
+    };
 
     return (
         <AuthenticatedLayout
@@ -565,8 +577,9 @@ export default function EditNews({ news, categories }) {
                                     <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-2">
                                         Description
                                     </label>
-                                    <ReactQuill
+                                    <QuillWrapper
                                         ref={quillRef}
+                                        forwardedRef={quillRef}
                                         theme="snow"
                                         value={data.description}
                                         onChange={(value) => setData('description', value)}

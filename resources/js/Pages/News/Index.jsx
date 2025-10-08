@@ -1,10 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function NewsIndex({ news }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [isMobile, setIsMobile] = useState(false);
+    const [expandedCards, setExpandedCards] = useState({});
+    const contentRefs = useRef({});
 
     // Check if mobile on component mount and window resize
     useEffect(() => {
@@ -97,14 +99,11 @@ export default function NewsIndex({ news }) {
                 {filteredNews.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                         {filteredNews.map((article) => (
-                            <Link 
+                            <article 
                                 key={article.id}
-                                href={route('news.show', article.slug)}
-                                className="block group"
+                                className="h-full flex flex-col bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <article 
-                                    className="h-full flex flex-col bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
-                                >
+                                <Link href={route('news.show', article.slug)} className="block group">
                                     <div className="relative overflow-hidden flex-shrink-0">
                                         <div className="aspect-w-16 aspect-h-9 w-full">
                                             <img
@@ -120,29 +119,63 @@ export default function NewsIndex({ news }) {
                                             </span>
                                         </div>
                                     </div>
+                                </Link>
 
-                                    <div className="p-5 flex-1 flex flex-col">
-                                        <div className="flex items-center text-xs text-slate-400 mb-3">
-                                            <span>By <span className="text-blue-300">{article.writer_name}</span></span>
-                                            <span className="mx-2">•</span>
-                                            <span>{formatDate(article.date)}</span>
-                                        </div>
+                                <div className="p-5 flex-1 flex flex-col">
+                                    <div className="flex items-center text-xs text-slate-400 mb-3">
+                                        <span>By <span className="text-blue-300">{article.writer_name}</span></span>
+                                        <span className="mx-2">•</span>
+                                        <span>{formatDate(article.date)}</span>
+                                    </div>
 
+                                    <Link href={route('news.show', article.slug)} className="group">
                                         <h2 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors line-clamp-2">
                                             {article.title}
                                         </h2>
-                                        <p className="text-slate-400 text-sm mb-4 line-clamp-3">
-                                            {article.description}
-                                        </p>
-                                        <div className="mt-auto pt-3 border-t border-slate-700/50 flex items-center justify-between text-sm text-slate-500">
-                                            <span className="text-xs sm:text-sm">{article.views || 0} views</span>
-                                            <span className="text-blue-400 hover:text-blue-300 font-medium text-sm">
-                                                Read more →
-                                            </span>
+                                    </Link>
+                                    
+                                    <div className="relative">
+                                        <div 
+                                            ref={el => contentRefs.current[article.id] = el}
+                                            className={`text-slate-400 text-sm mb-4 overflow-hidden transition-all duration-300 ${
+                                                expandedCards[article.id] ? 'max-h-full' : 'max-h-[4.5rem]'
+                                            }`}
+                                        >
+                                            <div dangerouslySetInnerHTML={{ 
+                                                __html: article.description 
+                                                    .replace(/<img[^>]+src=["']data:image\/[^;]+;base64[^"']+["'][^>]*>/g, '') 
+                                            }} />
                                         </div>
+                                        
+                                        {(!expandedCards[article.id] && contentRefs.current[article.id]?.scrollHeight > 100) && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-slate-900 to-transparent flex items-end justify-center pb-1">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setExpandedCards(prev => ({
+                                                            ...prev,
+                                                            [article.id]: true
+                                                        }));
+                                                    }}
+                                                    className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                                                >
+                                                    Read More
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                </article>
-                            </Link>
+                                    
+                                    <div className="mt-auto pt-3 border-t border-slate-700/50 flex items-center justify-between text-sm text-slate-500">
+                                        <span className="text-xs sm:text-sm">{article.views || 0} views</span>
+                                        <Link 
+                                            href={route('news.show', article.slug)}
+                                            className="text-blue-400 hover:text-blue-300 font-medium text-sm"
+                                        >
+                                            Read full article →
+                                        </Link>
+                                    </div>
+                                </div>
+                            </article>
                         ))}
                     </div>
                 ) : (
