@@ -33,6 +33,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Redirect writers to news management, others to dashboard
+        if (auth()->user()->role === 'writer') {
+            return redirect()->route('admin.news.index');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

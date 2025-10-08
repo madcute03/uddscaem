@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -9,9 +9,15 @@ export default function EditWriter({ auth, writer }) {
         bio: writer.writer_profile?.bio || '',
         specialization: writer.writer_profile?.specialization || '',
         status: writer.writer_profile?.status || 'active',
+        role: writer.role || 'writer',
         password: '',
         password_confirmation: '',
     });
+    
+    const roles = [
+        { value: 'admin', label: 'Administrator' },
+        { value: 'writer', label: 'Writer' },
+    ];
 
     const [isEditingPassword, setIsEditingPassword] = useState(false);
 
@@ -21,16 +27,21 @@ export default function EditWriter({ auth, writer }) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 leading-tight">Edit Writer</h2>
-                </div>
-            }
-        >
+        <AuthenticatedLayout>
             <Head title="Edit Writer" />
 
             <div className="py-12">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+                    <Link
+                        href={route('admin.writers.index')}
+                        className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors"
+                    >
+                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Writers
+                    </Link>
+                </div>
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-slate-900 overflow-hidden shadow-sm sm:rounded-lg border border-slate-700">
                         <div className="p-6">
@@ -137,6 +148,28 @@ export default function EditWriter({ auth, writer }) {
                                     />
                                     {errors.specialization && <p className="mt-1 text-sm text-red-500">{errors.specialization}</p>}
                                 </div>
+
+                                {/* Role (Admin only) */}
+                                {auth?.user?.role === 'admin' && (
+                                    <div>
+                                        <label htmlFor="role" className="block text-sm font-medium text-slate-300 mb-2">
+                                            Role
+                                        </label>
+                                        <select
+                                            id="role"
+                                            value={data.role}
+                                            onChange={e => setData('role', e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            {roles.map((role) => (
+                                                <option key={role.value} value={role.value}>
+                                                    {role.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
+                                    </div>
+                                )}
 
                                 {/* Status (Admin only) */}
                                 {auth?.user?.role === 'admin' && (

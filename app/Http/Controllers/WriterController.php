@@ -16,9 +16,10 @@ class WriterController extends Controller
      */
     public function index()
     {
-        $writers = User::where('role', 'writer')
+        $writers = User::whereIn('role', ['admin', 'writer'])
             ->with('writerProfile')
             ->withCount('news')
+            ->orderBy('name')
             ->get();
 
         return inertia('Admin/Writers/Index', [
@@ -105,6 +106,7 @@ class WriterController extends Controller
             'specialization' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'confirmed', 'min:8'],
             'status' => ['sometimes', 'required', 'in:active,inactive'],
+            'role' => ['sometimes', 'required', 'in:admin,editor,writer,user'],
         ]);
 
         // Update user data
@@ -112,6 +114,11 @@ class WriterController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
         ];
+
+        // Only update role if it's provided and user is admin
+        if (auth()->user()->role === 'admin' && isset($validated['role'])) {
+            $userData['role'] = $validated['role'];
+        }
 
         // Only update password if it's provided
         if (!empty($validated['password'])) {

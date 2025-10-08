@@ -73,17 +73,7 @@ export default function Login({ status, canResetPassword }) {
                             </div>
 
                             <div className="mt-4">
-                                <div className="flex justify-between items-center">
-                                    <InputLabel htmlFor="password" value="Password" className="text-slate-200" />
-                                    {canResetPassword && (
-                                        <Link
-                                            href={route('password.request')}
-                                            className="text-xs text-slate-300 hover:text-white hover:underline"
-                                        >
-                                            Forgot Password?
-                                        </Link>
-                                    )}
-                                </div>
+                                <InputLabel htmlFor="password" value="Password" className="text-slate-200" />
                                 <div className="relative">
                                     <TextInput
                                         id="password"
@@ -102,11 +92,13 @@ export default function Login({ status, canResetPassword }) {
                                     >
                                         {showPassword ? (
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                                                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l2.112 2.112A11.7 11.7 0 0 0 1.293 12c1.258 3.67 4.95 6.75 10.207 6.75 2.087 0 3.884-.47 5.38-1.24l3.59 3.59a.75.75 0 1 0 1.06-1.06L3.53 2.47ZM12.75 14.56l1.69 1.69a3.75 3.75 0 0 1-5.39-5.19l1.68 1.68a1.5 1.5 0 0 0 2.02 1.82ZM12 6.75c5.257 0 8.95 3.08 10.207 6.75-.598 1.747-1.77 3.33-3.388 4.532l-2.032-2.032A6 6 0 0 0 9.75 8.063V7.5A10.4 10.4 0 0 1 12 6.75Z" />
+                                                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l18 18a.75.75 0 1 0 1.06-1.06l-18-18zM22.676 12.553a11.249 11.249 0 01-2.631 3.31l-1.37-1.37a9.75 9.75 0 001.413-4.093 10.4 10.4 0 00-9.5-9.5 9.75 9.75 0 00-4.093 1.413L7.136 3.97A11.25 11.25 0 0122.676 12.553z" />
+                                                <path d="M15.75 12c0 .18-.013.357-.037.53l-4.244-4.243A3.75 3.75 0 0115.75 12zM12.53 15.713L8.287 11.47a3.75 3.75 0 004.243 4.243z" />
                                             </svg>
                                         ) : (
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                                                <path d="M12 5.25C6.743 5.25 3.05 8.33 1.793 12c1.257 3.67 4.95 6.75 10.207 6.75S20.95 15.67 22.207 12C20.95 8.33 17.257 5.25 12 5.25Zm0 10.5a3.75 3.75 0 1 1 0-7.5 3.75 3.75 0 0 1 0 7.5Z" />
+                                                <path d="M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
+                                                <path fillRule="evenodd" d="M1.5 12c0-2.388 2.524-5.25 7.5-5.25 4.976 0 7.5 2.862 7.5 5.25s-2.524 5.25-7.5 5.25c-4.976 0-7.5-2.862-7.5-5.25zM18 12c0-1.5 1.5-3.75 5.25-3.75 3.75 0 5.25 2.25 5.25 3.75s-1.5 3.75-5.25 3.75c-3.75 0-5.25-2.25-5.25-3.75z" clipRule="evenodd" />
                                             </svg>
                                         )}
                                     </button>
@@ -120,21 +112,6 @@ export default function Login({ status, canResetPassword }) {
                                 </PrimaryButton>
                             </div>
                         </form>
-
-                        <div className="mt-6 flex items-center justify-between text-slate-300">
-                            <span className="border-b border-slate-300/30 w-1/5 md:w-1/4" />
-                            <span className="text-xs uppercase">or sign up</span>
-                            <span className="border-b border-slate-300/30 w-1/5 md:w-1/4" />
-                        </div>
-
-                        <div className="mt-4 text-center">
-                            <span className="text-sm text-slate-300">
-                                Don’t have an account?{' '}
-                                <Link href={route('register')} className="text-blue-300 hover:text-blue-200 hover:underline">
-                                    Register
-                                </Link>
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>

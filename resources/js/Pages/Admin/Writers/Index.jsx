@@ -40,16 +40,16 @@ export default function WritersIndex({ writers }) {
         >
             <Head title="Writers Management" />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-end mb-6">
                     <Link
                         href={route('admin.writers.create')}
-                        className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center"
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center transition-colors duration-200 border border-blue-500 hover:border-blue-400"
                     >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        Add Writer
+                        Add User
                     </Link>
                 </div>
                 
@@ -58,63 +58,76 @@ export default function WritersIndex({ writers }) {
                     <h2 className="text-2xl font-bold text-gray-800">Writers</h2>
                 </div>
 
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-slate-800/60 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
                     {/* Desktop Table */}
                     <div className="hidden lg:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-700">
+                            <thead className="bg-slate-700/60">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Name
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Email
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        Role
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         News Count
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Specialization
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Joined
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="divide-y divide-slate-700">
                                 {writers.map((writer) => (
-                                    <tr key={writer.id} className="hover:bg-gray-50">
+                                    <tr key={writer.id} className="hover:bg-slate-700/30 transition-colors duration-150">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className="h-10 w-10 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center">
+                                                <div className="h-10 w-10 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center">
                                                     <span className="text-white font-medium">
                                                         {writer.name.charAt(0).toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">
+                                                    <div className="text-sm font-medium text-slate-100">
                                                         {writer.name}
                                                     </div>
-                                                    <div className="text-sm text-gray-500 lg:hidden">
+                                                    <div className="text-sm text-slate-300 lg:hidden">
                                                         {writer.email}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 hidden lg:table-cell">
                                             {writer.email}
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full ${
+                                                writer.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                                                writer.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                                                writer.role === 'writer' ? 'bg-green-100 text-green-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                                {writer.role.charAt(0).toUpperCase() + writer.role.slice(1)}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                                                 writer.writer_profile?.status === 'active'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-900/30 text-green-300 border-green-700/50'
+                                                    : 'bg-red-900/30 text-red-300 border-red-700/50'
                                             }`}>
                                                 {writer.writer_profile?.status || 'inactive'}
                                             </span>
@@ -124,17 +137,19 @@ export default function WritersIndex({ writers }) {
                                                 {writer.news_count || 0} {writer.news_count === 1 ? 'article' : 'articles'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
-                                            {writer.writer_profile?.specialization || 'Not specified'}
+                                        <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                                            <span className="px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full bg-slate-700/50 text-slate-200 border border-slate-600/50">
+                                                {writer.writer_profile?.specialization || 'Not specified'}
+                                            </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300 hidden md:table-cell">
                                             {formatDate(writer.created_at)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end space-x-2">
                                                 <Link
                                                     href={route('admin.writers.edit', writer.id)}
-                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                    className="text-blue-400 hover:text-blue-200 transition-colors duration-200"
                                                     title="Edit"
                                                 >
                                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -192,67 +207,98 @@ export default function WritersIndex({ writers }) {
                     </div>
 
                     {/* Mobile List */}
-                    <div className="lg:hidden divide-y divide-gray-200">
+                    <div className="lg:hidden divide-y divide-slate-700">
                         {writers.map((writer) => (
-                            <div key={writer.id} className="p-4 hover:bg-gray-50">
+                            <div key={writer.id} className="p-4 hover:bg-slate-700/30 transition-colors duration-150">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
-                                        <div className="h-10 w-10 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center">
-                                            <span className="text-white font-medium">
+                                        <div className="h-12 w-12 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center">
+                                            <span className="text-white font-medium text-lg">
                                                 {writer.name.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
                                         <div>
-                                            <div className="font-medium text-gray-900">{writer.name}</div>
-                                            <div className="text-sm text-gray-500">{writer.email}</div>
+                                            <div className="font-medium text-slate-100">{writer.name}</div>
+                                            <div className="text-sm text-slate-300">{writer.email}</div>
+                                            <div className="text-xs mt-1">
+                                                <span className={`px-2 py-0.5 inline-flex rounded-full ${
+                                                    writer.role === 'admin' ? 'bg-purple-900/30 text-purple-300 border border-purple-700/50' :
+                                                    writer.role === 'editor' ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' :
+                                                    writer.role === 'writer' ? 'bg-green-900/30 text-green-300 border border-green-700/50' :
+                                                    'bg-gray-900/30 text-gray-300 border border-gray-700/50'
+                                                }`}>
+                                                    {writer.role.charAt(0).toUpperCase() + writer.role.slice(1)}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 flex flex-wrap gap-1">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                    writer.writer_profile?.status === 'active'
+                                                        ? 'bg-green-900/30 text-green-300 border border-green-700/50'
+                                                        : 'bg-red-900/30 text-red-300 border border-red-700/50'
+                                                }`}>
+                                                    {writer.writer_profile?.status || 'inactive'}
+                                                </span>
+                                                {writer.writer_profile?.specialization && (
+                                                    <span className="px-2 py-0.5 inline-flex text-xs leading-5 font-medium rounded-full bg-slate-700/50 text-slate-200 border border-slate-600/50">
+                                                        {writer.writer_profile.specialization}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="relative">
-                                        <button 
-                                            onClick={() => toggleMobileMenu(writer.id)}
-                                            className="text-gray-400 hover:text-gray-500"
+                                    <div className="flex items-center space-x-2">
+                                        <Link
+                                            href={route('admin.writers.show', writer.id)}
+                                            className="p-1.5 text-blue-400 hover:text-blue-200 hover:bg-slate-700/50 rounded transition-colors"
+                                            title="View Profile"
                                         >
-                                            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
-                                        </button>
-                                        
-                                        {mobileMenuOpen[writer.id] && (
-                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-                                                <Link
-                                                    href={route('admin.writers.edit', writer.id)}
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                >
-                                                    Edit Writer
-                                                </Link>
-                                                <Link
-                                                    href={route('admin.writers.show', writer.id)}
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                >
-                                                    View Profile
-                                                </Link>
-                                                <Link
-                                                    href={route('admin.writers.toggle-status', writer.id)}
-                                                    method="patch"
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                >
-                                                    {writer.writer_profile?.status === 'active' ? 'Deactivate' : 'Activate'}
-                                                </Link>
-                                                <Link
-                                                    href={route('admin.writers.destroy', writer.id)}
-                                                    method="delete"
-                                                    as="button"
-                                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                                    onClick={(e) => {
-                                                        if (!confirm('Are you sure you want to delete this writer?')) {
-                                                            e.preventDefault();
-                                                        }
-                                                    }}
-                                                >
-                                                    Delete
-                                                </Link>
-                                            </div>
-                                        )}
+                                        </Link>
+                                        <Link
+                                            href={route('admin.writers.edit', writer.id)}
+                                            className="p-1.5 text-yellow-400 hover:text-yellow-200 hover:bg-slate-700/50 rounded transition-colors"
+                                            title="Edit Writer"
+                                        >
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </Link>
+                                        <Link
+                                            href={route('admin.writers.toggle-status', writer.id)}
+                                            method="patch"
+                                            as="button"
+                                            className={`p-1.5 hover:bg-slate-700/50 rounded transition-colors ${writer.writer_profile?.status === 'active' ? 'text-red-400 hover:text-red-200' : 'text-green-400 hover:text-green-200'}`}
+                                            title={writer.writer_profile?.status === 'active' ? 'Deactivate' : 'Activate'}
+                                        >
+                                            {writer.writer_profile?.status === 'active' ? (
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                                </svg>
+                                            )}
+                                        </Link>
+                                        <Link
+                                            href={route('admin.writers.destroy', writer.id)}
+                                            method="delete"
+                                            as="button"
+                                            className="p-1.5 text-red-400 hover:text-red-200 hover:bg-slate-700/50 rounded transition-colors"
+                                            title="Delete Writer"
+                                            onClick={(e) => {
+                                                if (!confirm('Are you sure you want to delete this writer? This action cannot be undone.')) {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                        >
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </Link>
                                     </div>
                                 </div>
                                 

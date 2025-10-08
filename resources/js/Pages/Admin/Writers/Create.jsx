@@ -24,12 +24,12 @@ export default function CreateWriter() {
         >
             <Head title="Add Writer" />
 
-            <div className="py-12">
+            <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12">
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
                     <div className="mb-6 flex justify-end">
                         <Link
                             href={route('admin.writers.index')}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
+                            className="bg-slate-700/50 border border-slate-600 hover:bg-slate-600/60 text-slate-200 font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center hover:text-white"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z" />
@@ -38,12 +38,12 @@ export default function CreateWriter() {
                             Manage Writers
                         </Link>
                     </div>
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div className="bg-slate-800/60 backdrop-blur-md overflow-hidden shadow-sm sm:rounded-lg border border-slate-700/50">
                         <div className="p-6">
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 {/* Name */}
                                 <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="name" className="block text-sm font-medium text-slate-300">
                                         Name
                                     </label>
                                     <input
@@ -51,7 +51,7 @@ export default function CreateWriter() {
                                         id="name"
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-700/70 transition-colors duration-200"
                                         required
                                     />
                                     {errors.name && <div className="text-red-600 text-sm mt-1">{errors.name}</div>}
@@ -59,7 +59,7 @@ export default function CreateWriter() {
 
                                 {/* Email */}
                                 <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="email" className="block text-sm font-medium text-slate-300">
                                         Email
                                     </label>
                                     <input
@@ -67,7 +67,7 @@ export default function CreateWriter() {
                                         id="email"
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-700/70 transition-colors duration-200"
                                         required
                                     />
                                     {errors.email && <div className="text-red-600 text-sm mt-1">{errors.email}</div>}
@@ -75,7 +75,7 @@ export default function CreateWriter() {
 
                                 {/* Password */}
                                 <div>
-                                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="password" className="block text-sm font-medium text-slate-300">
                                         Password
                                     </label>
                                     <input
@@ -83,7 +83,7 @@ export default function CreateWriter() {
                                         id="password"
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-700/70 transition-colors duration-200"
                                         required
                                     />
                                     {errors.password && <div className="text-red-600 text-sm mt-1">{errors.password}</div>}
@@ -91,7 +91,7 @@ export default function CreateWriter() {
 
                                 {/* Confirm Password */}
                                 <div>
-                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-300">
                                         Confirm Password
                                     </label>
                                     <input
@@ -99,7 +99,7 @@ export default function CreateWriter() {
                                         id="password_confirmation"
                                         value={data.password_confirmation}
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-700/70 transition-colors duration-200"
                                         required
                                     />
                                     {errors.password_confirmation && <div className="text-red-600 text-sm mt-1">{errors.password_confirmation}</div>}
@@ -107,7 +107,7 @@ export default function CreateWriter() {
 
                                 {/* Bio */}
                                 <div>
-                                    <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="bio" className="block text-sm font-medium text-slate-300">
                                         Bio
                                     </label>
                                     <textarea
@@ -115,7 +115,7 @@ export default function CreateWriter() {
                                         rows={4}
                                         value={data.bio}
                                         onChange={(e) => setData('bio', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-700/70 transition-colors duration-200"
                                         placeholder="Brief bio about the writer..."
                                     />
                                     {errors.bio && <div className="text-red-600 text-sm mt-1">{errors.bio}</div>}
@@ -123,7 +123,7 @@ export default function CreateWriter() {
 
                                 {/* Specialization */}
                                 <div>
-                                    <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="specialization" className="block text-sm font-medium text-slate-300">
                                         Specialization
                                     </label>
                                     <input
@@ -131,7 +131,7 @@ export default function CreateWriter() {
                                         id="specialization"
                                         value={data.specialization}
                                         onChange={(e) => setData('specialization', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-700/70 transition-colors duration-200"
                                         placeholder="e.g., Sports, Technology, Politics"
                                     />
                                     {errors.specialization && <div className="text-red-600 text-sm mt-1">{errors.specialization}</div>}
@@ -150,7 +150,7 @@ export default function CreateWriter() {
                                         disabled={processing}
                                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
                                     >
-                                        {processing ? 'Creating...' : 'Add Writer'}
+                                        {processing ? 'Creating...' : 'Add User'}
                                     </button>
                                 </div>
                             </form>

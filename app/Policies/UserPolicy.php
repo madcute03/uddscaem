@@ -18,7 +18,7 @@ class UserPolicy
 
     public function createWriter(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isWriter();
     }
 
     public function updateWriter(User $user, User $model): bool
