@@ -41,6 +41,7 @@ class Event extends Model
         'title',
         'description',
         'coordinator_name',
+        'venue',
         'participants',
         'category',
         'other_category',

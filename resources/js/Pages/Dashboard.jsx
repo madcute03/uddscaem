@@ -653,6 +653,7 @@ function Dashboard() {
         event_type: 'competition',
         category: 'sport',
         other_category: '',
+        venue: '',
         coordinator_name: '',
         participants: [''],
         event_date: '',
@@ -1088,6 +1089,7 @@ function Dashboard() {
             event_type: event.event_type || '',
             category: derivedCategory || 'sport',
             other_category: derivedOtherCategory,
+            venue: event.venue || '',
             event_date: eventDateValue,
             event_end_date: eventEndDateValue,
             registration_end_date: registrationEndDateValue,
@@ -1125,6 +1127,7 @@ function Dashboard() {
 
         formData.append('title', eventForm.title);
         formData.append('description', eventForm.description);
+        formData.append('venue', eventForm.venue || '');
         formData.append('coordinator_name', eventForm.coordinator_name);
         formData.append('event_type', eventForm.event_type);
         formData.append('category', eventForm.category);
@@ -1188,6 +1191,7 @@ function Dashboard() {
             formData.append('_method', 'PUT');
             formData.append('title', editData.title);
             formData.append('description', editData.description);
+            formData.append('venue', editData.venue || '');
             formData.append('coordinator_name', editData.coordinator_name);
             formData.append('event_type', editData.event_type);
             formData.append('category', editData.category);
@@ -1398,6 +1402,16 @@ function Dashboard() {
                                                 value={editData.coordinator_name}
                                                 onChange={e => setEditData({ ...editData, coordinator_name: e.target.value })}
                                                 className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm">Venue</label>
+                                            <input
+                                                type="text"
+                                                value={editData.venue || ''}
+                                                onChange={e => setEditData({ ...editData, venue: e.target.value })}
+                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
+                                                placeholder="Enter venue location"
                                             />
                                         </div>
 
@@ -1679,6 +1693,18 @@ function Dashboard() {
                                                     </div>
                                                 )}
 
+                                                {event.venue && (
+                                                    <div className="flex items-start gap-2">
+                                                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                        <div>
+                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Venue</p>
+                                                            <p className="text-slate-200">{event.venue}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div className="flex items-start gap-2">
                                                     <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

@@ -584,6 +584,7 @@ export default function CreateCompetition({ auth, events = [] }) {
         title: '',
         description: '',
         coordinator_name: '',
+        venue: '',
         participants: [''],
         category: 'sport', // Default to sport
         other_category: '', // For 'other' category input
@@ -875,6 +876,17 @@ export default function CreateCompetition({ auth, events = [] }) {
                                     value={data.coordinator_name}
                                     onChange={e => setData('coordinator_name', e.target.value)}
                                 />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block mb-1 text-slate-300">Venue</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                    value={data.venue}
+                                    onChange={e => setData('venue', e.target.value)}
+                                    placeholder="Enter event venue"
+                                />
+                                {errors.venue && <p className="text-red-500 text-xs mt-1">{errors.venue}</p>}
                             </div>
                             <div className="mb-4">
                                 <label className="block mb-2 text-slate-300">Participants</label>

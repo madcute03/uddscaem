@@ -51,7 +51,7 @@ class UserSeeder extends Seeder
         }
 
         $this->command->info('Users created successfully!');
-        $this->command->info('Admin: admin@example.com / admin123');
+        $this->command->info('Admin: admin@gmail.com / admin123');
         $this->command->info('Writer: writer@example.com / writer123');
         $this->command->warn('Please change the default passwords after first login!');
     }
