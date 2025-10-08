@@ -38,10 +38,21 @@ class NewsController extends Controller
      */
     public function create()
     {
-        $categories = ['Sports', 'Technology', 'Entertainment', 'Politics', 'Health', 'Travel', 'Business', 'Education'];
+        // Default categories
+        $defaultCategories = ['Sports', 'Culture', 'Arts'];
+        
+        // Get all unique categories from existing news (excluding 'education') and merge with defaults
+        $dbCategories = News::select('category')
+            ->where('category', '!=', 'education')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->toArray();
+            
+        $categories = array_unique(array_merge($defaultCategories, $dbCategories));
 
         return inertia('Admin/News/Create', [
-            'categories' => $categories,
+            'existingCategories' => $categories,
         ]);
     }
 
@@ -50,12 +61,16 @@ class NewsController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'category' => 'required|string',
+            'category' => 'required_without:newCategory|string|nullable',
+            'newCategory' => 'required_without:category|string|nullable',
         ]);
+
+        // Use new category if provided, otherwise use the selected category
+        $category = $request->filled('newCategory') ? $request->newCategory : $request->category;
 
         $imagePath = $request->file('image')->store('news', 'public');
 
@@ -65,7 +80,7 @@ class NewsController extends Controller
             'title' => $request->title,
             'slug' => Str::slug($request->title),
             'image' => $imagePath,
-            'category' => $request->category,
+            'category' => $category,
             'description' => $request->description,
             'date' => now()->format('F j, Y'),
             'status' => 'pending',
@@ -93,7 +108,18 @@ class NewsController extends Controller
     {
         $this->authorize('update', $news);
 
-        $categories = ['Sports', 'Technology', 'Entertainment', 'Politics', 'Health', 'Travel', 'Business', 'Education'];
+        // Default categories
+        $defaultCategories = ['Sports', 'Culture', 'Arts'];
+        
+        // Get all unique categories from existing news (excluding 'education') and merge with defaults
+        $dbCategories = News::select('category')
+            ->where('category', '!=', 'education')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->toArray();
+            
+        $categories = array_unique(array_merge($defaultCategories, $dbCategories));
 
         return inertia('Admin/News/Edit', [
             'news' => $news,

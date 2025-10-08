@@ -55,12 +55,61 @@ export default function ShowEvent({ event }) {
         ? (today > event.registration_end_date)
         : false;
 
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
+    const parseDateTimeValue = (dateTimeValue) => {
+        if (!dateTimeValue) return null;
+
+        const [datePart, rawTimePart = ''] = String(dateTimeValue).split('T');
+        if (!datePart) return null;
+
+        const [yearStr, monthStr, dayStr] = datePart.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr ?? 1) - 1;
+        const day = Number(dayStr ?? 1);
+
+        let timePart = rawTimePart
+            .replace(/Z$/i, '')
+            .replace(/\.[0-9]+$/, '')
+            .replace(/([+-][0-9:]+)$/, '')
+            .trim();
+
+        if (!timePart) {
+            return new Date(year, month, day, 0, 0, 0);
+        }
+
+        const [hourStr = '0', minuteStr = '0'] = timePart.split(':');
+        const hour = Number(hourStr);
+        const minute = Number(minuteStr);
+
+        return new Date(year, month, day, hour, minute, 0);
+    };
+
+    const formatDate = (dateString, includeTime = false) => {
+        if (!dateString) return '';
+        
+        const date = parseDateTimeValue(dateString);
+        if (!date) return '';
+        
+        if (includeTime) {
+            // Format: "Month Day, Year at Hour:Minute AM/PM" (e.g., "March 25, 2024 at 12:00 PM")
+            const datePart = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timePart = date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return `${datePart} at ${timePart}`;
+        } else {
+            // Date only format
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
     };
 
     const nextImage = () => {
@@ -158,8 +207,8 @@ export default function ShowEvent({ event }) {
                 
                 <div className="mb-8 ml-3 mt-7">
                     <p className="text-l tracking-wider text-blue-300 mb-2">Event Schedule</p>
-                    <div className="flex flex-col sm:flex-row gap-1 items-baseline">
-                        <p className="text-sm text-white">{formatDate(event.event_date)}</p>
+                    <div className="flex flex-col gap-1">
+                        <p className="text-sm text-white">{formatDate(event.event_date, true)}</p>
                         {event.event_end_date && (
                             <>
                                 <span className="hidden sm:inline">-</span>
@@ -204,7 +253,7 @@ export default function ShowEvent({ event }) {
                             <p className="text-lg font-semibold text-blue-300 mb-2">Registration Period</p>
                             <p className="text-slate-300">
                                 {event.registration_end_date 
-                                    ? `Until ${formatDate(event.registration_end_date)}`
+                                    ? `Until ${formatDate(event.registration_end_date, true)}`
                                     : 'Open until event starts'}
                             </p>
                         </div>

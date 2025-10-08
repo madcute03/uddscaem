@@ -821,11 +821,11 @@ function Dashboard() {
                 }
             }
 
-            // If no start date, show as pending
+            // If no start date, treat as UPCOMING
             if (!eventStart) {
                 return {
-                    label: 'PENDING',
-                    className: 'bg-slate-500 text-white'
+                    label: 'UPCOMING',
+                    className: 'bg-amber-500 text-white'
                 };
             }
 
@@ -842,17 +842,12 @@ function Dashboard() {
             }
 
             // If there's an end date and we're past it
-            if (eventEnd) {
-                console.log('Event end time:', eventEnd.toISOString());
-                console.log('Current time is after end time?', now > eventEnd);
-                
-                if (now > eventEnd) {
-                    console.log('Status: COMPLETED');
-                    return {
-                        label: 'COMPLETED',
-                        className: 'bg-green-500 text-white'
-                    };
-                }
+            if (eventEnd && now > eventEnd) {
+                console.log('Status: DONE');
+                return {
+                    label: 'DONE',
+                    className: 'bg-green-500 text-white'
+                };
             }
 
             // If we're between start and end time, or if there's no end time and we're past start time
@@ -865,8 +860,8 @@ function Dashboard() {
         } catch (error) {
             console.error('Error parsing event dates:', error);
             return {
-                label: 'PENDING',
-                className: 'bg-slate-500 text-white'
+                label: 'UPCOMING',
+                className: 'bg-amber-500 text-white'
             };
         }
     };

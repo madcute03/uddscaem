@@ -10,6 +10,8 @@ export default function EditNews({ news, categories }) {
         description: news.description || '',
         image: null,
         category: news.category || '',
+        newCategory: '',
+        showNewCategoryInput: false,
         status: news.status || 'pending',
     });
 
@@ -98,7 +100,30 @@ export default function EditNews({ news, categories }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(route('admin.news.update', news.id));
+        
+        // Prepare form data with the appropriate category
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('title', data.title);
+        formData.append('description', data.description);
+        if (data.image) {
+            formData.append('image', data.image);
+        }
+        formData.append('status', data.status);
+        
+        // If showing new category input, use newCategory, otherwise use the selected category
+        if (data.showNewCategoryInput && data.newCategory) {
+            formData.append('newCategory', data.newCategory);
+        } else {
+            formData.append('category', data.category);
+        }
+        
+        post(route('admin.news.update', news.id), formData, {
+            forceFormData: true,
+            onError: (errors) => {
+                // Handle errors if needed
+            },
+        });
     };
 
     // Image manipulation functionality
@@ -448,21 +473,47 @@ export default function EditNews({ news, categories }) {
                                     <label htmlFor="category" className="block text-sm font-medium text-slate-300 mb-2">
                                         Category
                                     </label>
+                                    
                                     <select
-                                        id="category"
-                                        value={data.category}
-                                        onChange={(e) => setData('category', e.target.value)}
-                                        className="mt-1 block w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-md shadow-sm focus:ring-blue-600/50 focus:border-blue-600/50 px-3 py-2"
-                                        required
+                                        value={data.showNewCategoryInput ? 'new' : data.category}
+                                        onChange={(e) => {
+                                            if (e.target.value === 'new') {
+                                                setData({
+                                                    ...data,
+                                                    showNewCategoryInput: true,
+                                                    category: '',
+                                                    newCategory: ''
+                                                });
+                                            } else {
+                                                setData({
+                                                    ...data,
+                                                    showNewCategoryInput: false,
+                                                    category: e.target.value
+                                                });
+                                            }
+                                        }}
+                                        className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         <option value="">Select a category</option>
-                                        {categories.map((category) => (
-                                            <option key={category} value={category}>
+                                        {categories && categories.map((category, index) => (
+                                            <option key={index} value={category}>
                                                 {category}
                                             </option>
                                         ))}
+                                        <option value="new">+New Category</option>
                                     </select>
-                                    {errors.category && <div className="text-red-400 text-sm mt-1">{errors.category}</div>}
+
+                                    {data.showNewCategoryInput && (
+                                        <input
+                                            type="text"
+                                            value={data.newCategory}
+                                            onChange={e => setData('newCategory', e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Enter new category name"
+                                            autoFocus
+                                        />
+                                    )}
+                                    {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
                                 </div>
 
                                 {/* Status */}

@@ -3,13 +3,35 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import 'quill-image-resize-module-react';
+import ImageResize from 'quill-image-resize-module-react';
 
-export default function CreateNews({ categories }) {
+// Register the image resize module
+const modules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link', 'image', 'video'],
+        ['clean']
+    ],
+    imageResize: {
+        parchment: ReactQuill.Quill.import('parchment'),
+        modules: ['Resize', 'DisplaySize']
+    }
+};
+
+// Register the image resize module
+ReactQuill.Quill.register('modules/imageResize', ImageResize);
+
+export default function CreateNews({ existingCategories }) {
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
         image: null,
         category: '',
+        newCategory: '',
+        showNewCategoryInput: false,
     });
 
     const [preview, setPreview] = useState(null);
@@ -32,7 +54,30 @@ export default function CreateNews({ categories }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('admin.news.store'));
+        
+        // Prepare form data with the appropriate category
+        const formData = new FormData();
+        formData.append('title', data.title);
+        formData.append('description', data.description);
+        formData.append('image', data.image);
+        
+        // If showing new category input, use newCategory, otherwise use the selected category
+        if (data.showNewCategoryInput && data.newCategory) {
+            formData.append('newCategory', data.newCategory);
+        } else {
+            formData.append('category', data.category);
+        }
+        
+        post(route('admin.news.store'), formData, {
+            forceFormData: true,
+            onError: (errors) => {
+                // Handle errors if needed
+            },
+        });
+    };
+    
+    const handleCategoryChange = (e) => {
+        setData('category', e.target.value);
     };
 
     // Image manipulation functionality
@@ -321,19 +366,44 @@ export default function CreateNews({ categories }) {
                                     <label htmlFor="category" className="block text-sm font-medium text-slate-300 mb-2">
                                         Category
                                     </label>
+                                    
                                     <select
-                                        id="category"
-                                        value={data.category}
-                                        onChange={e => setData('category', e.target.value)}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={data.showNewCategoryInput ? 'new' : data.category}
+                                        onChange={(e) => {
+                                            if (e.target.value === 'new') {
+                                                setData({
+                                                    showNewCategoryInput: true,
+                                                    category: '',
+                                                    newCategory: ''
+                                                });
+                                            } else {
+                                                setData({
+                                                    showNewCategoryInput: false,
+                                                    category: e.target.value
+                                                });
+                                            }
+                                        }}
+                                        className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         <option value="">Select a category</option>
-                                        {categories.map((category) => (
-                                            <option key={category.id} value={category.id}>
-                                                {category.name}
+                                        {existingCategories && existingCategories.map((category, index) => (
+                                            <option key={index} value={category}>
+                                                {category}
                                             </option>
                                         ))}
+                                        <option value="new">+New Category</option>
                                     </select>
+
+                                    {data.showNewCategoryInput && (
+                                        <input
+                                            type="text"
+                                            value={data.newCategory}
+                                            onChange={e => setData('newCategory', e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Enter new category name"
+                                            autoFocus
+                                        />
+                                    )}
                                     {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
                                 </div>
 
@@ -343,12 +413,12 @@ export default function CreateNews({ categories }) {
                                         Featured Image
                                     </label>
                                     <div className="mt-1 flex items-center">
-                                        <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-slate-700">
+                                        <span className="inline-block h-24 w-24 rounded-lg overflow-hidden bg-slate-700 border border-slate-600">
                                             {preview ? (
                                                 <img
                                                     src={preview}
                                                     alt="Preview"
-                                                    className="h-full w-full object-cover"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             ) : (
                                                 <svg
@@ -386,19 +456,12 @@ export default function CreateNews({ categories }) {
                                     <div className="image-resize-editor">
                                         <ReactQuill
                                             ref={quillRef}
-                                            value={data.description}
-                                            onChange={value => setData('description', value)}
-                                            modules={{
-                                                toolbar: [
-                                                    [{ 'header': [1, 2, 3, false] }],
-                                                    ['bold', 'italic', 'underline', 'strike'],
-                                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                                    ['link', 'image'],
-                                                    ['clean']
-                                                ],
-                                            }}
-                                            className="bg-slate-800 text-slate-100 rounded-b-md"
                                             theme="snow"
+                                            value={data.description}
+                                            onChange={(value) => setData('description', value)}
+                                            className="bg-slate-800 text-slate-100 rounded-b-md"
+                                            placeholder="Write news description here..."
+                                            modules={modules}
                                         />
                                     </div>
                                     {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
