@@ -696,6 +696,16 @@ export default function CreateTryouts({ auth, events = [] }) {
 
             <div className="py-8 px-2 sm:px-4 md:px-8">
                 <div className="mx-auto max-w-4xl w-full space-y-6">
+                    {/* Back Button */}
+                    <Link 
+                        href={route('dashboard')}
+                        className="inline-flex items-center text-slate-300 hover:text-white mb-4 transition-colors"
+                    >
+                        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Events
+                    </Link>
 
                     {/* Create Event Form */}
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">

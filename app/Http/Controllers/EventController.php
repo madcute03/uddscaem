@@ -31,6 +31,67 @@ class EventController extends Controller
             ->update(['is_done' => true]);
     }
     // ADMIN: Dashboard (list all events)
+    /**
+     * Get summary data for the dashboard
+     *
+     * @return \Inertia\Response
+     */
+    public function summary()
+    {
+        // Get counts for different event statuses
+        $totalEvents = Event::count();
+        $ongoingEvents = Event::where('event_date', '<=', now())
+            ->where(function($query) {
+                $query->where('event_end_date', '>=', now())
+                      ->orWhereNull('event_end_date');
+            })
+            ->where('is_done', false)
+            ->count();
+
+        $upcomingEvents = Event::where('event_date', '>', now())
+            ->where('is_done', false)
+            ->count();
+
+        // Get recent events for the dashboard
+        $recentEvents = Event::select(
+                'id',
+                'title as name',
+                'event_date as date',
+                'event_end_date as end_date',
+                'venue',
+                'is_done'
+            )
+            ->orderBy('event_date', 'desc')
+            ->get()
+            ->map(function($event) {
+                return [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'date' => $event->date,
+                    'end_date' => $event->end_date,
+                    'venue' => $event->venue,
+                    'is_done' => $event->is_done,
+                    'status' => $event->is_done ? 'Completed' : 
+                               ($event->date <= now() ? 'Ongoing' : 'Upcoming')
+                ];
+            });
+
+        return Inertia::render('DashboardSummary', [
+            'stats' => [
+                'total_events' => $totalEvents,
+                'ongoing_events' => $ongoingEvents,
+                'upcoming_events' => $upcomingEvents,
+            ],
+            'recentEvents' => $recentEvents,
+            'loading' => false
+        ]);
+    }
+
+    /**
+     * Show the dashboard with all events
+     *
+     * @return \Inertia\Response
+     */
     public function dashboard()
     {
         // Auto-mark completed events before fetching
@@ -71,7 +132,7 @@ class EventController extends Controller
             return $event;
         });
 
-        return Inertia::render('Dashboard', [
+        return Inertia::render('DashboardEvents', [
             'events' => $events,
         ]);
     }

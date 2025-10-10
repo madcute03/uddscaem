@@ -6,115 +6,235 @@ import 'react-quill/dist/quill.snow.css';
 import 'quill-image-resize-module-react';
 import ImageResize from 'quill-image-resize-module-react';
 
-// Register the image resize module
+// Custom image resize module with better mobile support
 const modules = {
-    toolbar: [
-        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['link', 'image', 'video'],
-        ['clean']
-    ],
-    imageResize: {
-        parchment: ReactQuill.Quill.import('parchment'),
-        modules: ['Resize', 'DisplaySize']
-    }
+  toolbar: [
+    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image', 'video'],
+    ['clean']
+  ],
+  clipboard: {
+    matchVisual: false,
+  },
+  imageResize: {
+    modules: ['Resize'],
+    displaySize: false,
+    handleStyles: {
+      backgroundColor: '#3B82F6',
+      border: '2px solid white',
+      borderRadius: '50%',
+      height: '24px',
+      width: '24px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      zIndex: '1000',
+      touchAction: 'none'
+    },
+    displayStyles: {
+      display: 'none'
+    },
+    toolbarStyles: {
+      display: 'none'
+    },
+    touchAction: 'manipulation',
+    handleOffset: 12
+  }
 };
 
-// Register the image resize module
+// Register the image resize module and custom image format
+const ImageFormat = ReactQuill.Quill.import('formats/image');
+
+class CustomImage extends ImageFormat {
+  static create(value) {
+    const node = super.create(value);
+    return node;
+  }
+}
+
+// Register the custom image format
+CustomImage.blotName = 'image';
+CustomImage.className = 'ql-image';
+CustomImage.tagName = 'IMG';
+
+// Register the custom image format and modules
+ReactQuill.Quill.register(CustomImage, true);
 ReactQuill.Quill.register('modules/imageResize', ImageResize);
 
-export default function CreateNews({ existingCategories }) {
+const styles = `
+  .ql-editor img {
+    max-width: 100%;
+    height: auto;
+    transition: all 0.2s ease;
+    touch-action: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .ql-editor img.active-resize {
+    outline: 2px solid #3B82F6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    touch-action: none;
+  }
+
+  .ql-image-resize-handle {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    border: 2px solid white !important;
+    background: #3B82F6 !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+    touch-action: none;
+    z-index: 1000;
+    cursor: pointer;
+    display: block !important;
+  }
+`;
+
+export default function CreateNews({ auth, existingCategories: propCategories = [] }) {
+    // Ensure categories is always an array and has default values
+    const defaultCategories = ['Sports', 'Culture', 'Arts'];
+    const existingCategories = Array.isArray(propCategories) && propCategories.length > 0 
+        ? propCategories 
+        : defaultCategories;
     const { data, setData, post, processing, errors = {} } = useForm({
         title: '',
         description: '',
         image: null,
         category: '',
         newCategory: '',
+        status: 'draft',
         showNewCategoryInput: false,
         errors: {}
     });
     
-    // Ensure we have default values to prevent undefined errors
-    const formData = {
-        title: data.title || '',
-        description: data.description || '',
-        image: data.image || null,
-        category: data.category || '',
-        newCategory: data.newCategory || '',
-        showNewCategoryInput: data.showNewCategoryInput || false
-    };
-
     const [preview, setPreview] = useState(null);
     const quillRef = useRef(null);
-
+    
+    const handleDescriptionChange = (value) => {
+        setData('description', value);
+    };
+    
+    // Add touch and mouse event handlers for better mobile support
+    useEffect(() => {
+        if (!quillRef.current) return;
+        
+        const editorContainer = quillRef.current.getEditor().container;
+        
+        const handleTouchStart = (e) => {
+            const quill = quillRef.current.getEditor();
+            window.quillInstance = quill;
+            document.body.style.overflow = 'hidden';
+        };
+        
+        const handleTouchEnd = () => {
+            delete window.quillInstance;
+            document.body.style.overflow = '';
+        };
+        
+        const handleMouseDown = (e) => {
+            if (e.button === 0) { // Left mouse button
+                const quill = quillRef.current.getEditor();
+                window.quillInstance = quill;
+            }
+        };
+        
+        const handleMouseUp = () => {
+            delete window.quillInstance;
+        };
+        
+        // Add event listeners
+        editorContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+        editorContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+        editorContainer.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+        editorContainer.addEventListener('mousedown', handleMouseDown);
+        editorContainer.addEventListener('mouseup', handleMouseUp);
+        
+        // Add styles
+        const styleElement = document.createElement('style');
+        styleElement.innerHTML = styles;
+        document.head.appendChild(styleElement);
+        
+        return () => {
+            editorContainer.removeEventListener('touchstart', handleTouchStart);
+            editorContainer.removeEventListener('touchend', handleTouchEnd);
+            editorContainer.removeEventListener('touchcancel', handleTouchEnd);
+            editorContainer.removeEventListener('mousedown', handleMouseDown);
+            editorContainer.removeEventListener('mouseup', handleMouseUp);
+            document.head.removeChild(styleElement);
+            delete window.quillInstance;
+        };
+    }, []);
+    
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        setData('image', file);
-
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreview(reader.result);
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    setData('image', file);
+                    setData('image_width', img.width);
+                    setData('image_height', img.height);
+                    setPreview(ev.target.result);
+                };
+                img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
         } else {
+            setData('image', null);
             setPreview(null);
         }
     };
+    
+    const handleRemoveImage = () => {
+        setData('remove_image', true);
+        setData('image', null);
+        setPreview(null);
+    };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Client-side validation with null/undefined check
-        const title = (data.title || '').trim();
-        if (!title) {
-            setData('errors', { ...errors, title: 'The title field is required.' });
-            return;
-        }
-        
-        // Clear any previous errors
-        const newErrors = {};
-        
-        // Prepare form data with the appropriate category
         const formData = new FormData();
-        formData.append('title', title);
+        formData.append('title', data.title);
         formData.append('description', data.description || '');
+        formData.append('category', data.category);
+        formData.append('newCategory', data.newCategory || '');
+        formData.append('status', data.status || 'draft');
         
         if (data.image) {
             formData.append('image', data.image);
+            if (data.image_width) formData.append('image_width', data.image_width);
+            if (data.image_height) formData.append('image_height', data.image_height);
         }
         
-        // Category validation
-        if (data.showNewCategoryInput) {
-            const newCategory = (data.newCategory || '').trim();
-            if (!newCategory) {
-                newErrors.category = 'Please enter a category name.';
-            } else {
-                formData.append('newCategory', newCategory);
-            }
-        } else if (!data.category) {
-            newErrors.category = 'Please select a category.';
-        } else {
-            formData.append('category', data.category);
+        if (data.remove_image) {
+            formData.append('remove_image', '1');
         }
         
-        // If there are validation errors, update state and return
-        if (Object.keys(newErrors).length > 0) {
-            setData('errors', { ...errors, ...newErrors });
-            return;
-        }
-        
-        post(route('admin.news.store'), formData, {
+        post(route('admin.news.store'), {
+            data: formData,
             forceFormData: true,
-            onError: (errors) => {
-                // Handle errors if needed
+            onSuccess: () => {
+                // Reset form on success
+                setData({
+                    title: '',
+                    description: '',
+                    image: null,
+                    category: '',
+                    newCategory: '',
+                    status: 'draft',
+                    errors: {}
+                });
+                setPreview(null);
             },
+            onError: (errors) => {
+                console.error('Error submitting form:', errors);
+            }
         });
-    };
-    
-    const handleCategoryChange = (e) => {
-        setData('category', e.target.value);
     };
 
     // Image manipulation functionality
@@ -391,7 +511,7 @@ export default function CreateNews({ existingCategories }) {
                                     <input
                                         type="text"
                                         id="title"
-                                        value={formData.title}
+                                        value={data.title}
                                         onChange={e => setData('title', e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Enter news title"
@@ -407,7 +527,7 @@ export default function CreateNews({ existingCategories }) {
                                     </label>
                                     
                                     <select
-                                        value={formData.showNewCategoryInput ? 'new' : formData.category}
+                                        value={data.showNewCategoryInput ? 'new' : data.category}
                                         onChange={(e) => {
                                             if (e.target.value === 'new') {
                                                 setData({
@@ -428,7 +548,7 @@ export default function CreateNews({ existingCategories }) {
                                         className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         <option value="">Select a category</option>
-                                        {existingCategories && existingCategories.map((category, index) => (
+                                        {existingCategories.map((category, index) => (
                                             <option key={index} value={category}>
                                                 {category}
                                             </option>
@@ -436,10 +556,10 @@ export default function CreateNews({ existingCategories }) {
                                         <option value="new">+New Category</option>
                                     </select>
 
-                                    {formData.showNewCategoryInput && (
+                                    {data.showNewCategoryInput && (
                                         <input
                                             type="text"
-                                            value={formData.newCategory}
+                                            value={data.newCategory}
                                             onChange={e => setData('newCategory', e.target.value)}
                                             className="w-full px-3 py-2 mt-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Enter new category name"
@@ -499,8 +619,8 @@ export default function CreateNews({ existingCategories }) {
                                         <ReactQuill
                                             ref={quillRef}
                                             theme="snow"
-                                            value={formData.description}
-                                            onChange={(value) => setData('description', value)}
+                                            value={data.description}
+                                            onChange={handleDescriptionChange}
                                             className="bg-slate-800 text-slate-100 rounded-b-md"
                                             placeholder="Write news description here..."
                                             modules={modules}

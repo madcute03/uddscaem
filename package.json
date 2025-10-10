@@ -28,6 +28,8 @@
         "@inertiajs/inertia-react": "^0.8.1",
         "@types/react-datepicker": "^6.2.0",
         "dayjs": "^1.11.18",
+        "lucide-react": "^0.545.0",
+        "prop-types": "^15.8.1",
         "quill": "^2.0.3",
         "quill-image-resize-module": "^3.0.0",
         "quill-image-resize-module-react": "^3.0.0",

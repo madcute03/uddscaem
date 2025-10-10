@@ -1324,7 +1324,29 @@ function Dashboard() {
            
 
             <div>
-                <h2 className="text-2xl font-bold mb-6 text-white">Events</h2>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 className="text-2xl font-bold text-white">Events</h2>
+                    <div className="flex flex-wrap gap-3">
+                        <Link
+                            href={route('dashboard.create-competition')}
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Event
+                        </Link>
+                        <Link
+                            href={route('bracket')}
+                            className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+                            </svg>
+                            Create Bracket
+                        </Link>
+                    </div>
+                </div>
                 {events.length === 0 && (
                     <div className="text-center py-8">
                         <p className="text-gray-400">No events created yet.</p>

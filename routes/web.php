@@ -59,6 +59,11 @@ Route::post('/complaints', [ComplaintController::class, 'store'])->name('complai
 Route::get('/news', [NewsController::class, 'publicIndex'])->name('news.index');
 Route::get('/news/{slug}', [NewsController::class, 'publicShow'])->name('news.show');
 
+// News Image Upload (Admin)
+Route::middleware(['auth'])->group(function () {
+    Route::post('/news/upload-image', [NewsController::class, 'uploadImage'])->name('news.upload-image');
+});
+
 // Bracket Previews
 Route::get('/bracket/single/{teams}', function ($teams) {
     $componentMap = [
@@ -98,6 +103,8 @@ Route::get('/bracket/double/{teams}', function ($teams) {
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [EventController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/summary', [\App\Http\Controllers\EventController::class, 'summary'])
+        ->name('dashboard.summary');
     Route::get('/dashboard/create-competition', function () {
         return Inertia::render('createEvents/CreateCompetition', [
             'auth' => [
@@ -153,7 +160,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('admin.complaints.destroy');
     });
 
-    // News Management
+    // News and Writer Management
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('news', NewsController::class)->except(['show']);
         Route::resource('writers', WriterController::class);
