@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('writer_name');
             $table->string('title');
             $table->string('slug')->unique();
-            $table->string('image');
+            $table->string('image')->nullable(); // Made nullable
             $table->string('category');
             $table->longText('description')->nullable();
             $table->string('date');

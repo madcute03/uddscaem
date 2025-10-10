@@ -13,9 +13,19 @@ export default function AuthenticatedLayout({ header, children }) {
     const handleNavClick = () => setShowingNavigationDropdown(false);
 
     const navigationLinks = [
+        {
+            label: 'Dashboard',
+            href: route('dashboard.summary'),
+            active: route().current('dashboard.summary'),
+            icon: (
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+            ),
+        },
         ...(user.role !== 'writer' ? [
             {
-                label: 'Dashboard',
+                label: 'Events',
                 href: route('dashboard'),
                 active: route().current('dashboard'),
                 icon: (
@@ -25,46 +35,21 @@ export default function AuthenticatedLayout({ header, children }) {
                     </svg>
                 ),
             },
-            {
-                label: 'Create Event',
-                href: route('dashboard.create-competition'),
-                active:
-                    route().current('dashboard.create-competition') ||
-                    route().current('dashboard.create-tryouts'),
-                icon: (
-                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                ),
-            },
-            {
-                label: 'Create Bracket',
-                href: route('bracket'),
-                active: route().current('bracket'),
-                icon: (
-                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 9l4-4m0 0l-4-4m4 4H8" />
-                    </svg>
-                ),
-            },
         ] : []),
-        ...(user.role === 'admin' || user.role === 'writer' ? [
+        ...(user.role === 'admin' ? [
             {
-                label: 'Create Writer',
-                href: route('admin.writers.create'),
+                label: 'Manage Writer',
+                href: route('admin.writers.index'),
                 active: route().current('admin.writers.*'),
                 icon: (
                     <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                 ),
             },
         ] : []),
         {
-            label: 'News Management',
+            label: 'Manage News',
             href: route('admin.news.index'),
             active: route().current('admin.news.*'),
             icon: (

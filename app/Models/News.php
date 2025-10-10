@@ -14,12 +14,11 @@ class News extends Model
         'writer_name',
         'title',
         'slug',
-        'image',
         'category',
         'description',
         'date',
         'status',
-        'count',
+        'image',
     ];
 
     protected $casts = [

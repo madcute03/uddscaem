@@ -168,7 +168,7 @@ export default function ShowEvent({ event }) {
     };
 
     return (
-        <PublicLayout showNavbar={false}>
+        <PublicLayout showNavbar={true}>
             <Head title={event.title} />
             
             {/* Event Image Carousel */}

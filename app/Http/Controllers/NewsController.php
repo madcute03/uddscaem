@@ -64,27 +64,32 @@ class NewsController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'category' => 'required_without:newCategory|string|nullable',
             'newCategory' => 'required_without:category|string|nullable',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Use new category if provided, otherwise use the selected category
         $category = $request->filled('newCategory') ? $request->newCategory : $request->category;
 
-        $imagePath = $request->file('image')->store('news', 'public');
-
-        $news = News::create([
+        $newsData = [
             'writer_id' => Auth::id(),
             'writer_name' => Auth::user()->name,
             'title' => $request->title,
             'slug' => Str::slug($request->title),
-            'image' => $imagePath,
             'category' => $category,
             'description' => $request->description,
             'date' => now()->format('F j, Y'),
             'status' => 'pending',
-        ]);
+        ];
+
+        // Handle image upload if present
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('news', 'public');
+            $newsData['image'] = $imagePath;
+        }
+
+        $news = News::create($newsData);
 
         return redirect()->route('admin.news.index')->with('success', 'News created successfully!');
     }
@@ -131,37 +136,72 @@ class NewsController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, News $news)
-    {
-        $this->authorize('update', $news);
+{
+    $this->authorize('update', $news);
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'category' => 'required|string',
-            'status' => 'required|in:pending,active,inactive',
-        ]);
+    // Log the request for debugging
+    \Log::info('Update request:', $request->all());
+    \Log::info('Has file image:', [$request->hasFile('image')]);
 
-        $data = [
-            'title' => $request->title,
-            'slug' => Str::slug($request->title),
-            'category' => $request->category,
-            'description' => $request->description,
-            'status' => $request->status,
-        ];
+    // Validate input
+    $validated = $request->validate([
+        'title' => 'nullable|string|max:255',
+        'description' => 'nullable|string',
+        'category' => 'nullable|string',
+        'newCategory' => 'nullable|string',
+        'status' => 'nullable|in:pending,active,inactive',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
-        if ($request->hasFile('image')) {
-            // Delete old image
-            if ($news->image) {
-                Storage::disk('public')->delete($news->image);
-            }
-            $data['image'] = $request->file('image')->store('news', 'public');
+    // Prepare data to update
+    $updateData = [];
+
+    if ($request->filled('title')) {
+        $updateData['title'] = $request->title;
+        $updateData['slug'] = \Str::slug($request->title);
+    }
+
+    if ($request->filled('description')) {
+        $updateData['description'] = $request->description;
+    }
+
+    // Category: use new one if provided
+    if ($request->filled('newCategory')) {
+        $updateData['category'] = $request->newCategory;
+    } elseif ($request->filled('category')) {
+        $updateData['category'] = $request->category;
+    }
+
+    if ($request->filled('status')) {
+        $updateData['status'] = $request->status;
+    }
+
+    // ✅ Handle Image Upload
+    if ($request->hasFile('image')) {
+        // Delete old image if exists
+        if ($news->image && \Storage::disk('public')->exists($news->image)) {
+            \Storage::disk('public')->delete($news->image);
         }
 
-        $news->update($data);
-
-        return redirect()->route('admin.news.index')->with('success', 'News updated successfully!');
+        // Store new image
+        $path = $request->file('image')->store('news', 'public');
+        $updateData['image'] = $path;
+    } elseif ($request->input('remove_image') === '1') {
+        // Handle image removal if user deletes it
+        if ($news->image && \Storage::disk('public')->exists($news->image)) {
+            \Storage::disk('public')->delete($news->image);
+        }
+        $updateData['image'] = null;
     }
+
+    // ✅ Save updated data
+    $news->update($updateData);
+
+    return redirect()
+        ->route('admin.news.index')
+        ->with('success', 'News updated successfully!');
+}
+
 
     /**
      * Remove the specified resource from storage.
@@ -169,12 +209,33 @@ class NewsController extends Controller
     public function destroy(News $news)
     {
         $this->authorize('delete', $news);
-
-        // Delete image file
+        
+        // Delete the associated image file if it exists
         if ($news->image) {
-            Storage::disk('public')->delete($news->image);
+            // Get the filename from the stored path
+            $filename = basename($news->image);
+            
+            // Path where the image is actually stored
+            $storagePath = 'public/news/' . $filename;
+            
+            // Delete from storage
+            if (Storage::exists($storagePath)) {
+                Storage::delete($storagePath);
+            }
+            
+            // Also try to delete the symlinked version in public/storage
+            $publicPath = public_path('storage/news/' . $filename);
+            if (file_exists($publicPath)) {
+                unlink($publicPath);
+            }
+            
+            // Try direct path in case the above doesn't work
+            $directPath = storage_path('app/public/news/' . $filename);
+            if (file_exists($directPath)) {
+                unlink($directPath);
+            }
         }
-
+        
         $news->delete();
 
         return redirect()->route('admin.news.index')->with('success', 'News deleted successfully!');
@@ -216,5 +277,28 @@ class NewsController extends Controller
             'news' => $news,
             'relatedNews' => $relatedNews,
         ]);
+    }
+    
+    /**
+     * Handle image upload from rich text editor
+     */
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('news/editor', 'public');
+            return response()->json([
+                'success' => true,
+                'url' => asset('storage/' . $path)
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Image upload failed.'
+        ], 400);
     }
 }

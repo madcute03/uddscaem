@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-
+import PublicLayout from '@/Layouts/PublicLayout';
 export default function NewsShow({ news, relatedNews }) {
     const [isMobile, setIsMobile] = useState(false);
 
@@ -8,211 +8,157 @@ export default function NewsShow({ news, relatedNews }) {
         const checkIfMobile = () => {
             setIsMobile(window.innerWidth < 768);
         };
-        
+
         checkIfMobile();
         window.addEventListener('resize', checkIfMobile);
         return () => window.removeEventListener('resize', checkIfMobile);
     }, []);
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-100">
-            <Head title={news.title} />
+        <PublicLayout>
+            <div className="min-h-screen bg-slate-900 text-slate-100">
+                <Head title={news.title} />
 
-            {/* Header */}
-            <div className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 border-b border-slate-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-                    <div className="text-center">
-                        <Link
-                            href={route('news.index')}
-                            className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-4 md:mb-6 transition-colors text-sm md:text-base"
-                        >
-                            <svg className="w-4 h-4 md:w-5 md:h-5 mr-1.5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to News
-                        </Link>
-                        
-                        <div className="mb-3 md:mb-4">
-                            <span className="bg-blue-600/30 text-blue-300 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium border border-blue-500/30">
-                                {news.category}
-                            </span>
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 px-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
-                            {news.title}
-                        </h1>
-                        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:text-sm text-slate-400">
-                            <span>By <span className="text-blue-300">{news.writer_name}</span></span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>{new Date(news.date).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: isMobile ? 'short' : 'long', 
-                                day: 'numeric' 
-                            })}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>{news.count} {isMobile ? 'views' : 'views'}</span>
+                {/* Header */}
+                <div className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 border-b border-slate-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+                        <div className="text-center">
+                            <Link
+                                href={route('news.index')}
+                                className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-4 md:mb-6 transition-colors text-sm md:text-base"
+                            >
+                                <svg className="w-4 h-4 md:w-5 md:h-5 mr-1.5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Back to News
+                            </Link>
+
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 px-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+                                {news.title}
+                            </h1>
+                            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:text-sm text-slate-400">
+                                <span>By <span className="text-blue-300">{news.writer_name}</span></span>
+                                <span className="hidden sm:inline">•</span>
+                                <span>{new Date(news.date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: isMobile ? 'short' : 'long',
+                                    day: 'numeric'
+                                })}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-2">
-                        <article className="bg-slate-800/60 rounded-xl border border-slate-700/50 shadow-2xl overflow-hidden backdrop-blur-sm">
-                            <div className="overflow-hidden">
-                                <img
-                                    src={`/storage/${news.image}`}
-                                    alt={news.title}
-                                    className="w-full h-auto max-h-[400px] sm:max-h-[500px] object-cover transition-transform duration-500 hover:scale-105"
-                                    loading="lazy"
-                                />
-                            </div>
-
-                            <div className="p-4 sm:p-6 md:p-8">
-                                <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-headings:text-slate-100 prose-p:text-slate-300 prose-a:text-blue-400 hover:prose-a:text-blue-300 prose-strong:text-slate-100 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-slate-500 prose-img:rounded-lg prose-img:border prose-img:border-slate-700/50">
-                                    <div dangerouslySetInnerHTML={{ __html: news.description }} />
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                        {/* Main Content */}
+                        <div className="lg:col-span-2">
+                            <article className="bg-slate-800/60 rounded-xl border border-slate-700/50 shadow-2xl overflow-hidden backdrop-blur-sm">
+                                <div className="overflow-hidden">
+                                    <img
+                                        src={`/storage/${news.image}`}
+                                        alt={news.title}
+                                        className="w-full h-auto max-h-[400px] sm:max-h-[500px] object-cover transition-transform duration-500 hover:scale-105"
+                                        loading="lazy"
+                                    />
                                 </div>
-                            </div>
-                            
-                            {/* Social Sharing Buttons */}
-                            <div className="px-4 sm:px-6 md:px-8 pb-6 md:pb-8">
-                                <div className="flex flex-wrap gap-3">
-                                    <span className="text-sm text-slate-400 flex items-center mr-2">Share:</span>
-                                    {['twitter', 'facebook', 'linkedin', 'whatsapp'].map((platform) => (
-                                        <button 
-                                            key={platform}
-                                            className="w-9 h-9 rounded-full bg-slate-700/50 hover:bg-slate-700/80 flex items-center justify-center transition-colors"
-                                            aria-label={`Share on ${platform}`}
-                                        >
-                                            <span className="sr-only">Share on {platform}</span>
-                                            <svg className="w-4 h-4 text-slate-300" fill="currentColor" viewBox="0 0 24 24">
-                                                {/* Add your social media icons here */}
-                                            </svg>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </article>
-                    </div>
 
-                    {/* Sidebar */}
-                    <div className="lg:col-span-1 space-y-6">
-                        {/* Table of Contents - Only show if content has headings */}
-                        <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 sm:p-6 shadow-xl sticky top-6">
-                            <h3 className="text-lg sm:text-xl font-bold text-slate-100 mb-4 pb-2 border-b border-slate-700/50 flex items-center">
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                                Table of Contents
-                            </h3>
-                            <nav className="space-y-2 text-sm sm:text-base">
-                                {/* This would be dynamically generated from the article headings */}
-                                <a href="#section1" className="block text-blue-400 hover:text-blue-300 py-1.5 transition-colors">Introduction</a>
-                                <a href="#section2" className="block text-blue-400 hover:text-blue-300 py-1.5 transition-colors">Key Points</a>
-                                <a href="#section3" className="block text-blue-400 hover:text-blue-300 py-1.5 transition-colors">Conclusion</a>
-                            </nav>
+                                <div className="p-4 sm:p-6 md:p-8">
+                                    <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-headings:text-slate-100 prose-p:text-slate-300 prose-a:text-blue-400 hover:prose-a:text-blue-300 prose-strong:text-slate-100 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-slate-500 prose-img:rounded-lg prose-img:border prose-img:border-slate-700/50">
+                                        <div dangerouslySetInnerHTML={{ __html: news.description }} />
+                                    </div>
+                                </div>
+
+                                {/* Social Sharing Buttons */}
+                                <div className="px-4 sm:px-6 md:px-8 pb-6 md:pb-8">
+                                    <div className="flex flex-wrap gap-3">
+                                        <span className="text-sm text-slate-400 flex items-center mr-2">Share:</span>
+                                        {[
+                                            { 
+                                                name: 'twitter',
+                                                path: 'M22.46,6C21.69,6.35 20.86,6.58 20,6.69C20.88,6.16 21.56,5.32 21.88,4.31C21.05,4.81 20.13,5.16 19.16,5.36C18.37,4.5 17.26,4 16,4C13.65,4 11.73,5.92 11.73,8.29C11.73,8.63 11.77,8.96 11.84,9.27C8.28,9.09 5.11,7.38 3,4.79C2.63,5.42 2.42,6.16 2.42,6.94C2.42,8.43 3.17,9.75 4.33,10.5C3.62,10.5 2.96,10.3 2.38,10C2.38,10 2.38,10 2.38,10.03C2.38,12.11 3.86,13.85 5.82,14.24C5.19,14.4 4.62,14.4 4,14.31C4.32,15.19 4.97,15.88 5.79,16.18C4.66,16.85 3.32,17.23 1.88,17.23C1.53,17.23 1.19,17.22 0.85,17.16C1.7,17.85 2.76,18.27 3.92,18.27C8.1,18.27 10.68,14.59 10.68,11.5C10.68,11.4 10.68,11.29 10.67,11.19C11.5,10.6 12.2,9.86 12.72,9' 
+                                            },
+                                            { 
+                                                name: 'facebook',
+                                                path: 'M18.77,7.46H14.5v-1.9c0-0.8,0.43-1.56,1.5-1.56h1.27V0.56c-0.22-0.03-0.98-0.09-1.86-0.09c-1.85,0-3.11,1.12-3.11,3.19v1.7h-2.5v3.2h2.5v8.53h3.16v-8.53h2.22L18.77,7.46z'
+                                            },
+                                            { 
+                                                name: 'linkedin',
+                                                path: 'M20.45,20.45h-3.56v-5.57c0-1.33-0.02-3.03-1.84-3.03c-1.85,0-2.13,1.44-2.13,2.94v5.66H9.35V9h3.42v1.56h0.05c0.47-0.9,1.64-1.84,3.37-1.84c3.61,0,4.27,2.38,4.27,5.47V20.45z M5.34,7.43c-1.15,0-2.08-0.94-2.08-2.08c0-1.15,0.93-2.08,2.08-2.08c1.15,0,2.08,0.93,2.08,2.08C7.42,6.5,6.49,7.43,5.34,7.43z M7.12,20.45H3.56V9h3.56V20.45z M22.23,0H1.77C0.79,0,0,0.78,0,1.75v20.5C0,23.22,0.79,24,1.77,24h20.46c0.98,0,1.77-0.78,1.77-1.75V1.75C24,0.78,23.21,0,22.23,0z'
+                                            },
+                                            { 
+                                                name: 'whatsapp',
+                                                path: 'M17.5,14.4c-0.2-0.1-1.2-0.6-1.4-0.6c-0.2,0-0.4,0.1-0.5,0.3c-0.1,0.2-0.4,0.6-0.5,0.7c-0.1,0.1-0.2,0.1-0.4,0c-0.2-0.1-0.7-0.3-1.4-0.9c-0.5-0.5-0.9-1-1-1.2c-0.1-0.2,0-0.3,0.1-0.4c0.1-0.1,0.2-0.2,0.3-0.3c0.1-0.1,0.2-0.2,0.3-0.3c0.1-0.1,0.1-0.2,0.2-0.3c0.1-0.1,0-0.3,0-0.3c0-0.1-0.5-1.3-0.7-1.8c-0.2-0.5-0.4-0.4-0.5-0.4c-0.1,0-0.3,0-0.5,0c-0.2,0-0.5,0.1-0.8,0.3c-0.3,0.2-1,1-1,2.4c0,1.3,1,2.8,1.1,3c0.1,0.2,1.8,2.7,4.4,3.8c0.6,0.3,1.1,0.5,1.5,0.6c0.6,0.2,1.2,0.2,1.6,0.1c0.5-0.1,1.4-0.6,1.6-1.1c0.2-0.5,0.2-1,0.1-1.1C17.8,14.5,17.7,14.4,17.5,14.4z M12,0C5.4,0,0,5.4,0,12s5.4,12,12,12s12-5.4,12-12S18.6,0,12,0z M12,22.5c-5.8,0-10.5-4.7-10.5-10.5S6.2,1.5,12,1.5S22.5,6.2,22.5,12S17.8,22.5,12,22.5z'
+                                            }
+                                        ].map(({ name, path }) => (
+                                            <button
+                                                key={name}
+                                                className="w-9 h-9 rounded-full bg-slate-700/50 hover:bg-slate-700/80 flex items-center justify-center transition-colors"
+                                                aria-label={`Share on ${name}`}
+                                            >
+                                                <span className="sr-only">Share on {name}</span>
+                                                <svg className="w-4 h-4 text-slate-300" viewBox="0 0 24 24">
+                                                    <path fill="currentColor" d={path} />
+                                                </svg>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </article>
                         </div>
 
-                        {/* Related News */}
-                        {relatedNews.length > 0 && (
-                            <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 sm:p-6 shadow-xl">
-                                <h3 className="text-lg sm:text-xl font-bold text-slate-100 mb-4 sm:mb-6 pb-2 sm:pb-3 border-b border-slate-700/50 flex items-center">
-                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                                    </svg>
-                                    Related Articles
-                                </h3>
-                                <div className="space-y-3 sm:space-y-4">
-                                    {relatedNews.slice(0, isMobile ? 3 : 5).map((article) => (
-                                        <div key={article.id} className="group">
-                                            <Link 
-                                                href={route('news.show', article.slug)}
-                                                className="block hover:bg-slate-700/30 p-2 sm:p-3 rounded-lg transition-colors duration-200"
-                                            >
-                                                <div className="flex items-start space-x-3 sm:space-x-4">
-                                                    <div className="flex-shrink-0 w-16 h-14 sm:w-20 sm:h-16 overflow-hidden rounded-lg">
-                                                        <img
-                                                            src={`/storage/${article.image}`}
-                                                            alt={article.title}
-                                                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                                                            loading="lazy"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="text-sm sm:text-base font-medium text-slate-100 group-hover:text-blue-300 line-clamp-2 transition-colors">
-                                                            {article.title}
-                                                        </h4>
-                                                        <div className="flex items-center mt-1 text-xs text-slate-400">
-                                                            <span>{new Date(article.date).toLocaleDateString('en-US', { 
-                                                                month: 'short', 
-                                                                day: 'numeric' 
-                                                            })}</span>
-                                                            <span className="mx-1.5">•</span>
-                                                            <span>{article.count} views</span>
+                        {/* Sidebar */}
+                        <div className="lg:col-span-1 space-y-6">
+                            {/* Related News */}
+                            {relatedNews.length > 0 && (
+                                <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4 sm:p-6 shadow-xl">
+                                    <h3 className="text-lg sm:text-xl font-bold text-slate-100 mb-4 sm:mb-6 pb-2 sm:pb-3 border-b border-slate-700/50 flex items-center">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                        </svg>
+                                        Related News
+                                    </h3>
+                                    <div className="space-y-5 sm:space-y-6">
+                                        {relatedNews.slice(0, isMobile ? 3 : 4).map((article) => (
+                                            <div key={article.id} className="group">
+                                                <Link
+                                                    href={route('news.show', article.slug)}
+                                                    className="block hover:bg-slate-700/40 p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:shadow-xl border border-slate-700/50 hover:border-slate-600/50"
+                                                >
+                                                    <div className="flex items-start space-x-5">
+                                                        <div className="flex-shrink-0 w-32 h-28 sm:w-36 sm:h-32 overflow-hidden rounded-xl shadow-lg">
+                                                            <img
+                                                                src={`/storage/${article.image}`}
+                                                                alt={article.title}
+                                                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                                                                loading="lazy"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0 pt-1">
+                                                            <h4 className="text-base sm:text-lg lg:text-xl font-medium text-slate-100 group-hover:text-blue-300 line-clamp-3 transition-colors mb-2">
+                                                                {article.title}
+                                                            </h4>
+                                                            <div className="flex items-center text-sm sm:text-base text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-full w-fit">
+                                                                <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                                <span>{new Date(article.date).toLocaleDateString('en-US', {
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                    year: 'numeric'
+                                                                })}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    ))}
+                                                </Link>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Share Buttons */}
-                        <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 shadow-xl">
-                            <h3 className="text-lg font-semibold text-slate-100 mb-4">Share this article</h3>
-                            <div className="flex space-x-3">
-                                <a 
-                                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(news.title)}`}
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="w-10 h-10 rounded-lg bg-slate-700/50 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 flex items-center justify-center transition-colors border border-slate-700/50"
-                                    aria-label="Share on Twitter"
-                                >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
-                                    </svg>
-                                </a>
-                                <a 
-                                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="w-10 h-10 rounded-lg bg-slate-700/50 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 flex items-center justify-center transition-colors border border-slate-700/50"
-                                    aria-label="Share on Facebook"
-                                >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
-                                    </svg>
-                                </a>
-                                <a 
-                                    href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(news.title)}`}
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="w-10 h-10 rounded-lg bg-slate-700/50 hover:bg-blue-700/20 text-blue-400 hover:text-blue-300 flex items-center justify-center transition-colors border border-slate-700/50"
-                                    aria-label="Share on LinkedIn"
-                                >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                                    </svg>
-                                </a>
-                                <button 
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(window.location.href);
-                                        alert('Link copied to clipboard!');
-                                    }}
-                                    className="w-10 h-10 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-white flex items-center justify-center transition-colors border border-slate-700/50"
-                                    aria-label="Copy link"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                    </svg>
-                                </button>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </PublicLayout>
     );
 }

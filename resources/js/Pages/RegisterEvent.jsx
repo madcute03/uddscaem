@@ -1,5 +1,6 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { useEffect } from 'react';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function RegisterEvent({ event, requiredPlayers }) {
     const { data, setData, post, errors, reset } = useForm({
@@ -71,7 +72,7 @@ export default function RegisterEvent({ event, requiredPlayers }) {
     };
 
     return (
-        <>
+        <PublicLayout>
             <Head title={`Register: ${event.title}`} />
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-8 px-2 sm:px-4 md:px-8">
                 <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
@@ -179,6 +180,6 @@ export default function RegisterEvent({ event, requiredPlayers }) {
                     </Link>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }
