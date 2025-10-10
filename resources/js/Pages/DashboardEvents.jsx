@@ -669,6 +669,7 @@ function Dashboard() {
     const [editingEventId, setEditingEventId] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
     const [eventForm, setEventForm] = useState({ ...defaultEventForm });
+    const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'upcoming', 'ongoing', 'completed'
     const [editData, setEditData] = useState({
         id: '',
         title: '',
@@ -713,6 +714,46 @@ function Dashboard() {
 
         return () => clearTimeout(timer);
     }, [successMessage]);
+
+    // Categorize events
+    const now = new Date();
+    
+    const categorizedEvents = events.reduce((acc, event) => {
+        const eventStart = new Date(event.event_date);
+        const eventEnd = event.event_end_date ? new Date(event.event_end_date) : new Date(eventStart);
+        
+        // If event is marked as done, it's completed
+        if (event.is_done) {
+            acc.completed.push(event);
+        } 
+        // If current time is between start and end (or just after start if no end date), it's ongoing
+        else if (now >= eventStart && (!event.event_end_date || now <= eventEnd)) {
+            acc.ongoing.push(event);
+        } 
+        // Otherwise, it's upcoming
+        else if (now < eventStart) {
+            acc.upcoming.push(event);
+        } else {
+            // Fallback for any uncaught cases
+            acc.completed.push(event);
+        }
+        
+        return acc;
+    }, { upcoming: [], ongoing: [], completed: [] });
+    
+    // Get events based on active filter
+    const getFilteredEvents = () => {
+        switch(activeFilter) {
+            case 'upcoming':
+                return categorizedEvents.upcoming;
+            case 'ongoing':
+                return categorizedEvents.ongoing;
+            case 'completed':
+                return categorizedEvents.completed;
+            default:
+                return events; // All events
+        }
+    };
 
     // Event type color mapping
     const eventTypeColorDefaults = {
@@ -1249,6 +1290,8 @@ function Dashboard() {
                 forceFormData: true,
                 onSuccess: () => {
                     setEditingEventId(null);
+                    // Force a page reload to get fresh data including updated_at
+                    window.location.reload();
                 },
                 onError: (errors) => {
                     const message = errors ? Object.values(errors).flat().join('\n') : 'Failed to update event';
@@ -1353,8 +1396,36 @@ function Dashboard() {
                     </div>
                 )}
 
+                {/* Filter Buttons */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                    <button 
+                        onClick={() => setActiveFilter('all')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                    >
+                        All Events
+                    </button>
+                    <button 
+                        onClick={() => setActiveFilter('upcoming')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                    >
+                        Upcoming ({categorizedEvents.upcoming.length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveFilter('ongoing')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'ongoing' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                    >
+                        Ongoing ({categorizedEvents.ongoing.length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveFilter('completed')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                    >
+                        Completed ({categorizedEvents.completed.length})
+                    </button>
+                </div>
+
                 <div className={`${editingEventId ? 'mx-auto max-w-4xl w-full space-y-6' : 'grid grid-cols-1 md:grid-cols-2 gap-6'}`}>
-                    {events.map(event => {
+                    {(activeFilter === 'all' ? events : getFilteredEvents()).map(event => {
                         const statusInfo = getEventStatus(event);
                         const cardImages = (() => {
                             if (Array.isArray(event.images_path) && event.images_path.length > 0) {
@@ -1387,16 +1458,24 @@ function Dashboard() {
                         const isTryouts = editingEventId === event.id && (editData.event_type || '').toLowerCase() === 'tryouts';
 
                         return (
-                            <div key={event.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 relative">
-                                {(event.is_done || statusInfo) && (
-                                    <div
-                                        className={`absolute -top-2 -right-2 text-[10px] font-bold px-3 py-1 rounded-full shadow-md ${event.is_done ? 'bg-green-500 text-white' : statusInfo.className}`}
-                                    >
-                                        {event.is_done ? 'DONE' : statusInfo.label}
+                            <div key={event.id} className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 relative group">
+                                {/* Admin Status Bar */}
+                                <div className="bg-slate-900/80 px-4 py-2 flex justify-between items-center border-b border-slate-700">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${event.is_done ? 'bg-green-500/20 text-green-300 border border-green-500/30' : statusInfo.className}`}>
+                                            {event.is_done ? 'COMPLETED' : statusInfo.label}
+                                        </span>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${getEventTypeColor(event.event_type || 'general')}`}>
+                                            {event.event_type ? event.event_type.toUpperCase() : 'EVENT'}
+                                        </span>
                                     </div>
-                                )}
-
-                                {editingEventId === event.id ? (
+                                    <div className="flex items-center gap-2">
+                                        
+                                    </div>
+                                </div>
+                                
+                                <div className="p-5">
+                                    {editingEventId === event.id ? (
                                     <form onSubmit={handleEditSubmit} encType="multipart/form-data" className="space-y-2">
                                         <div>
                                             <label className="block text-sm">Title</label>
@@ -1673,11 +1752,6 @@ function Dashboard() {
                                                 <div className="flex flex-col gap-2">
                                                     <div className="flex items-center justify-between">
                                                         <h3 className="text-lg font-semibold text-white">{event.title}</h3>
-                                                        <div className="flex gap-2">
-                                                            <span className={`text-xs px-2 py-1 rounded-full ${getEventTypeColor(event.event_type)}`}>
-                                                                {event.event_type}
-                                                            </span>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1791,54 +1865,65 @@ function Dashboard() {
                                             )}
                                         </div>
 
-                                        <div className="mt-4 pt-4 border-t border-slate-700 flex justify-end gap-4">
-                                            {event.registration_end_date ? (
+                                        <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <p className="text-xs font-medium text-slate-400">Registration Status</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${event.registration_end_date && new Date(event.registration_end_date) > new Date() ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                                    <span className="text-sm">
+                                                        {event.registration_end_date && new Date(event.registration_end_date) > new Date() 
+                                                            ? 'Open until ' + formatDateTime(event.registration_end_date)
+                                                            : 'Registration closed'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="col-span-2 flex justify-between items-center pt-2">
                                                 <Link
-                                                    href={route('events.registrations', event.id)}
-                                                    className="text-gray-400 hover:text-blue-500 transition-colors"
-                                                    title="View teams"
+                                                    href={`/events/${event.id}/registrations`}
+                                                    className="text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-1.5 rounded-md border border-blue-500/30 transition-colors flex items-center gap-1.5"
                                                 >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                                     </svg>
+                                                    View Registrations
                                                 </Link>
-                                            ) : (
-                                                <span className="text-gray-500 cursor-not-allowed" title="Registration not yet open">
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                    </svg>
-                                                </span>
-                                            )}
-
-                                            <button
-                                                onClick={() => startEdit(event)}
-                                                className="text-gray-400 hover:text-amber-500 transition-colors"
-                                                title="Edit"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </button>
-
-                                            <button
-                                                onClick={() => handleDelete(event.id)}
-                                                className="text-gray-400 hover:text-red-500 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                                
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => startEdit(event)}
+                                                        className="text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-1.5 rounded-md border border-blue-500/30 transition-colors flex items-center gap-1.5"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                        Edit
+                                                    </button>
+                                                    
+                                                    <button
+                                                        onClick={() => handleDelete(event.id)}
+                                                        className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-md border border-red-500/30 transition-colors flex items-center gap-1.5"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
+                                
+                                
+                                </div>
                             </div>
                         );
                     })}
                 </div>
             </div>
         </AuthenticatedLayout>
-    )
+    );
 }
 
 export default Dashboard;

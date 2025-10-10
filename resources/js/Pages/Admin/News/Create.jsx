@@ -66,30 +66,53 @@ const styles = `
     max-width: 100%;
     height: auto;
     transition: all 0.2s ease;
-    touch-action: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .ql-editor img.active-resize {
+  .ql-editor img.selected {
     outline: 2px solid #3B82F6;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-    touch-action: none;
+    position: relative;
   }
 
-  .ql-image-resize-handle {
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 50% !important;
-    border: 2px solid white !important;
-    background: #3B82F6 !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+  .ql-editor img::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    right: -15px;
+    bottom: -15px;
+    background: #3B82F6;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: none;
     touch-action: none;
     z-index: 1000;
-    cursor: pointer;
-    display: block !important;
+  }
+
+  .ql-editor img.selected::after {
+    display: block;
+  }
+
+  /* Improve touch targets for mobile */
+  @media (pointer: coarse) {
+    .ql-editor img {
+      min-width: 100px;
+      min-height: 100px;
+    }
+    
+    .ql-editor img::after {
+      width: 36px;
+      height: 36px;
+      right: -18px;
+      bottom: -18px;
+    }
   }
 `;
 
@@ -257,7 +280,74 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                     let startHeight = 0;
                     let aspectRatio = 0;
 
-                    // Add event listeners for image manipulation
+                    // Touch event handlers
+                    const handleTouchStart = (e) => {
+                        if (!selectedImage) return;
+                        
+                        const touch = e.touches[0];
+                        const rect = selectedImage.getBoundingClientRect();
+                        
+                        // Check if touch is on the resize handle (bottom-right corner)
+                        const handleSize = 50; // Larger touch target for mobile
+                        const isOnHandle = touch.clientX >= rect.right - handleSize && 
+                                        touch.clientY >= rect.bottom - handleSize;
+                        
+                        if (isOnHandle) {
+                            e.preventDefault();
+                            isResizing = true;
+                            startX = touch.clientX;
+                            startY = touch.clientY;
+                            startWidth = rect.width;
+                            startHeight = rect.height;
+                            aspectRatio = startWidth / startHeight;
+                            document.body.style.overflow = 'hidden';
+                        } else {
+                            // Start dragging
+                            isDragging = true;
+                            startX = touch.clientX - rect.left;
+                            startY = touch.clientY - rect.top;
+                            selectedImage.style.cursor = 'grabbing';
+                        }
+                    };
+
+                    const handleTouchMove = (e) => {
+                        if (!selectedImage) return;
+                        
+                        const touch = e.touches[0];
+                        
+                        if (isResizing) {
+                            e.preventDefault();
+                            const width = startWidth + (touch.clientX - startX);
+                            const height = width / aspectRatio;
+                            
+                            selectedImage.style.width = `${width}px`;
+                            selectedImage.style.height = `${height}px`;
+                        } else if (isDragging) {
+                            e.preventDefault();
+                            const editorRect = editorContainer.getBoundingClientRect();
+                            let left = touch.clientX - startX - editorRect.left;
+                            let top = touch.clientY - startY - editorRect.top;
+                            
+                            // Boundary checks
+                            left = Math.max(0, Math.min(left, editorRect.width - selectedImage.width));
+                            top = Math.max(0, Math.min(top, editorRect.height - selectedImage.height));
+                            
+                            selectedImage.style.position = 'absolute';
+                            selectedImage.style.left = `${left}px`;
+                            selectedImage.style.top = `${top}px`;
+                        }
+                    };
+
+                    const handleTouchEnd = () => {
+                        isResizing = false;
+                        isDragging = false;
+                        document.body.style.overflow = '';
+                        if (selectedImage) {
+                            selectedImage.style.cursor = 'grab';
+                        }
+                    };
+
+                    // Mouse event handlers
                     const handleImageClick = (e) => {
                         const img = e.target;
                         if (img.tagName === 'IMG') {
@@ -273,6 +363,9 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                             // Add selected class to clicked image
                             img.classList.add('selected');
                             selectedImage = img;
+                            
+                            // Add cursor style
+                            img.style.cursor = 'grab';
                         }
                     };
 

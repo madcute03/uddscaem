@@ -66,52 +66,53 @@ const styles = `
     max-width: 100%;
     height: auto;
     transition: all 0.2s ease;
-    touch-action: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .ql-editor img.active-resize {
+  .ql-editor img.selected {
     outline: 2px solid #3B82F6;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-    touch-action: none;
-  }
-
-  .ql-image-resize-handle {
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 50% !important;
-    border: 2px solid white !important;
-    background: #3B82F6 !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
-    touch-action: none;
-    z-index: 1000;
-    cursor: pointer;
-    display: block !important;
-  }
-
-  .ql-image-resize-handle::after {
-    content: '';
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    background: transparent;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 999;
-  }
-
-  /* Hide any overlay elements that might show × buttons */
-  .ql-editor .ql-image-resize {
     position: relative;
   }
 
-  .ql-editor .ql-image-resize::before,
-  .ql-editor .ql-image-resize::after {
-    display: none !important;
+  .ql-editor img::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    right: -15px;
+    bottom: -15px;
+    background: #3B82F6;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: none;
+    touch-action: none;
+    z-index: 1000;
+  }
+
+  .ql-editor img.selected::after {
+    display: block;
+  }
+
+  /* Improve touch targets for mobile */
+  @media (pointer: coarse) {
+    .ql-editor img {
+      min-width: 100px;
+      min-height: 100px;
+    }
+    
+    .ql-editor img::after {
+      width: 36px;
+      height: 36px;
+      right: -18px;
+      bottom: -18px;
+    }
   }
 
   @media (max-width: 768px) {
@@ -122,8 +123,7 @@ const styles = `
       width: 32px;
       height: 32px;
     }
-  }
-`;
+  }`;
 
 export default function EditNews({ auth, news, categories: propCategories = [] }) {
   // Ensure categories is always an array and has default values
@@ -148,7 +148,7 @@ export default function EditNews({ auth, news, categories: propCategories = [] }
 
   // Enhanced touch and mouse interaction support for image resizing with auto-save
   useEffect(() => {
-    if (!quillRef.current) return;
+    if (!quillRef.current) return () => {};
 
     const editor = quillRef.current.getEditor();
     const editorContainer = editor.container;
@@ -156,48 +156,136 @@ export default function EditNews({ auth, news, categories: propCategories = [] }
     // Store the quill instance globally for the delete button
     window.quillInstance = editor;
 
+    let selectedImage = null;
+    let isResizing = false;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+    let aspectRatio = 0;
+
+    // Touch event handlers
     const handleTouchStart = (e) => {
-      const img = e.target.closest('img');
-      if (img) {
-        img.classList.add('active-resize');
+      const touch = e.touches[0];
+      const img = touch.target.closest('img');
+      
+      if (!img) {
+        // Clicked outside image, deselect
+        const allImages = editorContainer.querySelectorAll('img');
+        allImages.forEach(image => image.classList.remove('selected'));
+        selectedImage = null;
+        return;
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Remove selected class from all images
+      const allImages = editorContainer.querySelectorAll('img');
+      allImages.forEach(image => image.classList.remove('selected'));
+      
+      // Add selected class to clicked image
+      img.classList.add('selected');
+      selectedImage = img;
+      
+      const rect = img.getBoundingClientRect();
+      
+      // Check if touch is on the resize handle (bottom-right corner)
+      const handleSize = 50; // Larger touch target for mobile
+      const isOnHandle = touch.clientX >= rect.right - handleSize && 
+                        touch.clientY >= rect.bottom - handleSize;
+      
+      if (isOnHandle) {
+        isResizing = true;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startWidth = rect.width;
+        startHeight = rect.height;
+        aspectRatio = startWidth / startHeight;
         document.body.style.overflow = 'hidden';
+      } else {
+        // Start dragging
+        isDragging = true;
+        startX = touch.clientX - rect.left;
+        startY = touch.clientY - rect.top;
+        img.style.cursor = 'grabbing';
       }
     };
 
-    const handleTouchEnd = (e) => {
-      const img = e.target.closest('img');
-      if (img) {
-        img.classList.remove('active-resize');
-        document.body.style.overflow = '';
-        // Auto-save description when image resize ends
+    const handleTouchMove = (e) => {
+      if (!selectedImage) return;
+      
+      const touch = e.touches[0];
+      
+      if (isResizing) {
+        e.preventDefault();
+        const width = startWidth + (touch.clientX - startX);
+        const height = width / aspectRatio;
+        
+        selectedImage.style.width = `${width}px`;
+        selectedImage.style.height = `${height}px`;
+      } else if (isDragging) {
+        e.preventDefault();
+        const editorRect = editorContainer.getBoundingClientRect();
+        let left = touch.clientX - startX - editorRect.left;
+        let top = touch.clientY - startY - editorRect.top;
+        
+        // Boundary checks
+        left = Math.max(0, Math.min(left, editorRect.width - selectedImage.width));
+        top = Math.max(0, Math.min(top, editorRect.height - selectedImage.height));
+        
+        selectedImage.style.position = 'absolute';
+        selectedImage.style.left = `${left}px`;
+        selectedImage.style.top = `${top}px`;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isResizing = false;
+      isDragging = false;
+      document.body.style.overflow = '';
+      if (selectedImage) {
+        selectedImage.style.cursor = 'grab';
+        // Auto-save description when image manipulation ends
         const currentContent = editor.root.innerHTML;
         setData('description', currentContent);
       }
     };
 
-    // Add touch event listeners with passive: false to allow preventDefault
+    // Mouse event handlers
+    const handleImageClick = (e) => {
+      const img = e.target;
+      if (img.tagName === 'IMG') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Remove selected class from all images
+        const allImages = editorContainer.querySelectorAll('img');
+        allImages.forEach(image => image.classList.remove('selected'));
+
+        // Add selected class to clicked image
+        img.classList.add('selected');
+        selectedImage = img;
+        
+        // Add cursor style
+        img.style.cursor = 'grab';
+      }
+    };
+
+    const handleEditorClick = (e) => {
+      // Remove selected class from all images when clicking elsewhere
+      const allImages = editorContainer.querySelectorAll('img');
+      allImages.forEach(image => image.classList.remove('selected'));
+      selectedImage = null;
+    };
+
+    // Add event listeners
     editorContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
-    editorContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
-    editorContainer.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-
-    // Mouse events for desktop
-    const handleMouseDown = (e) => {
-      if (e.target.tagName === 'IMG') {
-        e.target.classList.add('active-resize');
-      }
-    };
-
-    const handleMouseUp = (e) => {
-      if (e.target.tagName === 'IMG') {
-        e.target.classList.remove('active-resize');
-        // Auto-save description when image resize ends
-        const currentContent = editor.root.innerHTML;
-        setData('description', currentContent);
-      }
-    };
-
-    editorContainer.addEventListener('mousedown', handleMouseDown);
-    editorContainer.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    editorContainer.addEventListener('click', handleImageClick);
+    editorContainer.addEventListener('mousedown', handleEditorClick);
 
     // Add styles to head
     const styleElement = document.createElement('style');
@@ -205,13 +293,17 @@ export default function EditNews({ auth, news, categories: propCategories = [] }
     document.head.appendChild(styleElement);
 
     return () => {
+      // Remove all event listeners
       editorContainer.removeEventListener('touchstart', handleTouchStart);
-      editorContainer.removeEventListener('touchend', handleTouchEnd);
-      editorContainer.removeEventListener('touchcancel', handleTouchEnd);
-      editorContainer.removeEventListener('mousedown', handleMouseDown);
-      editorContainer.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      editorContainer.removeEventListener('click', handleImageClick);
+      editorContainer.removeEventListener('mousedown', handleEditorClick);
+      
+      // Clean up
       document.body.style.overflow = '';
       document.head.removeChild(styleElement);
+      
       // Clean up the global reference
       delete window.quillInstance;
     };
