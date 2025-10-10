@@ -1353,7 +1353,7 @@ function Dashboard() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2  gap-6">
+                <div className={`${editingEventId ? 'mx-auto max-w-4xl w-full space-y-6' : 'grid grid-cols-1 md:grid-cols-2 gap-6'}`}>
                     {events.map(event => {
                         const statusInfo = getEventStatus(event);
                         const cardImages = (() => {

@@ -207,15 +207,10 @@ export default function ShowEvent({ event }) {
                 
                 <div className="mb-8 ml-3 mt-7">
                     <p className="text-l tracking-wider text-blue-300 mb-2">Event Schedule</p>
-                    <div className="flex flex-col gap-1">
-                        <p className="text-sm text-white">{formatDate(event.event_date, true)}</p>
-                        {event.event_end_date && (
-                            <>
-                                <span className="hidden sm:inline">-</span>
-                                <p className="text-sm text-white">{formatDate(event.event_end_date)}</p>
-                            </>
-                        )}
-                    </div>
+                    
+                        <p className="text-sm text-white">{formatDate(event.event_date, true)} - {formatDate(event.event_end_date)}</p>
+                       
+                    
                     {event.venue && (
                         <div className="mt-3">
                             <p className="text-l text-slate-300">
