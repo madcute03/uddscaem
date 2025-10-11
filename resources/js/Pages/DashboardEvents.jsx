@@ -682,7 +682,6 @@ function Dashboard() {
         registration_end_date: '',
         coordinator_name: '',
         participants: [''],
-        is_done: false,
         images: [],
         existingImages: [],
         allow_bracketing: false,
@@ -722,20 +721,17 @@ function Dashboard() {
         const eventStart = new Date(event.event_date);
         const eventEnd = event.event_end_date ? new Date(event.event_end_date) : new Date(eventStart);
         
-        // If event is marked as done, it's completed
-        if (event.is_done) {
+        // If current time is after the event end date, it's completed
+        if (now > eventEnd) {
             acc.completed.push(event);
         } 
         // If current time is between start and end (or just after start if no end date), it's ongoing
-        else if (now >= eventStart && (!event.event_end_date || now <= eventEnd)) {
+        else if (now >= eventStart && now <= eventEnd) {
             acc.ongoing.push(event);
         } 
         // Otherwise, it's upcoming
-        else if (now < eventStart) {
+        else {
             acc.upcoming.push(event);
-        } else {
-            // Fallback for any uncaught cases
-            acc.completed.push(event);
         }
         
         return acc;
@@ -794,106 +790,50 @@ function Dashboard() {
     };
 
     const getEventStatus = (event) => {
-        console.log('--- Event Status Check ---');
-        console.log('Event ID:', event.id);
-        
-        // Get current time in local timezone
         const now = new Date();
-        console.log('Current local time:', now.toString());
-        console.log('Current UTC time:', now.toISOString());
         
-        if (event.is_done) {
-            console.log('Event is marked as DONE');
-            return {
-                label: 'DONE',
-                className: 'bg-green-500 text-white'
-            };
-        }
-
-        let eventStart, eventEnd;
-        
-        console.log('Event data:', {
-            event_date: event.event_date,
-            event_end_date: event.event_end_date,
-            is_done: event.is_done
-        });
-
         try {
-            // Parse event start date
-            if (event.event_date) {
-                // Parse the date string and adjust for local timezone
-                const [datePart, timePart] = event.event_date.split('T');
-                const [year, month, day] = datePart.split('-').map(Number);
-                let hours = 0, minutes = 0;
-                
-                if (timePart) {
-                    const [timeStr] = timePart.split('.'); // Remove milliseconds if present
-                    [hours, minutes] = timeStr.split(':').map(Number);
-                }
-                
-                // Create date in local timezone
-                eventStart = new Date(year, month - 1, day, hours, minutes);
-                
-                if (isNaN(eventStart.getTime())) {
-                    throw new Error('Invalid start date');
-                }
-                
-                console.log('Parsed event start (local):', eventStart.toString());
-            }
-
-            // Parse event end date if it exists
-            if (event.event_end_date) {
-                const [datePart, timePart] = event.event_end_date.split('T');
-                const [year, month, day] = datePart.split('-').map(Number);
-                let hours = 23, minutes = 59; // Default to end of day if no time specified
-                
-                if (timePart) {
-                    const [timeStr] = timePart.split('.'); // Remove milliseconds if present
-                    [hours, minutes] = timeStr.split(':').map(Number);
-                }
-                
-                // Create date in local timezone
-                eventEnd = new Date(year, month - 1, day, hours, minutes);
-                
-                if (isNaN(eventEnd.getTime())) {
-                    console.warn('Invalid end date, ignoring');
-                    eventEnd = null;
-                } else {
-                    console.log('Parsed event end (local):', eventEnd.toString());
-                }
-            }
-
-            // If no start date, treat as UPCOMING
-            if (!eventStart) {
+            // Parse start date
+            const startDate = new Date(event.event_date);
+            if (isNaN(startDate.getTime())) {
+                console.warn('Invalid start date for event:', event.id);
                 return {
                     label: 'UPCOMING',
                     className: 'bg-amber-500 text-white'
                 };
+            }
+
+            // Parse end date (default to end of start date if not provided)
+            let endDate = startDate;
+            if (event.event_end_date) {
+                endDate = new Date(event.event_end_date);
+                // If no time is specified in end date, set to end of day
+                if (event.event_end_date.split('T').length === 1) {
+                    endDate.setHours(23, 59, 59, 999);
+                }
+            } else {
+                // If no end date, set to end of start date
+                endDate = new Date(startDate);
+                endDate.setHours(23, 59, 59, 999);
             }
 
             // If current time is before event start time
-            console.log('Event start time:', eventStart.toISOString());
-            console.log('Current time is before start time?', now < eventStart);
-            
-            if (now < eventStart) {
-                console.log('Status: UPCOMING');
+            if (now < startDate) {
                 return {
                     label: 'UPCOMING',
                     className: 'bg-amber-500 text-white'
                 };
             }
-
-            // If there's an end date and we're past it
-            if (eventEnd && now > eventEnd) {
-                console.log('Status: DONE');
+            
+            // If current time is after event end time
+            if (now > endDate) {
                 return {
-                    label: 'DONE',
-                    className: 'bg-green-500 text-white'
+                    label: 'COMPLETED',
+                    className: 'bg-gray-500 text-white'
                 };
             }
-
-            // If we're between start and end time, or if there's no end time and we're past start time
-            console.log('Status: ONGOING');
+            
+            // If we're between start and end time
             return {
                 label: 'ONGOING',
                 className: 'bg-emerald-500 text-white'
@@ -1138,7 +1078,6 @@ function Dashboard() {
             participants: Array.isArray(event.participants) && event.participants.length > 0
                 ? event.participants.map((participant) => (typeof participant === 'string' ? participant : '')).filter(Boolean)
                 : [''],
-            is_done: event.is_done ?? false,
             images: [],
             existingImages: buildExistingImages(event),
             allow_bracketing: !!event.allow_bracketing,
@@ -1248,15 +1187,36 @@ function Dashboard() {
 
             const eventTypeLower = (editData.event_type || '').toLowerCase();
 
-            if (eventTypeLower !== 'tryouts' && editData.event_end_date) {
+            // Handle event_end_date for all event types
+            if (editData.event_end_date) {
                 formData.append('event_end_date', editData.event_end_date);
+            } else {
+                formData.append('event_end_date', '');
             }
 
-            if (eventTypeLower === 'tryouts' && editData.registration_end_date) {
-                const sanitizedRegistrationDate = editData.registration_end_date.length === 16
-                    ? `${editData.registration_end_date}:00`
-                    : editData.registration_end_date;
-                formData.append('registration_end_date', sanitizedRegistrationDate);
+            // For tryouts, always set has_registration_end_date to true and require registration_end_date
+            if (eventTypeLower === 'tryouts') {
+                formData.append('has_registration_end_date', '1');
+                if (editData.registration_end_date) {
+                    const sanitizedRegistrationDate = editData.registration_end_date.length === 16
+                        ? `${editData.registration_end_date}:00`
+                        : editData.registration_end_date;
+                    formData.append('registration_end_date', sanitizedRegistrationDate);
+                } else {
+                    // If no date is set, use the event date as a fallback
+                    formData.append('registration_end_date', editData.event_date || '');
+                }
+            } else {
+                // For other event types, use the toggle
+                formData.append('has_registration_end_date', editData.has_registration_end_date ? '1' : '0');
+                if (editData.has_registration_end_date && editData.registration_end_date) {
+                    const sanitizedRegistrationDate = editData.registration_end_date.length === 16
+                        ? `${editData.registration_end_date}:00`
+                        : editData.registration_end_date;
+                    formData.append('registration_end_date', sanitizedRegistrationDate);
+                } else {
+                    formData.append('registration_end_date', '');
+                }
             }
 
             if (eventTypeLower !== 'tryouts' && Array.isArray(editData.participants)) {
@@ -1462,8 +1422,8 @@ function Dashboard() {
                                 {/* Admin Status Bar */}
                                 <div className="bg-slate-900/80 px-4 py-2 flex justify-between items-center border-b border-slate-700">
                                     <div className="flex items-center gap-2">
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${event.is_done ? 'bg-green-500/20 text-green-300 border border-green-500/30' : statusInfo.className}`}>
-                                            {event.is_done ? 'COMPLETED' : statusInfo.label}
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusInfo.className}`}>
+                                            {statusInfo.label}
                                         </span>
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${getEventTypeColor(event.event_type || 'general')}`}>
                                             {event.event_type ? event.event_type.toUpperCase() : 'EVENT'}
@@ -1601,25 +1561,57 @@ function Dashboard() {
                                             />
                                         </div>
 
-                                        {!isTryouts && (
-                                            <div>
-                                                <label className="block text-sm">Event End Date</label>
-                                                <DatePicker
-                                                    value={editData.event_end_date}
-                                                    onChange={(date) => setEditData({ ...editData, event_end_date: date })}
-                                                    placeholder="Select event end date"
-                                                />
-                                            </div>
-                                        )}
+                                        <div>
+                                            <label className="block text-sm">Event End Date</label>
+                                            <DatePicker
+                                                value={editData.event_end_date}
+                                                onChange={(date) => setEditData({ ...editData, event_end_date: date })}
+                                                placeholder="Select event end date"
+                                            />
+                                        </div>
 
-                                        {isTryouts && (
+                                        {isTryouts ? (
                                             <div>
-                                                <label className="block text-sm">Registration End</label>
+                                                <label className="block text-sm">Registration End <span className="text-red-500">*</span></label>
                                                 <DateTimePicker
-                                                    value={editData.registration_end_date}
+                                                    value={editData.registration_end_date || ''}
                                                     onChange={handleRegistrationEndDateChange}
                                                     placeholder="Select registration end date"
+                                                    required
                                                 />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`has_registration_end_date_${editingEventId}`}
+                                                        checked={editData.has_registration_end_date}
+                                                        onChange={(e) => setEditData({ 
+                                                            ...editData, 
+                                                            has_registration_end_date: e.target.checked,
+                                                            // If enabling registration, set a default date if none exists
+                                                            registration_end_date: !editData.registration_end_date && e.target.checked 
+                                                                ? new Date().toISOString().slice(0, 16) 
+                                                                : editData.registration_end_date
+                                                        })}
+                                                        className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                                                    />
+                                                    <label htmlFor={`has_registration_end_date_${editingEventId}`} className="text-sm">
+                                                        Enable Registration End Date
+                                                    </label>
+                                                </div>
+                                                
+                                                {editData.has_registration_end_date && (
+                                                    <div>
+                                                        <label className="block text-sm">Registration End</label>
+                                                        <DateTimePicker
+                                                            value={editData.registration_end_date}
+                                                            onChange={handleRegistrationEndDateChange}
+                                                            placeholder="Select registration end date"
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -1866,35 +1858,39 @@ function Dashboard() {
                                         </div>
 
                                         <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-medium text-slate-400">Registration Status</p>
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${event.registration_end_date && new Date(event.registration_end_date) > new Date() ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                                    <span className="text-sm">
-                                                        {event.registration_end_date && new Date(event.registration_end_date) > new Date() 
-                                                            ? 'Open until ' + formatDateTime(event.registration_end_date)
-                                                            : 'Registration closed'}
-                                                    </span>
+                                            {event.has_registration_end_date && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-medium text-slate-400">Registration Status</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-2 h-2 rounded-full ${event.registration_end_date && new Date(event.registration_end_date) > new Date() ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                                        <span className="text-sm">
+                                                            {event.registration_end_date && new Date(event.registration_end_date) > new Date() 
+                                                                ? 'Open until ' + formatDateTime(event.registration_end_date)
+                                                                : 'Registration closed'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
                                             
                                             <div className="col-span-2 flex justify-between items-center pt-2">
-                                                <Link
-                                                    href={`/events/${event.id}/registrations`}
-                                                    className="text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-1.5 rounded-md border border-blue-500/30 transition-colors flex items-center gap-1.5"
-                                                >
-                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                    </svg>
-                                                    View Registrations
-                                                </Link>
+                                                {event.has_registration_end_date && (
+                                                    <Link
+                                                        href={`/events/${event.id}/registrations`}
+                                                        className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                        View Registrations
+                                                    </Link>
+                                                )}
                                                 
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => startEdit(event)}
-                                                        className="text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-1.5 rounded-md border border-blue-500/30 transition-colors flex items-center gap-1.5"
+                                                        className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
                                                     >
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                         </svg>
                                                         Edit
@@ -1902,9 +1898,9 @@ function Dashboard() {
                                                     
                                                     <button
                                                         onClick={() => handleDelete(event.id)}
-                                                        className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-md border border-red-500/30 transition-colors flex items-center gap-1.5"
+                                                        className="text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-2.5 py-1 rounded border border-red-500/30 transition-colors flex items-center gap-1"
                                                     >
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                         </svg>
                                                         Delete

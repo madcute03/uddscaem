@@ -823,19 +823,34 @@ export default function CreateCompetition({ auth, events = [] }) {
                     {/* Create Event Form */}
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                         <div className="flex flex-col space-y-4">
-                            <div className="flex justify-between items-center">
-                                
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-slate-300">Enable Bracketing</span>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            className="sr-only peer" 
-                                            checked={data.allow_bracketing}
-                                            onChange={(e) => setData('allow_bracketing', e.target.checked)}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
+                            <div className="flex flex-col space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-300">Enable Bracketing</span>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                className="sr-only peer" 
+                                                checked={data.allow_bracketing}
+                                                onChange={(e) => setData('allow_bracketing', e.target.checked)}
+                                            />
+                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-300">Enable Registration</span>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                className="sr-only peer" 
+                                                checked={data.has_registration_end_date}
+                                                onChange={(e) => setData('has_registration_end_date', e.target.checked)}
+                                            />
+                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
@@ -1001,6 +1016,22 @@ export default function CreateCompetition({ auth, events = [] }) {
                                 />
                                 {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
                             </div>
+
+                            {/* Registration End Date - Only show if registration is enabled */}
+                            {data.has_registration_end_date && (
+                                <div className="mb-4">
+                                    <label className="block mb-1 text-slate-300">Registration End Date</label>
+                                    <DateTimePicker
+                                        value={data.registration_end_date}
+                                        onChange={(value) => setData('registration_end_date', value)}
+                                        label=""
+                                        placeholder="Select registration end date and time"
+                                    />
+                                    {errors.registration_end_date && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Images */}
                             <div className="mb-2">

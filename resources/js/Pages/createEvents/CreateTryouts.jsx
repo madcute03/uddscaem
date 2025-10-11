@@ -11,25 +11,25 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
     const [showModal, setShowModal] = useState(false);
-    
+
     // Parse time into hours, minutes, and AM/PM
     const parseTime = (timeStr) => {
         if (!timeStr) return { hour: 12, minute: 0, period: 'AM' };
-        
+
         const [hours, minutes] = timeStr.split(':').map(Number);
         const period = hours >= 12 ? 'PM' : 'AM';
         let hour = hours % 12;
         if (hour === 0) hour = 12; // Convert 0 to 12 for 12-hour format
-        
+
         return {
             hour: hour,
             minute: minutes || 0,
             period: period
         };
     };
-    
+
     const [time, setTime] = useState(parseTime(timeValue));
-    
+
     // Generate time options
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
     const minutes = Array.from({ length: 60 }, (_, i) => i); // 0 to 59
@@ -65,7 +65,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const handleTimeChange = (field, value) => {
         const newTime = { ...time, [field]: value };
         setTime(newTime);
-        
+
         // Convert to 24-hour format for storage
         let hour24 = newTime.hour;
         if (newTime.period === 'PM' && hour24 < 12) {
@@ -73,7 +73,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         } else if (newTime.period === 'AM' && hour24 === 12) {
             hour24 = 0;
         }
-        
+
         const formattedTime = `${String(hour24).padStart(2, '0')}:${String(newTime.minute).padStart(2, '0')}`;
         setTimeValue(formattedTime);
         updateDateTime(dateValue, formattedTime);
@@ -363,9 +363,21 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
         return days;
     };
 
+    const formatDateForComparison = (date) => {
+        if (!date) return '';
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleDateSelect = (date) => {
         if (date) {
-            const formattedDate = date.toISOString().split('T')[0];
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
             onChange(formattedDate);
             setIsOpen(false);
         }
@@ -381,7 +393,9 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
 
     const isSelected = (date) => {
         if (!date || !value) return false;
-        return date.toISOString().split('T')[0] === value;
+        const selectedDate = formatDateForComparison(date);
+        const currentValue = formatDateForComparison(value);
+        return selectedDate === currentValue;
     };
 
     const isToday = (date) => {
@@ -409,71 +423,98 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
             </div>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-700 rounded-md shadow-lg z-[60] p-4">
-                    {/* Calendar Header */}
-                    <div className="flex items-center justify-between mb-4 px-2">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50">
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md p-6 relative">
+                        {/* Close Button */}
                         <button
                             type="button"
-                            onClick={() => navigateMonth(-1)}
-                            className="p-1 hover:bg-slate-700 rounded-full"
+                            onClick={() => setIsOpen(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-700 transition-colors"
                         >
-                            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
-                        <h3 className="text-slate-100 font-medium text-lg">{monthYear}</h3>
-                        <button
-                            type="button"
-                            onClick={() => navigateMonth(1)}
-                            className="p-1 hover:bg-slate-700 rounded-full"
-                        >
-                            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
 
-                    {/* Days of Week */}
-                    <div className="grid grid-cols-7 gap-1 mb-2">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
-                                {day}
-                            </div>
-                        ))}
-                    </div>
+                        {/* Calendar Header */}
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-semibold text-slate-100">Select Date</h3>
+                        </div>
 
-                    {/* Calendar Days */}
-                    <div className="grid grid-cols-7 gap-1">
-                        {days.map((date, index) => (
+                        {/* Month Navigation */}
+                        <div className="flex items-center justify-between mb-4">
                             <button
-                                key={index}
                                 type="button"
-                                onClick={() => handleDateSelect(date)}
-                                disabled={!date}
-                                className={`
-                                    h-8 text-sm rounded transition-colors
-                                    ${!date ? 'invisible' : ''}
-                                    ${isSelected(date)
-                                        ? 'bg-blue-600 text-white'
-                                        : isToday(date)
-                                            ? 'bg-slate-600 text-slate-100 hover:bg-slate-500'
-                                            : 'text-slate-300 hover:bg-slate-700'
-                                    }
-                                `}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigateMonth(-1);
+                                }}
+                                className="p-2 hover:bg-slate-700 rounded-full transition-colors"
                             >
-                                {date?.getDate()}
+                                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
                             </button>
-                        ))}
+                            <h4 className="text-lg font-medium text-slate-100">{monthYear}</h4>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigateMonth(1);
+                                }}
+                                className="p-2 hover:bg-slate-700 rounded-full transition-colors"
+                            >
+                                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Days of Week */}
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">
+                                    {day}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Calendar Days */}
+                        <div className="grid grid-cols-7 gap-1">
+                            {days.map((date, index) => (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => {
+                                        handleDateSelect(date);
+                                        setIsOpen(false);
+                                    }}
+                                    disabled={!date}
+                                    className={`
+                                        aspect-square w-full text-sm rounded-lg transition-all flex items-center justify-center
+                                        ${!date ? 'invisible' : ''}
+                                        ${isSelected(date)
+                                            ? 'bg-blue-600 text-white font-medium'
+                                            : isToday(date)
+                                                ? 'bg-slate-700 text-blue-400 font-medium'
+                                                : 'text-slate-300 hover:bg-slate-700/50'
+                                        }
+                                    `}
+                                >
+                                    {date?.getDate()}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Selected Date Display */}
+                        {value && (
+                            <div className="mt-4 pt-4 border-t border-slate-700">
+                                <p className="text-slate-400 text-sm">Selected:</p>
+                                <p className="text-slate-100 font-medium">{formatDate(value)}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
-
-            {/* Overlay to close calendar when clicking outside */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[55]"
-                    onClick={() => setIsOpen(false)}
-                />
             )}
         </div>
     );
@@ -489,6 +530,7 @@ export default function CreateTryouts({ auth, events = [] }) {
         event_type: 'tryouts', // Set default to 'tryouts'
         other_event_type: '',
         event_date: '',
+        event_end_date: '',
         registration_end_date: '',
         has_registration_end_date: true,
         has_required_players: true,
@@ -697,7 +739,7 @@ export default function CreateTryouts({ auth, events = [] }) {
             <div className="py-8 px-2 sm:px-4 md:px-8">
                 <div className="mx-auto max-w-4xl w-full space-y-6">
                     {/* Back Button */}
-                    <Link 
+                    <Link
                         href={route('dashboard')}
                         className="inline-flex items-center text-slate-300 hover:text-white mb-4 transition-colors"
                     >
@@ -711,7 +753,7 @@ export default function CreateTryouts({ auth, events = [] }) {
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                         <div className="flex flex-col space-y-4">
                             <div className="flex justify-between items-center">
-                                
+
                                 <div className="flex items-center space-x-2">
                                     <span className="text-sm text-slate-300">Enable Bracketing</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -812,6 +854,7 @@ export default function CreateTryouts({ auth, events = [] }) {
                                     </div>
                                 )}
                             </div>
+
                             <div className="mb-4">
                                 <label className="block mb-1 text-slate-300">Event Start Date & Time</label>
                                 <DateTimePicker
@@ -821,6 +864,16 @@ export default function CreateTryouts({ auth, events = [] }) {
                                     placeholder="Select event date and time"
                                 />
                                 {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
+                            </div>
+                            <div className="mb-4">
+                                <label className="block mb-1 text-slate-300">Event End Date</label>
+                                <CalendarPicker
+                                    value={data.event_end_date}
+                                    onChange={(value) => setData('event_end_date', value)}
+                                    label=""
+                                    placeholder="Select event end date"
+                                />
+                                {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
                             </div>
                             <div className="mt-4">
                                 <div className="mb-4">
@@ -841,7 +894,7 @@ export default function CreateTryouts({ auth, events = [] }) {
                                         key={idx}
                                         type="file"
                                         className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
-                                        style={{width: '100%'}}
+                                        style={{ width: '100%' }}
                                         onChange={e => {
                                             const newImages = [...data.images];
                                             newImages[idx] = e.target.files[0];

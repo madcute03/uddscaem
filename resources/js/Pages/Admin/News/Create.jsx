@@ -507,15 +507,7 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 leading-tight">Create News</h2>
-                    <Link
-                        href={route('admin.news.index')}
-                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                        Back to News
-                    </Link>
-                </div>
+                <h2 className="font-semibold text-xl text-gray-800 leading-tight">Create News</h2>
             }
             suppressHydrationWarning={true}
         >
@@ -593,6 +585,17 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
 
             <div className="py-12">
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                    <div className="mb-4">
+                        <Link
+                            href={route('admin.news.index')}
+                            className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to News
+                        </Link>
+                    </div>
                     <div className="bg-slate-900 overflow-hidden shadow-sm sm:rounded-lg border border-slate-700">
                         <div className="p-6">
                             <form onSubmit={handleSubmit} className="space-y-6">

@@ -47,16 +47,6 @@ export default function ShowWriter({ writer }) {
                                         
                                         <div className="mt-4 w-full">
                                             <div className="flex items-center justify-between py-2 border-b border-slate-700">
-                                                <span className="text-slate-400">Status:</span>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    writer.writer_profile?.status === 'active' 
-                                                        ? 'bg-green-100 text-green-800' 
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                    {writer.writer_profile?.status === 'active' ? 'Active' : 'Inactive'}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between py-2 border-b border-slate-700">
                                                 <span className="text-slate-400">Articles:</span>
                                                 <span className="text-white">{writer.news_count || 0}</span>
                                             </div>
