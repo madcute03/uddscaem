@@ -39,12 +39,23 @@ export default function RegisterEvent({ event, requiredPlayers }) {
         for (let i = 0; i < data.players.length; i++) {
             const email = data.players[i].email.trim();
             if (!email.endsWith('@cdd.edu.ph')) {
-                alert(`Player ${i + 1}: Email must end with @cdd.edu.ph`);
                 return; // Stop form submission
             }
         }
 
         // Use plain payload now that we're sending a text link (no files)
+        const styles = `
+  /* Style for dropdown options */
+  select option {
+    background-color: #1e293b; /* slate-800 */
+    color: #f1f5f9; /* slate-100 */
+  }
+
+  .ql-editor img {
+    max-width: 100%;
+  }
+        `;
+
         const payload = {
             team_name: requiredPlayers > 1 ? data.team_name : undefined,
             players: data.players.map((p) => ({
@@ -52,7 +63,6 @@ export default function RegisterEvent({ event, requiredPlayers }) {
                 name: p.name,
                 email: p.email,
                 department: p.department,
-                age: p.age,
                 gdrive_link: p.gdrive_link,
             })),
         };
@@ -73,7 +83,21 @@ export default function RegisterEvent({ event, requiredPlayers }) {
 
     return (
         <PublicLayout>
-            <Head title={`Register: ${event.title}`} />
+            <Head title={`Register: ${event.title}`}>
+                <style>
+                    {`
+                        select option {
+                            background-color: #1e293b; /* slate-800 */
+                            color: #f1f5f9; /* slate-100 */
+                            padding: 8px;
+                        }
+                        select option:checked {
+                            background-color: #334155; /* slate-700 */
+                            font-weight: 500;
+                        }
+                    `}
+                </style>
+            </Head>
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-8 px-2 sm:px-4 md:px-8">
                 <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
                     <h1 className="text-2xl font-semibold text-center">Register for {event.title}</h1>
@@ -130,14 +154,38 @@ export default function RegisterEvent({ event, requiredPlayers }) {
                                     required
                                 />
 
-                                <input
-                                    type="text"
-                                    placeholder="Department"
-                                    value={player.department}
-                                    onChange={(e) => handlePlayerChange(index, 'department', e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                    required
-                                />
+                                <div className="space-y-2">
+                                    <select
+                                        value={player.department.startsWith('Other: ') ? 'Other' : player.department}
+                                        onChange={(e) => {
+                                            const value = e.target.value === 'Other' ? 'Other: ' : e.target.value;
+                                            handlePlayerChange(index, 'department', value);
+                                        }}
+                                        className="w-full bg-white/10 border border-white/20 text-slate-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                        required
+                                    >
+                                        <option value="">Select Department</option>
+                                        <option value="School of Information Technology">School of Information Technology</option>
+                                        <option value="School of Engineering">School of Engineering</option>
+                                        <option value="School of Teacher Education">School of Teacher Education</option>
+                                        <option value="School of Business and Accountancy">School of Business and Accountancy</option>
+                                        <option value="School of International Hospitality Management">School of International Hospitality Management</option>
+                                        <option value="School of Humanities">School of Humanities</option>
+                                        <option value="School of Health and Sciences">School of Health and Sciences</option>
+                                        <option value="School of Criminology">School of Criminology</option>
+                                        <option value="Other">Other (Please specify)</option>
+                                    </select>
+                                    {player.department.startsWith('Other: ') || player.department === 'Other' ? (
+                                        <input
+                                            type="text"
+                                            placeholder="Please specify department"
+                                            value={player.department.startsWith('Other: ') ? player.department.substring(8) : ''}
+                                            onChange={(e) => handlePlayerChange(index, 'department', 'Other: ' + e.target.value)}
+                                            className="w-full mt-2 bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                            required
+                                        />
+                                    ) : null}
+                                </div>
 
                                 <input
                                     type="number"
