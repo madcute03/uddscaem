@@ -659,7 +659,7 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                                             onChange={e => setData('newCategory', e.target.value)}
                                             className="w-full px-3 py-2 mt-2 bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Enter new category name"
-                                            required={formData.showNewCategoryInput}
+                                            required={data.showNewCategoryInput}
                                         />
                                     )}
                                     {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}

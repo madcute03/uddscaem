@@ -66,7 +66,7 @@ class NewsController extends Controller
             'description' => 'required|string',
             'category' => 'required_without:newCategory|string|nullable',
             'newCategory' => 'required_without:category|string|nullable',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:1073741824',
         ]);
 
         // Use new category if provided, otherwise use the selected category
