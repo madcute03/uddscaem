@@ -246,11 +246,11 @@ export default function ShowEvent({ event }) {
                     <div className="mt-8 flex flex-col gap-4">
                         {/* Register Button for Tryouts and Competitions - Only show if registration is enabled */}
                         {event.has_registration_end_date && (event.event_type === 'tryouts' || event.event_type === 'competition') && isUpcoming && (
-                            <div className="flex flex-col gap-2">
+                            <div>
                                 {(!event.registration_end_date || new Date(event.registration_end_date) > new Date()) && (
                                     <Link
                                         href={route("events.register", event.id)}
-                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300 text-center"
+                                        className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300 text-center"
                                     >
                                         Register Now
                                     </Link>
