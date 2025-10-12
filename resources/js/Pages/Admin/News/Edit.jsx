@@ -373,6 +373,17 @@ export default function EditNews({ auth, news, categories: propCategories = [] }
       
       <div className="py-8">
         <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
+          <div className="mb-4">
+            <Link
+              href={route('admin.news.index')}
+              className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to News
+            </Link>
+          </div>
           <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 shadow-2xl sm:rounded-lg p-6">
             <form onSubmit={handleSubmit} encType="multipart/form-data">
               {/* Title */}

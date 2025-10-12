@@ -81,24 +81,52 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
         
         const processEvents = (event) => {
             if (!event?.date) return null;
-            const eventDate = new Date(event.date);
-            const endDate = event.end_date ? new Date(event.end_date) : null;
             
-            // Determine if event is ongoing (started but not ended)
-            const isOngoing = eventDate <= now && 
-                (endDate ? endDate >= now : true) && 
-                !event.is_done;
-                
-            // Determine if event is upcoming (not started)
-            const isUpcoming = eventDate > now && !event.is_done;
+            // Parse start date
+            const startDate = new Date(event.date);
+            if (isNaN(startDate.getTime())) return null;
+
+            // Parse end date (default to end of start date if not provided)
+            let endDate = startDate;
+            if (event.end_date) {
+                endDate = new Date(event.end_date);
+                // If no time is specified in end date, set to end of day
+                if (event.end_date.split('T').length === 1) {
+                    endDate.setHours(23, 59, 59, 999);
+                }
+            } else {
+                // If no end date, set to end of start date
+                endDate = new Date(startDate);
+                endDate.setHours(23, 59, 59, 999);
+            }
+            
+            // Determine event status
+            let status, isOngoing, isUpcoming, isCompleted;
+            
+            if (now < startDate) {
+                status = 'Upcoming';
+                isUpcoming = true;
+                isOngoing = false;
+                isCompleted = false;
+            } else if (now > endDate) {
+                status = 'Done';
+                isCompleted = true;
+                isOngoing = false;
+                isUpcoming = false;
+            } else {
+                status = 'Ongoing';
+                isOngoing = true;
+                isUpcoming = false;
+                isCompleted = false;
+            }
             
             return {
                 ...event,
                 isOngoing,
                 isUpcoming,
-                isCompleted: event.is_done,
-                status: event.is_done ? 'Done' : 
-                        isOngoing ? 'Ongoing' : 'Upcoming'
+                isCompleted,
+                status,
+                originalStatus: event.status // Keep original status for reference
             };
         };
         
@@ -152,7 +180,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
         },
         { 
             name: 'Upcoming', 
-            value: loading ? '...' : (upcomingEvents?.length || 0), 
+            value: '', 
             icon: CalendarDaysIcon,
             bgColor: 'bg-gradient-to-br from-violet-500 to-violet-600',
             textColor: 'text-violet-100',
@@ -207,9 +235,14 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
 
         return (
             <div className="mb-6">
-                <h3 className="text-md font-medium text-white mb-3 px-2">
-                    {title} <span className="text-slate-400">({events.length})</span>
-                </h3>
+                {title && (
+                    <h3 className="text-md font-medium text-white mb-3 px-2">
+                        {title}
+                        {title.toLowerCase() !== 'upcoming' && (
+                            <span className="text-slate-400"> ({events.length})</span>
+                        )}
+                    </h3>
+                )}
                 
                 <div className="overflow-hidden rounded-lg border border-slate-700">
                     {/* Mobile View - Card Layout */}
@@ -521,10 +554,10 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                 {/* Ongoing Events */}
                                 <div className="mb-8">
                                     <h3 className="text-lg font-semibold text-white mb-4">
-                                        Ongoing Events {filteredOngoing.length > 0 && `(${filteredOngoing.length})`}
+                                        Ongoing Events
                                     </h3>
                                     {filteredOngoing.length > 0 ? (
-                                        renderEventsTable(filteredOngoing, 'ongoing')
+                                        renderEventsTable(filteredOngoing, '')
                                     ) : (
                                         <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
                                             {searchTerm ? 'No matching ongoing events found' : 'No ongoing events'}
@@ -535,10 +568,10 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                 {/* Upcoming Events */}
                                 <div className="mb-8">
                                     <h3 className="text-lg font-semibold text-white mb-4">
-                                        Upcoming Events {filteredUpcoming.length > 0 && `(${filteredUpcoming.length})`}
+                                        Upcoming Events
                                     </h3>
                                     {filteredUpcoming.length > 0 ? (
-                                        renderEventsTable(filteredUpcoming, 'upcoming')
+                                        renderEventsTable(filteredUpcoming, '')
                                     ) : (
                                         <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
                                             {searchTerm ? 'No matching upcoming events found' : 'No upcoming events'}
@@ -549,10 +582,10 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                 {/* Completed Events */}
                                 <div className="mb-8">
                                     <h3 className="text-lg font-semibold text-white mb-4">
-                                        Completed Events {filteredCompleted.length > 0 && `(${filteredCompleted.length})`}
+                                        Completed Events
                                     </h3>
                                     {filteredCompleted.length > 0 ? (
-                                        renderEventsTable(filteredCompleted, 'completed')
+                                        renderEventsTable(filteredCompleted, '')
                                     ) : (
                                         <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
                                             {searchTerm ? 'No matching completed events found' : 'No completed events'}
@@ -622,13 +655,15 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                     <div className={`${stat.bgColor} rounded-lg p-2 mr-3 flex-shrink-0`}>
                                                         <stat.icon className="h-5 w-5 text-white" aria-hidden="true" />
                                                     </div>
-                                                    <div className="min-w-[40px]">
-                                                        {stat.loading ? (
-                                                            <div className="h-7 w-10 bg-slate-600/50 rounded animate-pulse"></div>
-                                                        ) : (
-                                                            <p className="text-2xl font-bold text-white">{stat.value}</p>
-                                                        )}
-                                                    </div>
+                                                    {stat.name !== 'Upcoming' && (
+                                                        <div className="min-w-[40px]">
+                                                            {stat.loading ? (
+                                                                <div className="h-7 w-10 bg-slate-600/50 rounded animate-pulse"></div>
+                                                            ) : (
+                                                                <p className="text-2xl font-bold text-white">{stat.value}</p>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

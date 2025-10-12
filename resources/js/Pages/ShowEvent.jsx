@@ -242,28 +242,25 @@ export default function ShowEvent({ event }) {
                         </div>
                     )}
 
-                    {/* Registration Info */}
-                    {event.event_type === 'tryouts' && (
-                        <div className="mt-6">
-                            <p className="text-lg font-semibold text-blue-300 mb-2">Registration Period</p>
-                            <p className="text-slate-300">
-                                {event.registration_end_date 
-                                    ? `Until ${formatDate(event.registration_end_date, true)}`
-                                    : 'Open until event starts'}
-                            </p>
-                        </div>
-                    )}
-
                     {/* Action Buttons */}
-                    <div className="mt-8 flex flex-wrap gap-4">
-                        {/* Register Button for Tryouts */}
-                        {event.event_type === 'tryouts' && isUpcoming && !isRegistrationClosed && (
-                            <Link
-                                href={route("events.register", event.id)}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300"
-                            >
-                                Register Now
-                            </Link>
+                    <div className="mt-8 flex flex-col gap-4">
+                        {/* Register Button for Tryouts and Competitions - Only show if registration is enabled */}
+                        {event.has_registration_end_date && (event.event_type === 'tryouts' || event.event_type === 'competition') && isUpcoming && (
+                            <div className="flex flex-col gap-2">
+                                {(!event.registration_end_date || new Date(event.registration_end_date) > new Date()) && (
+                                    <Link
+                                        href={route("events.register", event.id)}
+                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300 text-center"
+                                    >
+                                        Register Now
+                                    </Link>
+                                )}
+                                {event.registration_end_date && new Date(event.registration_end_date) > new Date() && (
+                                    <div className="text-center text-blue-300 text-sm">
+                                        Closes {formatDate(event.registration_end_date, true)}
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* View Bracket Button */}
