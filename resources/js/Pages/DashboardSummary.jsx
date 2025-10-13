@@ -180,7 +180,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
         },
         { 
             name: 'Upcoming', 
-            value: '', 
+            value: loading ? '...' : (upcomingEvents?.length || 0), 
             icon: CalendarDaysIcon,
             bgColor: 'bg-gradient-to-br from-violet-500 to-violet-600',
             textColor: 'text-violet-100',
@@ -655,15 +655,13 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                     <div className={`${stat.bgColor} rounded-lg p-2 mr-3 flex-shrink-0`}>
                                                         <stat.icon className="h-5 w-5 text-white" aria-hidden="true" />
                                                     </div>
-                                                    {stat.name !== 'Upcoming' && (
-                                                        <div className="min-w-[40px]">
-                                                            {stat.loading ? (
-                                                                <div className="h-7 w-10 bg-slate-600/50 rounded animate-pulse"></div>
-                                                            ) : (
-                                                                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                                    <div className="min-w-[40px]">
+                                                        {stat.loading ? (
+                                                            <div className="h-7 w-10 bg-slate-600/50 rounded animate-pulse"></div>
+                                                        ) : (
+                                                            <p className="text-2xl font-bold text-white">{stat.value}</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
