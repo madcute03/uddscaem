@@ -243,21 +243,26 @@ export default function ShowEvent({ event }) {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="mt-8 flex flex-col gap-4">
+                    <div className="mt-8 flex gap-8">
                         {/* Register Button for Tryouts and Competitions - Only show if registration is enabled */}
                         {event.has_registration_end_date && (event.event_type === 'tryouts' || event.event_type === 'competition') && isUpcoming && (
                             <div>
                                 {(!event.registration_end_date || new Date(event.registration_end_date) > new Date()) && (
                                     <Link
                                         href={route("events.register", event.id)}
-                                        className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300 text-center"
+                                        className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                     >
                                         Register Now
                                     </Link>
                                 )}
                                 {event.registration_end_date && new Date(event.registration_end_date) > new Date() && (
-                                    <div className="text-center text-blue-300 text-sm">
-                                        Closes {formatDate(event.registration_end_date, true)}
+                                    <div className="text-left py-4 text-blue-300 text-sm ">
+                                        Registration Until {formatDate(event.registration_end_date, true)}
                                     </div>
                                 )}
                             </div>
@@ -268,7 +273,12 @@ export default function ShowEvent({ event }) {
                             <Link
                                 href={route("bracket.show", { event: event.id })}
                                 onClick={(e) => handleViewBracket(e, 'bracket')}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300"
+                                className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                             >
                                 View Bracket
                             </Link>
