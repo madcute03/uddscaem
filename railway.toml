@@ -1,12 +1,13 @@
+
 [build]
 # Install PHP and JS dependencies, then build assets and clear config cache
 command = "composer install --no-dev --optimize-autoloader && npm install && npm run build && php artisan config:clear"
 
 [deploy]
-# Only run migrations and seeders in the deploy phase
+# Run migrations and seeders after deploy
 dependsOn = ["build"]
 command = "php artisan storage:link --force && php artisan migrate --force --seed"
 
 [start]
-# Only start the server, migrations already ran in the deploy phase
-command = "php -S 0.0.0.0:$PORT -t public"
+# Run migrations, seeders and start the server
+command = "php artisan migrate --force --seed && php -S 0.0.0.0:$PORT -t public"
