@@ -141,14 +141,24 @@ export default function CreateWriter() {
                                 <div className="flex justify-end space-x-3">
                                     <Link
                                         href={route('admin.writers.index')}
-                                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                        className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#FF0000] to-[#FF0000]/0 
+                                                               bg-[#FF0000]/20 flex items-center justify-center 
+                                                               hover:bg-[#FF0000]/70 hover:shadow-[0_0_10px_rgba(255,0,0,0.5)] 
+                                                               focus:outline-none focus:bg-[#FF0000]/70 focus:shadow-[0_0_10px_rgba(255,0,0,0.5)]"
                                     >
                                         Cancel
                                     </Link>
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                                        className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                     >
                                         {processing ? 'Creating...' : 'Add User'}
                                     </button>
