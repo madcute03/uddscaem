@@ -6,4 +6,8 @@ dependsOn = ["build"]
 command = "php artisan storage:link --force && php artisan migrate --force --seed"
 
 [start]
-command = "php -S 0.0.0.0:$PORT -t public"
+command = "php -d display_errors=1 -d error_reporting=E_ALL -S 0.0.0.0:$PORT -t public"
+
+[processes]
+web = "php -S 0.0.0.0:$PORT -t public"
+queue = "php artisan queue:work --tries=3"
