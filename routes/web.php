@@ -15,7 +15,6 @@ use App\Http\Controllers\DoubleEliminationController;
 use App\Http\Controllers\SingleEliminationController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
-use App\Models\Event;
 
 // ============================================
 // Public Routes
@@ -32,41 +31,56 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-// Events
+// ============================================
+// Event Viewing & Brackets
+// ============================================
+
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
 Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
 
 // Bracket Data (Public JSON endpoints)
-Route::get('/double-elimination/{event}', [DoubleEliminationController::class, 'show'])
-    ->name('double-elimination.show');
-Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])
-    ->name('single-elimination.show');
+Route::get('/double-elimination/{event}', [DoubleEliminationController::class, 'show'])->name('double-elimination.show');
+Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])->name('single-elimination.show');
 
-// Event Registration
+// ============================================
+// Event Registration (Single Player Version)
+// ============================================
+
+// Registration form
 Route::get('/events/{event}/register', [EventRegistrationController::class, 'create'])
     ->name('events.register');
+
+// Registration submission
 Route::post('/events/{event}/register', [EventRegistrationController::class, 'store'])
     ->name('eventregistrations.store');
-Route::get('/events/{event}/registrations', [EventRegistrationController::class, 'showTeamRegistrations'])
-    ->name('events.registrations');
 
-// Complaints
+// View registered players (per event)
+Route::get('/events/{event}/registrations', [EventRegistrationController::class, 'showPlayers'])
+    ->name('events.players');
+
+// ============================================
+// Complaints (Public)
+// ============================================
 Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
 Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
 
+// ============================================
 // News (Public)
+// ============================================
 Route::get('/news', [NewsController::class, 'publicIndex'])->name('news.index');
 Route::get('/news/{slug}', [NewsController::class, 'publicShow'])->name('news.show');
 
-// News Image Upload (Admin)
+// News Image Upload (Authenticated)
 Route::middleware(['auth'])->group(function () {
     Route::post('/news/upload-image', [NewsController::class, 'uploadImage'])->name('news.upload-image');
 });
 
+// ============================================
 // Bracket Previews
+// ============================================
 Route::get('/bracket/single/{teams}', function ($teams) {
-    $componentMap = [
+    $map = [
         2 => 'Bracket/SingleEliminationBracket/Bracket2',
         3 => 'Bracket/SingleEliminationBracket/Bracket3',
         4 => 'Bracket/SingleEliminationBracket/Bracket4',
@@ -75,14 +89,12 @@ Route::get('/bracket/single/{teams}', function ($teams) {
         7 => 'Bracket/SingleEliminationBracket/Bracket7',
         8 => 'Bracket/SingleEliminationBracket/Bracket8',
     ];
-
-    if (!isset($componentMap[$teams])) abort(404);
-
-    return Inertia::render($componentMap[$teams], ['teams' => $teams]);
+    abort_unless(isset($map[$teams]), 404);
+    return Inertia::render($map[$teams], ['teams' => $teams]);
 })->name('bracket.single');
 
 Route::get('/bracket/double/{teams}', function ($teams) {
-    $componentMap = [
+    $map = [
         3 => 'Bracket/DoubleEliminationBracket/Bracket3/Bracket',
         4 => 'Bracket/DoubleEliminationBracket/Bracket4/Bracket',
         5 => 'Bracket/DoubleEliminationBracket/Bracket5/Bracket',
@@ -90,12 +102,9 @@ Route::get('/bracket/double/{teams}', function ($teams) {
         7 => 'Bracket/DoubleEliminationBracket/Bracket7/Bracket',
         8 => 'Bracket/DoubleEliminationBracket/Bracket8/Bracket',
     ];
-
-    if (!isset($componentMap[$teams])) abort(404);
-
-    return Inertia::render($componentMap[$teams], ['teams' => $teams]);
+    abort_unless(isset($map[$teams]), 404);
+    return Inertia::render($map[$teams], ['teams' => $teams]);
 })->name('bracket.double');
-
 
 // ============================================
 // Admin Routes (Authenticated & Verified)
@@ -103,50 +112,21 @@ Route::get('/bracket/double/{teams}', function ($teams) {
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [EventController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard/summary', [\App\Http\Controllers\EventController::class, 'summary'])
-        ->name('dashboard.summary');
-    Route::get('/dashboard/create-competition', function () {
-        return Inertia::render('createEvents/CreateCompetition', [
-            'auth' => [
-                'user' => auth()->user()
-            ],
-            'events' => [],
-        ]);
-    })->name('dashboard.create-competition');
+    Route::get('/dashboard/summary', [EventController::class, 'summary'])->name('dashboard.summary');
 
-    Route::get('/dashboard/create-tryouts', function () {
-        return Inertia::render('createEvents/CreateTryouts', [
-            'auth' => [
-                'user' => auth()->user()
-            ],
-            'events' => []
-        ]);
-    })->name('dashboard.create-tryouts');
+    // Event creation pages
+    Route::get('/dashboard/create-competition', fn() => Inertia::render('createEvents/CreateCompetition', ['auth' => ['user' => auth()->user()]]) )->name('dashboard.create-competition');
+    Route::get('/dashboard/create-tryouts', fn() => Inertia::render('createEvents/CreateTryouts', ['auth' => ['user' => auth()->user()]]) )->name('dashboard.create-tryouts');
+    Route::get('/dashboard/create-intramurals', fn() => Inertia::render('createEvents/CreateIntramurals', ['auth' => ['user' => auth()->user()]]) )->name('dashboard.create-intramurals');
+    Route::get('/dashboard/create-other-event', fn() => Inertia::render('createEvents/CreateOtherEvent', ['auth' => ['user' => auth()->user()]]) )->name('dashboard.create-other-event');
 
-    Route::get('/dashboard/create-intramurals', function () {
-        return Inertia::render('createEvents/CreateIntramurals', [
-            'auth' => [
-                'user' => auth()->user()
-            ],
-            'events' => []
-        ]);
-    })->name('dashboard.create-intramurals');
-
-    Route::get('/dashboard/create-other-event', function () {
-        return Inertia::render('createEvents/CreateOtherEvent', [
-            'auth' => [
-                'user' => auth()->user()
-            ],
-            'events' => []
-        ]);
-    })->name('dashboard.create-other-event');
-
+    // Event Management
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('/events/{id}/mark-done', [EventController::class, 'markDone'])->name('events.markDone');
-
     Route::post('/events/{id}/mark-undone', [EventController::class, 'markUndone'])->name('events.markUndone');
+
     // Bracket Management
     Route::get('/dashboard/bracket', [CreateBracketController::class, 'bracket'])->name('bracket');
     Route::post('/events/{event}/bracket-settings', [BracketController::class, 'storeBracketSettings'])->name('bracket.storeSettings');
@@ -167,7 +147,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/writers/{writer}/toggle-status', [WriterController::class, 'toggleStatus'])->name('writers.toggle-status');
     });
 
-    // Player Management
+    // Player Status Management
     Route::post('/player/update-status', [PlayerController::class, 'updateStatus'])->name('player.updateStatus');
 
     // User Profile

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Player;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
 
 class EventRegistrationController extends Controller
 {
@@ -15,65 +15,57 @@ class EventRegistrationController extends Controller
     {
         return Inertia::render('RegisterEvent', [
             'event' => $event,
-            // Default to 1 if not configured to avoid empty form
-            'requiredPlayers' => $event->required_players ?? 1,
         ]);
     }
 
-    // Store registration
+    // Store single player registration
     public function store(Request $request, Event $event)
-    {
-        $validated = $request->validate([
-            'team_name' => 'nullable|string|max:255',
-            'players.*.student_id' => 'required',
-            'players.*.name' => 'required|string|max:255',
-            'players.*.email' => 'required|email|ends_with:@cdd.edu.ph',
-            'players.*.department' => 'required|string|max:255',
-            'players.*.age' => 'required|integer',
-            'players.*.gdrive_link' => 'required|url',
-        ]);
+{
+    // ✅ Validate input
+    $validated = $request->validate(
+        [
+            'student_id' => 'required|string|max:255|unique:players,student_id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|ends_with:@cdd.edu.ph|unique:players,email',
+            'department' => 'required|string|max:255',
+            'age' => 'required|integer',
+            'gdrive_link' => 'required|url',
+        ],
+        [
+            'email.unique' => 'This email is already registered.',
+            'student_id.unique' => 'This student ID is already registered.',
+            'email.ends_with' => 'Email must end with @cdd.edu.ph.',
+            'gdrive_link.url' => 'Please enter a valid Google Drive link.',
+        ]
+    );
 
-        // Create event registration
-        $registration = EventRegistration::create([
-            'event_id' => $event->id,
-            'team_name' => $request->team_name ?? $request->players[0]['name'],
-        ]);
+    // ✅ Create player directly linked to the event
+    Player::create([
+        'event_id' => $event->id, // ← FIX: directly link to the event
+        'student_id' => $validated['student_id'],
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'department' => $validated['department'],
+        'age' => $validated['age'],
+        'gdrive_link' => $validated['gdrive_link'],
+    ]);
 
-        foreach ($validated['players'] as $player) {
-            // Reuse existing DB columns to store the link to avoid a migration right now
-            $gdriveLink = $player['gdrive_link'];
-
-            $registration->players()->create([
-                'student_id' => $player['student_id'],
-                'name' => $player['name'],
-                'email' => $player['email'],
-                'department' => $player['department'],
-                'age' => $player['age'],
-                'player_image' => $gdriveLink,
-                'whiteform_image' => $gdriveLink,
-            ]);
-        }
+    return redirect()
+        ->route('events.show', $event->id)
+        ->with('success', 'Registration successful!');
+}
 
 
-        return redirect()->route('events.show', $event->id)
-            ->with('success', 'Registration successful!');
-    }
+    // Show all registered players for an event
+    public function showPlayers(Event $event)
+{
+    // Get all players registered for this event
+    $players = \App\Models\Player::where('event_id', $event->id)->get();
 
-    // Show registered teams and players
-    public function showTeamRegistrations(Event $event)
-    {
-        // Fetch registrations with players
-        $registrations = EventRegistration::with('players')
-            ->where('event_id', $event->id)
-            ->get();
+    return Inertia::render('Registrations/RegisteredPlayers', [
+        'players' => $players,
+        'event' => $event,
+    ]);
+}
 
-        // Count the number of teams for the frontend
-        $teamsCount = $registrations->count();
-
-        return Inertia::render('Registrations/RegisteredTeams', [
-            'registrations' => $registrations,
-            'event' => $event,
-            'teams_count' => $teamsCount, // ✅ pass count explicitly
-        ]);
-    }
 }

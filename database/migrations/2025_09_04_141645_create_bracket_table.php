@@ -16,7 +16,7 @@ return new class extends Migration
             $table->json('matches'); // store matches as JSON
             $table->string('champion')->nullable();
             $table->timestamps();
-                $table->integer('team_count')->nullable(); // or 'bracket_size'
+                $table->integer('team_players')->nullable(); // or 'bracket_size'
 
 
             $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');

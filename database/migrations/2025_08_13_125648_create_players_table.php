@@ -11,15 +11,13 @@ return new class extends Migration
         Schema::create('players', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_registration_id')
-                ->constrained('event_registrations')
-                ->onDelete('cascade');
+            ->constrained('event_registrations')
+            ->onDelete('cascade');
             $table->string('student_id');
             $table->string('name');
             $table->string('email'); // ✅ Add this line
             $table->string('department');
             $table->integer('age');
-            $table->longText('player_image');
-            $table->longText('whiteform_image');
             $table->timestamps();
         });
     }

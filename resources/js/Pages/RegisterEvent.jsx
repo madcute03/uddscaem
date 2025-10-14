@@ -1,73 +1,26 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { useEffect } from 'react';
 import PublicLayout from '@/Layouts/PublicLayout';
 
-export default function RegisterEvent({ event, requiredPlayers }) {
+export default function RegisterEvent({ event }) {
     const { data, setData, post, errors, reset } = useForm({
-        team_name: '',
-        players: Array.from({ length: requiredPlayers }, () => ({
-            student_id: '',
-            name: '',
-            email: '',
-            department: '',
-            age: '',
-            gdrive_link: '',
-        })),
+        student_id: '',
+        name: '',
+        email: '',
+        department: '',
+        age: '',
+        gdrive_link: '',
     });
-
-    useEffect(() => {
-        setData('players', Array.from({ length: requiredPlayers }, () => ({
-            student_id: '',
-            name: '',
-            email: '',
-            department: '',
-            age: '',
-            gdrive_link: '',
-        })));
-    }, [requiredPlayers]);
-
-    const handlePlayerChange = (index, field, value) => {
-        const newPlayers = [...data.players];
-        newPlayers[index][field] = value;
-        setData('players', newPlayers);
-    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Strict email validation before submit
-        for (let i = 0; i < data.players.length; i++) {
-            const email = data.players[i].email.trim();
-            if (!email.endsWith('@cdd.edu.ph')) {
-                return; // Stop form submission
-            }
+        // Simple email check before submission
+        if (!data.email.endsWith('@cdd.edu.ph')) {
+            alert('Email must end with @cdd.edu.ph');
+            return;
         }
 
-        // Use plain payload now that we're sending a text link (no files)
-        const styles = `
-  /* Style for dropdown options */
-  select option {
-    background-color: #1e293b; /* slate-800 */
-    color: #f1f5f9; /* slate-100 */
-  }
-
-  .ql-editor img {
-    max-width: 100%;
-  }
-        `;
-
-        const payload = {
-            team_name: requiredPlayers > 1 ? data.team_name : undefined,
-            players: data.players.map((p) => ({
-                student_id: p.student_id,
-                name: p.name,
-                email: p.email,
-                department: p.department,
-                gdrive_link: p.gdrive_link,
-            })),
-        };
-
-        post(route('eventregistrations.store', event.id), payload, {
+        post(route('eventregistrations.store', event.id), {
             onSuccess: () => {
                 router.visit(route('events.show', event.id), {
                     only: ['event'],
@@ -87,133 +40,152 @@ export default function RegisterEvent({ event, requiredPlayers }) {
                 <style>
                     {`
                         select option {
-                            background-color: #1e293b; /* slate-800 */
-                            color: #f1f5f9; /* slate-100 */
+                            background-color: #1e293b;
+                            color: #f1f5f9;
                             padding: 8px;
                         }
                         select option:checked {
-                            background-color: #334155; /* slate-700 */
+                            background-color: #334155;
                             font-weight: 500;
                         }
                     `}
                 </style>
             </Head>
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-8 px-2 sm:px-4 md:px-8">
-                <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
-                    <h1 className="text-2xl font-semibold text-center">Register for {event.title}</h1>
-                    <p className="text-lg text-slate-300 text-center">Fill in participant details</p>
 
-                    <form onSubmit={handleSubmit} className="mt-4 space-y-6" encType="multipart/form-data">
-                        {requiredPlayers > 1 && (
-                            <div>
-                                <label className="block mb-1 text-slate-200">Team Name *</label>
-                                <input
-                                    type="text"
-                                    value={data.team_name}
-                                    onChange={(e) => setData('team_name', e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                    required
-                                />
-                                {errors.team_name && <p className="text-red-300 text-sm mt-1">{errors.team_name}</p>}
-                            </div>
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-8 px-4">
+                <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-6 md:p-8">
+                    <h1 className="text-2xl font-semibold text-center mb-2">
+                        Register for {event.title}
+                    </h1>
+                    <p className="text-lg text-slate-300 text-center mb-6">
+                        Fill in your registration details below
+                    </p>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <input
+                            type="text"
+                            placeholder="Student ID"
+                            value={data.student_id}
+                            onChange={(e) => setData('student_id', e.target.value)}
+                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                            pattern="[0-9\-]+"
+                            title="Only numbers and dashes allowed, e.g., 2025-001"
+                            required
+                        />
+                        {errors.student_id && (
+                            <p className="text-red-400 text-sm mt-1">{errors.student_id}</p>
                         )}
 
-                        {data.players.map((player, index) => (
-                            <div key={index} className="border border-white/20 rounded p-4 space-y-3 bg-white/5">
-                                
+                        <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                            required
+                        />
 
+                        <input
+                            type="email"
+                            placeholder="Email (must end with @cdd.edu.ph)"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                            pattern="^[a-zA-Z0-9._%+-]+@cdd\\.edu\\.ph$"
+                            title="Email must be a valid @cdd.edu.ph address"
+                            required
+                        />
+                        {errors.email && (
+                            <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                        )}
+
+                        <div className="space-y-2">
+                            <select
+                                value={data.department.startsWith('Other: ') ? 'Other' : data.department}
+                                onChange={(e) => {
+                                    const value =
+                                        e.target.value === 'Other' ? 'Other: ' : e.target.value;
+                                    setData('department', value);
+                                }}
+                                className="w-full bg-white/10 border border-white/20 text-slate-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                required
+                            >
+                                <option value="">Select Department</option>
+                                <option value="School of Information Technology">
+                                    School of Information Technology
+                                </option>
+                                <option value="School of Engineering">
+                                    School of Engineering
+                                </option>
+                                <option value="School of Teacher Education">
+                                    School of Teacher Education
+                                </option>
+                                <option value="School of Business and Accountancy">
+                                    School of Business and Accountancy
+                                </option>
+                                <option value="School of International Hospitality Management">
+                                    School of International Hospitality Management
+                                </option>
+                                <option value="School of Humanities">
+                                    School of Humanities
+                                </option>
+                                <option value="School of Health and Sciences">
+                                    School of Health and Sciences
+                                </option>
+                                <option value="School of Criminology">
+                                    School of Criminology
+                                </option>
+                                <option value="Other">Other (Please specify)</option>
+                            </select>
+
+                            {data.department.startsWith('Other: ') || data.department === 'Other' ? (
                                 <input
                                     type="text"
-                                    placeholder="Student ID"
-                                    value={player.student_id}
-                                    onChange={(e) => handlePlayerChange(index, 'student_id', e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                    pattern="[0-9\-]+"
-                                    title="Only numbers and dashes allowed, e.g., 2025-001"
+                                    placeholder="Please specify department"
+                                    value={
+                                        data.department.startsWith('Other: ')
+                                            ? data.department.substring(8)
+                                            : ''
+                                    }
+                                    onChange={(e) =>
+                                        setData('department', 'Other: ' + e.target.value)
+                                    }
+                                    className="w-full mt-2 bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                                     required
                                 />
+                            ) : null}
+                        </div>
 
-                                <input
-                                    type="text"
-                                    placeholder="Name"
-                                    value={player.name}
-                                    onChange={(e) => handlePlayerChange(index, 'name', e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                    required
-                                />
+                        <input
+                            type="number"
+                            placeholder="Age"
+                            value={data.age}
+                            onChange={(e) => setData('age', e.target.value)}
+                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                            required
+                        />
 
-                                {/* Email restricted to @cdd.edu.ph */}
-                                <input
-                                    type="email"
-                                    placeholder="Email (must end with @cdd.edu.ph)"
-                                    value={player.email}
-                                    onChange={(e) => handlePlayerChange(index, 'email', e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                    pattern="^[a-zA-Z0-9._%+-]+@cdd\.edu\.ph$"
-                                    title="Email must be a valid @cdd.edu.ph address"
-                                    required
-                                />
-
-                                <div className="space-y-2">
-                                    <select
-                                        value={player.department.startsWith('Other: ') ? 'Other' : player.department}
-                                        onChange={(e) => {
-                                            const value = e.target.value === 'Other' ? 'Other: ' : e.target.value;
-                                            handlePlayerChange(index, 'department', value);
-                                        }}
-                                        className="w-full bg-white/10 border border-white/20 text-slate-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                        required
-                                    >
-                                        <option value="">Select Department</option>
-                                        <option value="School of Information Technology">School of Information Technology</option>
-                                        <option value="School of Engineering">School of Engineering</option>
-                                        <option value="School of Teacher Education">School of Teacher Education</option>
-                                        <option value="School of Business and Accountancy">School of Business and Accountancy</option>
-                                        <option value="School of International Hospitality Management">School of International Hospitality Management</option>
-                                        <option value="School of Humanities">School of Humanities</option>
-                                        <option value="School of Health and Sciences">School of Health and Sciences</option>
-                                        <option value="School of Criminology">School of Criminology</option>
-                                        <option value="Other">Other (Please specify)</option>
-                                    </select>
-                                    {player.department.startsWith('Other: ') || player.department === 'Other' ? (
-                                        <input
-                                            type="text"
-                                            placeholder="Please specify department"
-                                            value={player.department.startsWith('Other: ') ? player.department.substring(8) : ''}
-                                            onChange={(e) => handlePlayerChange(index, 'department', 'Other: ' + e.target.value)}
-                                            className="w-full mt-2 bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                            required
-                                        />
-                                    ) : null}
-                                </div>
-
-                                <input
-                                    type="number"
-                                    placeholder="Age"
-                                    value={player.age}
-                                    onChange={(e) => handlePlayerChange(index, 'age', e.target.value)}
-                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                    required
-                                />
-
-                                <div>
-                                    <label className="block mb-1 text-slate-200">Google Drive link (Whiteform/PDS/Medical in one folder)</label>
-                                    <input
-                                        type="url"
-                                        placeholder="https://drive.google.com/..."
-                                        value={player.gdrive_link}
-                                        onChange={(e) => handlePlayerChange(index, 'gdrive_link', e.target.value)}
-                                        className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                        pattern="https?://.+"
-                                        title="Enter a valid link (include https://)"
-                                        required
-                                    />
-                                    <p className="text-xs text-slate-300 mt-1">Make sure the sharing is set to Anyone with the link can view.</p>
-                                </div>
-
-                                
-                            </div>
-                        ))}
+                        <div>
+                            <label className="block mb-1 text-slate-200">
+                                Google Drive link (Whiteform/PDS/Medical in one folder)
+                            </label>
+                            <input
+                                type="url"
+                                placeholder="https://drive.google.com/..."
+                                value={data.gdrive_link}
+                                onChange={(e) => setData('gdrive_link', e.target.value)}
+                                className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                pattern="https?://.+"
+                                title="Enter a valid link (include https://)"
+                                required
+                            />
+                            {errors.gdrive_link && (
+                                <p className="text-red-400 text-sm mt-1">{errors.gdrive_link}</p>
+                            )}
+                            <p className="text-xs text-slate-300 mt-1">
+                                Make sure sharing is set to “Anyone with the link can view.”
+                            </p>
+                        </div>
 
                         <button
                             type="submit"
@@ -223,7 +195,10 @@ export default function RegisterEvent({ event, requiredPlayers }) {
                         </button>
                     </form>
 
-                    <Link href={route('home')} className="mt-6 inline-block text-blue-300 hover:text-blue-200 hover:underline">
+                    <Link
+                        href={route('home')}
+                        className="mt-6 inline-block text-blue-300 hover:text-blue-200 hover:underline"
+                    >
                         ← Back to Events
                     </Link>
                 </div>

@@ -1,25 +1,28 @@
 <?php
 
-// app/Models/RegisteredPlayer.php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RegisteredPlayer extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'event_registration_id',
+        'event_id',
         'student_id',
         'name',
         'email',
         'department',
         'age',
-        'player_image',
-        'whiteform_image'
+        'gdrive_link',
+        'status', // optional if you track approval
     ];
 
-    public function team()
+    // Relationship: Each registered player belongs to one event
+    public function event()
     {
-        return $this->belongsTo(EventRegistration::class, 'event_registration_id');
+        return $this->belongsTo(Event::class);
     }
 }

@@ -5,35 +5,34 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Bracket;
 
 class Event extends Model
 {
     use HasFactory;
-    
+
     /**
-     * The "booting" method of the model.
-     *
-     * @return void
+     * Automatically handle cleanup when deleting an event.
      */
     protected static function booted()
     {
         static::deleting(function ($event) {
-            // Delete all associated images from storage and database
-            $event->images->each(function ($image) {
+            // Delete all associated images from storage and DB
+            $event->images->each(function ($image) use ($event) {
                 try {
                     if (Storage::disk('public')->exists($image->image_path)) {
                         Storage::disk('public')->delete($image->image_path);
                     }
                     $image->delete();
                 } catch (\Exception $e) {
-                    // Log the error but don't stop the deletion process
                     \Log::error('Error deleting event image: ' . $e->getMessage(), [
                         'image_id' => $image->id,
                         'event_id' => $event->id
                     ]);
                 }
             });
+
+            // Also delete all player registrations when an event is deleted
+            $event->registrations()->each->delete();
         });
     }
 
@@ -67,15 +66,15 @@ class Event extends Model
         'registration_end_date' => 'datetime',
         'participants' => 'array',
     ];
-    
+
     protected $attributes = [
-        'event_type' => 'competition', // Default value
-        'category' => 'sport', // Default value
+        'event_type' => 'competition',
+        'category' => 'sport',
         'is_done' => false,
         'allow_bracketing' => false,
         'has_registration_end_date' => false,
     ];
-    
+
     protected $dates = [
         'event_date',
         'event_end_date',
@@ -85,7 +84,7 @@ class Event extends Model
     ];
 
     /**
-     * Get the event's images.
+     * Each event can have multiple images.
      */
     public function images()
     {
@@ -93,7 +92,7 @@ class Event extends Model
     }
 
     /**
-     * Get the event's registrations.
+     * Each event can have multiple single-player registrations.
      */
     public function registrations()
     {
@@ -101,7 +100,7 @@ class Event extends Model
     }
 
     /**
-     * Get the bracket associated with the event.
+     * Each event can have one bracket (for competitions).
      */
     public function bracket()
     {

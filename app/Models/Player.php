@@ -10,19 +10,19 @@ class Player extends Model
     use HasFactory;
 
     protected $fillable = [
-        'registration_id',
+        'event_id',
         'student_id',
         'name',
         'email',
         'department',
         'age',
-        'player_image',
-        'whiteform_image',
+        'gdrive_link',
+        'status', // Optional: if you’re approving/disapproving players
     ];
 
-    public function registration()
+    // Relationship: Each player belongs to one event
+    public function event()
     {
-        return $this->belongsTo(EventRegistration::class, 'event_registration_id');
+        return $this->belongsTo(Event::class);
     }
-
 }
