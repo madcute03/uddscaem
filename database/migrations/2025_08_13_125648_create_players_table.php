@@ -18,6 +18,20 @@ return new class extends Migration
             $table->integer('age');
             $table->timestamps();
         });
+        if (!Schema::hasTable('players')) {
+            Schema::create('players', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('event_registration_id')
+                    ->constrained('event_registrations')
+                    ->onDelete('cascade');
+                $table->string('student_id');
+                $table->string('name');
+                $table->string('email');
+                $table->string('department');
+                $table->integer('age');
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
