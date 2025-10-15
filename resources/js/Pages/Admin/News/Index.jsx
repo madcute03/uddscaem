@@ -120,7 +120,7 @@ export default function NewsIndex({ news, stats }) {
                                                 Date
                                             </th>
                                             <th className="px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                                <span className="sr-only">Actions</span>
+                                                Actions
                                             </th>
                                         </tr>
                                     </thead>

@@ -101,7 +101,7 @@ export default function EventTabs({ events }) {
         return (
             <Link
                 href={route("events.show", event.id)}
-                className="group w-full h-full min-h-[550px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-300 hover:border-blue-500/50"
+                className="group w-full h-full min-h-[550px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-300 hover:border-blue-500/50 hover:-translate-y-1 hover:scale-105 animate-zoom-in"
             >
                 {/* Cover Image reserved height */}
                 <div className="relative w-full h-full md:h-80 overflow-hidden bg-gray-200">
@@ -132,6 +132,11 @@ export default function EventTabs({ events }) {
                     <h3 className="text-3xl font-bold text-slate-100 mb-2 line-clamp-4">{event.title}</h3>                   
                     <p className="text-sm text-slate-400 mt-auto">
                         By <span className="font-semibold text-slate-200">{event.coordinator_name}</span> | {dayjs(event.event_date).format("MMM D, YYYY")}
+                        {event.registration_type === 'team' && event.team_size && (
+                            <span className="ml-2 px-2 py-1 bg-blue-600/20 text-blue-300 text-xs rounded-full">
+                                {event.team_size} players per team
+                            </span>
+                        )}
                     </p>
                 </div>
             </Link>

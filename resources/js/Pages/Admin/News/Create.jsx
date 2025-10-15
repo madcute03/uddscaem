@@ -6,13 +6,19 @@ import 'react-quill/dist/quill.snow.css';
 import 'quill-image-resize-module-react';
 import ImageResize from 'quill-image-resize-module-react';
 
-// Custom image resize module with better mobile support
+// Custom modules configuration for better heading support
 const modules = {
   toolbar: [
     [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
     ['bold', 'italic', 'underline', 'strike'],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    [{ 'indent': '-1'}, { 'indent': '+1' }],
+    [{ 'direction': 'rtl' }],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
     ['link', 'image', 'video'],
+    ['blockquote', 'code-block'],
     ['clean']
   ],
   clipboard: {
@@ -137,6 +143,8 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
     const quillRef = useRef(null);
     
     const handleDescriptionChange = (value) => {
+        console.log('ReactQuill content changed:', value);
+        console.log('Content length:', value.length);
         setData('description', value);
     };
     
@@ -221,25 +229,16 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        const formData = new FormData();
-        formData.append('title', data.title);
-        formData.append('description', data.description || '');
-        formData.append('category', data.category);
-        formData.append('newCategory', data.newCategory || '');
-        formData.append('status', data.status || 'draft');
-        
-        if (data.image) {
-            formData.append('image', data.image);
-            if (data.image_width) formData.append('image_width', data.image_width);
-            if (data.image_height) formData.append('image_height', data.image_height);
-        }
-        
-        if (data.remove_image) {
-            formData.append('remove_image', '1');
-        }
-        
         post(route('admin.news.store'), {
-            data: formData,
+            title: data.title,
+            description: data.description || '',
+            category: data.category,
+            newCategory: data.newCategory || '',
+            status: data.status || 'draft',
+            ...(data.image && { image: data.image }),
+            ...(data.image_width && { image_width: data.image_width }),
+            ...(data.image_height && { image_height: data.image_height }),
+            ...(data.remove_image && { remove_image: '1' }),
             forceFormData: true,
             onSuccess: () => {
                 // Reset form on success
@@ -581,6 +580,67 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                 .image-toolbar button:hover {
                     background-color: #f3f4f6;
                 }
+
+                /* Ensure ReactQuill toolbar displays properly */
+                .ql-toolbar {
+                    border-top: 1px solid #4a5568 !important;
+                    border-left: 1px solid #4a5568 !important;
+                    border-right: 1px solid #4a5568 !important;
+                    background-color: #2d3748 !important;
+                }
+
+                .ql-container {
+                    border-bottom: 1px solid #4a5568 !important;
+                    border-left: 1px solid #4a5568 !important;
+                    border-right: 1px solid #4a5568 !important;
+                    background-color: #1a202c !important;
+                }
+
+                .ql-editor {
+                    color:rgb(24, 87, 170) !important;
+                    min-height: 200px;
+                }
+
+                .ql-editor.ql-blank::before {
+                    color: #a0aec0 !important;
+                }
+
+                /* Style for header dropdown to show "Normal" option clearly */
+                .ql-header option[value=""]::before {
+                    content: "Normal";
+                }
+
+                .ql-header .ql-picker-label::before {
+                    content: "Normal";
+                }
+
+                .ql-header[data-value=""] .ql-picker-label::before {
+                    content: "Normal";
+                }
+
+                /* Ensure all toolbar buttons are visible */
+                .ql-toolbar .ql-picker {
+                    color:rgb(7, 34, 70) !important;
+                }
+
+                .ql-toolbar button {
+                    background-color: transparent !important;
+                    color:rgb(82, 105, 136) !important;
+                    border: none !important;
+                }
+
+                .ql-toolbar button:hover {
+                    background-color: #4a5568 !important;
+                    color:rgb(67, 87, 153) !important;
+                }
+
+                .ql-toolbar .ql-stroke {
+                    stroke: #e2e8f0 !important;
+                }
+
+                .ql-toolbar .ql-fill {
+                    fill: #e2e8f0 !important;
+                }
             `}</style>
 
             <div className="py-12">
@@ -721,6 +781,12 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                                             placeholder="Write news description here..."
                                             modules={modules}
                                             style={{ minHeight: '200px' }}
+                                            formats={[
+                                                'header', 'bold', 'italic', 'underline', 'strike',
+                                                'list', 'bullet', 'script', 'indent', 'direction',
+                                                'color', 'background', 'align', 'link', 'image', 'video',
+                                                'blockquote', 'code-block'
+                                            ]}
                                         />
                                     </div>
                                     {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}

@@ -103,7 +103,7 @@ export default function NewsIndex({ news }) {
                             {filteredNews.map((article) => (
                                 <article
                                     key={article.id}
-                                    className="h-full flex flex-col bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                                    className="h-full flex flex-col bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-zoom-in"
                                 >
                                     <div className="relative overflow-hidden flex-shrink-0">
                                         <div className="aspect-w-16 aspect-h-9 w-full">

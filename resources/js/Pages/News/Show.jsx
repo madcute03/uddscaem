@@ -13,8 +13,167 @@ export default function NewsShow({ news, relatedNews }) {
         window.addEventListener('resize', checkIfMobile);
         return () => window.removeEventListener('resize', checkIfMobile);
     }, []);
+
+    // Share functionality
+    const handleShare = (platform) => {
+        const url = window.location.href;
+        const title = news.title;
+        const description = news.description ? news.description.replace(/<[^>]*>/g, '').substring(0, 200) + '...' : title;
+
+        let shareUrl = '';
+
+        switch (platform) {
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                break;
+            case 'linkedin':
+                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+                break;
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+                break;
+            default:
+                // Copy to clipboard as fallback
+                navigator.clipboard.writeText(url);
+                // You could add a toast notification here
+                return;
+        }
+
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'width=600,height=400');
+        }
+    };
+
     return (
         <PublicLayout>
+            <style jsx global>{`
+                /* Ensure ReactQuill content displays properly */
+                .ql-editor {
+                    padding: 0 !important;
+                }
+
+                .ql-editor h1,
+                .ql-editor h2,
+                .ql-editor h3,
+                .ql-editor h4,
+                .ql-editor h5,
+                .ql-editor h6 {
+                    color: #f1f5f9 !important;
+                    font-weight: 600 !important;
+                    margin-top: 1.5em !important;
+                    margin-bottom: 0.5em !important;
+                    line-height: 1.3 !important;
+                }
+
+                .ql-editor h1 { font-size: 2em !important; }
+                .ql-editor h2 { font-size: 1.5em !important; }
+                .ql-editor h3 { font-size: 1.25em !important; }
+                .ql-editor h4 { font-size: 1.1em !important; }
+                .ql-editor h5 { font-size: 1em !important; }
+                .ql-editor h6 { font-size: 0.9em !important; }
+
+                .ql-editor p {
+                    color: #cbd5e1 !important;
+                    margin-bottom: 1em !important;
+                    line-height: 1.7 !important;
+                }
+
+                .ql-editor strong, .ql-editor b {
+                    color: #f1f5f9 !important;
+                    font-weight: 600 !important;
+                }
+
+                .ql-editor em, .ql-editor i {
+                    color: #cbd5e1 !important;
+                    font-style: italic !important;
+                }
+
+                .ql-editor u {
+                    color: #cbd5e1 !important;
+                    text-decoration: underline !important;
+                }
+
+                .ql-editor a {
+                    color: #60a5fa !important;
+                    text-decoration: none !important;
+                    transition: color 0.2s ease !important;
+                }
+
+                .ql-editor a:hover {
+                    color: #93c5fd !important;
+                    text-decoration: underline !important;
+                }
+
+                .ql-editor ul, .ql-editor ol {
+                    color: #cbd5e1 !important;
+                    padding-left: 1.5em !important;
+                    margin-bottom: 1em !important;
+                }
+
+                .ql-editor li {
+                    color: #cbd5e1 !important;
+                    margin-bottom: 0.25em !important;
+                }
+
+                .ql-editor blockquote {
+                    border-left: 4px solid #3b82f6 !important;
+                    padding-left: 1em !important;
+                    margin: 1.5em 0 !important;
+                    color: #94a3b8 !important;
+                    font-style: italic !important;
+                }
+
+                .ql-editor code {
+                    background-color: #1e293b !important;
+                    color: #f1f5f9 !important;
+                    padding: 0.2em 0.4em !important;
+                    border-radius: 0.25em !important;
+                    font-size: 0.9em !important;
+                }
+
+                .ql-editor pre {
+                    background-color: #1e293b !important;
+                    color: #f1f5f9 !important;
+                    padding: 1em !important;
+                    border-radius: 0.5em !important;
+                    overflow-x: auto !important;
+                    margin: 1em 0 !important;
+                }
+
+                .ql-editor img {
+                    border-radius: 0.5em !important;
+                    border: 1px solid #475569 !important;
+                    margin: 1em 0 !important;
+                    max-width: 100% !important;
+                    height: auto !important;
+                }
+
+                .ql-editor table {
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                    margin: 1em 0 !important;
+                }
+
+                .ql-editor th, .ql-editor td {
+                    border: 1px solid #475569 !important;
+                    padding: 0.5em 1em !important;
+                    text-align: left !important;
+                }
+
+                .ql-editor th {
+                    background-color: #1e293b !important;
+                    color: #f1f5f9 !important;
+                    font-weight: 600 !important;
+                }
+
+                .ql-editor td {
+                    color: #cbd5e1 !important;
+                }
+            `}</style>
+
             <div className="min-h-screen bg-slate-900 text-slate-100">
                 <Head title={news.title} />
 
@@ -64,6 +223,121 @@ export default function NewsShow({ news, relatedNews }) {
 
                                 <div className="p-4 sm:p-6 md:p-8">
                                     <div className="prose prose-sm sm:prose-base prose-invert max-w-none prose-headings:text-slate-100 prose-p:text-slate-300 prose-a:text-blue-400 hover:prose-a:text-blue-300 prose-strong:text-slate-100 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-slate-500 prose-img:rounded-lg prose-img:border prose-img:border-slate-700/50">
+                                        {/* ReactQuill content styling */}
+                                        <style jsx>{`
+                                            .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+                                                color: #f1f5f9 !important;
+                                                font-weight: 600 !important;
+                                                margin-top: 1.5em !important;
+                                                margin-bottom: 0.5em !important;
+                                                line-height: 1.3 !important;
+                                            }
+
+                                            .prose h1 { font-size: 2em !important; }
+                                            .prose h2 { font-size: 1.5em !important; }
+                                            .prose h3 { font-size: 1.25em !important; }
+                                            .prose h4 { font-size: 1.1em !important; }
+                                            .prose h5 { font-size: 1em !important; }
+                                            .prose h6 { font-size: 0.9em !important; }
+
+                                            .prose p {
+                                                color: #cbd5e1 !important;
+                                                margin-bottom: 1em !important;
+                                                line-height: 1.7 !important;
+                                            }
+
+                                            .prose strong, .prose b {
+                                                color: #f1f5f9 !important;
+                                                font-weight: 600 !important;
+                                            }
+
+                                            .prose em, .prose i {
+                                                color: #cbd5e1 !important;
+                                                font-style: italic !important;
+                                            }
+
+                                            .prose u {
+                                                color: #cbd5e1 !important;
+                                                text-decoration: underline !important;
+                                            }
+
+                                            .prose a {
+                                                color: #60a5fa !important;
+                                                text-decoration: none !important;
+                                                transition: color 0.2s ease !important;
+                                            }
+
+                                            .prose a:hover {
+                                                color: #93c5fd !important;
+                                                text-decoration: underline !important;
+                                            }
+
+                                            .prose ul, .prose ol {
+                                                color: #cbd5e1 !important;
+                                                padding-left: 1.5em !important;
+                                                margin-bottom: 1em !important;
+                                            }
+
+                                            .prose li {
+                                                color: #cbd5e1 !important;
+                                                margin-bottom: 0.25em !important;
+                                            }
+
+                                            .prose blockquote {
+                                                border-left: 4px solid #3b82f6 !important;
+                                                padding-left: 1em !important;
+                                                margin: 1.5em 0 !important;
+                                                color: #94a3b8 !important;
+                                                font-style: italic !important;
+                                            }
+
+                                            .prose code {
+                                                background-color: #1e293b !important;
+                                                color: #f1f5f9 !important;
+                                                padding: 0.2em 0.4em !important;
+                                                border-radius: 0.25em !important;
+                                                font-size: 0.9em !important;
+                                            }
+
+                                            .prose pre {
+                                                background-color: #1e293b !important;
+                                                color: #f1f5f9 !important;
+                                                padding: 1em !important;
+                                                border-radius: 0.5em !important;
+                                                overflow-x: auto !important;
+                                                margin: 1em 0 !important;
+                                            }
+
+                                            .prose img {
+                                                border-radius: 0.5em !important;
+                                                border: 1px solid #475569 !important;
+                                                margin: 1em 0 !important;
+                                                max-width: 100% !important;
+                                                height: auto !important;
+                                            }
+
+                                            .prose table {
+                                                width: 100% !important;
+                                                border-collapse: collapse !important;
+                                                margin: 1em 0 !important;
+                                            }
+
+                                            .prose th, .prose td {
+                                                border: 1px solid #475569 !important;
+                                                padding: 0.5em 1em !important;
+                                                text-align: left !important;
+                                            }
+
+                                            .prose th {
+                                                background-color: #1e293b !important;
+                                                color: #f1f5f9 !important;
+                                                font-weight: 600 !important;
+                                            }
+
+                                            .prose td {
+                                                color: #cbd5e1 !important;
+                                            }
+                                        `}</style>
                                         <div dangerouslySetInnerHTML={{ __html: news.description }} />
                                     </div>
                                 </div>
@@ -88,14 +362,20 @@ export default function NewsShow({ news, relatedNews }) {
                                             { 
                                                 name: 'whatsapp',
                                                 path: 'M17.5,14.4c-0.2-0.1-1.2-0.6-1.4-0.6c-0.2,0-0.4,0.1-0.5,0.3c-0.1,0.2-0.4,0.6-0.5,0.7c-0.1,0.1-0.2,0.1-0.4,0c-0.2-0.1-0.7-0.3-1.4-0.9c-0.5-0.5-0.9-1-1-1.2c-0.1-0.2,0-0.3,0.1-0.4c0.1-0.1,0.2-0.2,0.3-0.3c0.1-0.1,0.2-0.2,0.3-0.3c0.1-0.1,0.1-0.2,0.2-0.3c0.1-0.1,0-0.3,0-0.3c0-0.1-0.5-1.3-0.7-1.8c-0.2-0.5-0.4-0.4-0.5-0.4c-0.1,0-0.3,0-0.5,0c-0.2,0-0.5,0.1-0.8,0.3c-0.3,0.2-1,1-1,2.4c0,1.3,1,2.8,1.1,3c0.1,0.2,1.8,2.7,4.4,3.8c0.6,0.3,1.1,0.5,1.5,0.6c0.6,0.2,1.2,0.2,1.6,0.1c0.5-0.1,1.4-0.6,1.6-1.1c0.2-0.5,0.2-1,0.1-1.1C17.8,14.5,17.7,14.4,17.5,14.4z M12,0C5.4,0,0,5.4,0,12s5.4,12,12,12s12-5.4,12-12S18.6,0,12,0z M12,22.5c-5.8,0-10.5-4.7-10.5-10.5S6.2,1.5,12,1.5S22.5,6.2,22.5,12S17.8,22.5,12,22.5z'
+                                            },
+                                            {
+                                                name: 'copy',
+                                                path: 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
                                             }
                                         ].map(({ name, path }) => (
                                             <button
                                                 key={name}
+                                                onClick={() => handleShare(name)}
                                                 className="w-9 h-9 rounded-full bg-slate-700/50 hover:bg-slate-700/80 flex items-center justify-center transition-colors"
-                                                aria-label={`Share on ${name}`}
+                                                aria-label={`Share on ${name === 'copy' ? 'Copy link' : name}`}
+                                                title={name === 'copy' ? 'Copy link to clipboard' : `Share on ${name}`}
                                             >
-                                                <span className="sr-only">Share on {name}</span>
+                                                <span className="sr-only">{name === 'copy' ? 'Copy link' : `Share on ${name}`}</span>
                                                 <svg className="w-4 h-4 text-slate-300" viewBox="0 0 24 24">
                                                     <path fill="currentColor" d={path} />
                                                 </svg>

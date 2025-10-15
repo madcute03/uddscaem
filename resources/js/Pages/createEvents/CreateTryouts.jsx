@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useState } from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Inertia } from '@inertiajs/inertia';
 import EventTypeSelector from '@/Components/EventTypeSelector';
 
@@ -533,10 +533,12 @@ export default function CreateTryouts({ auth, events = [] }) {
         event_end_date: '',
         registration_end_date: '',
         has_registration_end_date: true,
-        has_required_players: true,
+        registration_type: 'single', // Added missing field
+        team_size: null, // Added missing field
         allow_bracketing: false,
         images: [],
-        required_players: '1',
+        required_players: 1, // Changed from '1' to 1 (integer)
+        venue: '',
     });
 
     const [editingEventId, setEditingEventId] = useState(null);
@@ -596,11 +598,17 @@ export default function CreateTryouts({ auth, events = [] }) {
             } else if (key === 'required_players' && !data.has_required_players) {
                 // Skip required players if not enabled
                 return;
+            } else if (key === 'team_size' && data.registration_type !== 'team') {
+                // Skip team_size if registration_type is not team
+                return;
             } else if (key === 'other_event_type' && data.event_type !== 'other') {
                 // Skip other_event_type if event_type is not 'other'
                 return;
-            } else if (value !== null && value !== undefined) {
-                // Handle all other fields
+            } else if (key === 'other_category' && data.category !== 'other') {
+                // Skip other_category if category is not 'other'
+                return;
+            } else if (value !== null && value !== undefined && value !== '') {
+                // Handle all other fields, skip empty strings
                 formData.append(key, value);
             }
         });
@@ -615,9 +623,16 @@ export default function CreateTryouts({ auth, events = [] }) {
                 fileInputs.forEach(input => {
                     input.value = '';
                 });
+                alert('Event created successfully!');
             },
             onError: (errors) => {
                 console.error('Error creating event:', errors);
+                // Display general error message if validation fails
+                if (errors && Object.keys(errors).length > 0) {
+                    alert('Please fix the following errors:\n' + Object.entries(errors).map(([field, message]) => `${field}: ${message}`).join('\n'));
+                } else {
+                    alert('An error occurred while creating the event. Please try again.');
+                }
             },
             preserveScroll: true
         });
@@ -752,21 +767,7 @@ export default function CreateTryouts({ auth, events = [] }) {
                     {/* Create Event Form */}
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                         <div className="flex flex-col space-y-4">
-                            <div className="flex justify-between items-center">
-
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-slate-300">Enable Bracketing</span>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={data.allow_bracketing}
-                                            onChange={(e) => setData('allow_bracketing', e.target.checked)}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                            </div>
+                            {/* Event Type Selector - Moved to top */}
                             <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
                                 <EventTypeSelector
                                     value={{
@@ -789,134 +790,184 @@ export default function CreateTryouts({ auth, events = [] }) {
                                     <p className="mt-1 text-sm text-red-500">{errors.other_event_type}</p>
                                 )}
                             </div>
+
+                            {/* Registration Settings */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Settings</h3>
+                                <div className="flex flex-col space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-sm text-slate-300">Enable Bracketing</span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={data.allow_bracketing}
+                                                    onChange={(e) => setData('allow_bracketing', e.target.checked)}
+                                                />
+                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <form onSubmit={checkDateAndSubmit} encType="multipart/form-data" className="mt-4">
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Event Title</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.title}
-                                    onChange={e => setData('title', e.target.value)}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Description</label>
-                                <textarea
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.description}
-                                    onChange={e => setData('description', e.target.value)}
-                                    rows={10}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Coordinator</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.coordinator_name}
-                                    onChange={e => setData('coordinator_name', e.target.value)}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Venue</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.venue || ''}
-                                    onChange={e => setData('venue', e.target.value)}
-                                    placeholder="Enter event venue"
-                                />
-                                {errors.venue && <p className="text-red-500 text-xs mt-1">{errors.venue}</p>}
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Category</label>
-                                <select
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
-                                >
-                                    <option value="sport">Sport</option>
-                                    <option value="culture">Culture</option>
-                                    <option value="arts">Arts</option>
-                                    <option value="intramurals">Intramurals</option>
-                                    <option value="other">Other (please specify)</option>
-                                </select>
-                                {data.category === 'other' && (
-                                    <div className="mt-2">
+                        <form onSubmit={checkDateAndSubmit} encType="multipart/form-data" className="mt-6 space-y-6">
+                            {/* Basic Information */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Basic Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block mb-1 text-slate-300">Event Title</label>
                                         <input
                                             type="text"
                                             className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                            placeholder="Please specify category"
-                                            value={data.other_category}
-                                            onChange={(e) => setData('other_category', e.target.value)}
+                                            value={data.title}
+                                            onChange={e => setData('title', e.target.value)}
+                                            placeholder="Enter event title"
                                         />
+                                        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block mb-1 text-slate-300">Event Start Date & Time</label>
-                                <DateTimePicker
-                                    value={data.event_date}
-                                    onChange={(value) => setData('event_date', value)}
-                                    label=""
-                                    placeholder="Select event date and time"
-                                />
-                                {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
-                            </div>
-                            <div className="mb-4">
-                                <label className="block mb-1 text-slate-300">Event End Date</label>
-                                <CalendarPicker
-                                    value={data.event_end_date}
-                                    onChange={(value) => setData('event_end_date', value)}
-                                    label=""
-                                    placeholder="Select event end date"
-                                />
-                                {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
-                            </div>
-                            <div className="mt-4">
-                                <div className="mb-4">
-                                    <label className="block mb-1 text-slate-300">Registration End Date & Time</label>
-                                    <DateTimePicker
-                                        value={data.registration_end_date}
-                                        onChange={(value) => setData('registration_end_date', value)}
-                                        label=""
-                                        placeholder="Select registration end date and time"
-                                    />
-                                    {errors.registration_end_date && <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>}
+                                    <div className="md:col-span-2">
+                                        <label className="block mb-1 text-slate-300">Description</label>
+                                        <textarea
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.description}
+                                            onChange={e => setData('description', e.target.value)}
+                                            rows={4}
+                                            placeholder="Enter event description"
+                                        />
+                                        {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Coordinator</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.coordinator_name}
+                                            onChange={e => setData('coordinator_name', e.target.value)}
+                                            placeholder="Enter coordinator name"
+                                        />
+                                        {errors.coordinator_name && <p className="text-red-500 text-xs mt-1">{errors.coordinator_name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Venue</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.venue || ''}
+                                            onChange={e => setData('venue', e.target.value)}
+                                            placeholder="Enter event venue"
+                                        />
+                                        {errors.venue && <p className="text-red-500 text-xs mt-1">{errors.venue}</p>}
+                                    </div>
                                 </div>
-                            </div>     {/* Images */}
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Image of the event</label>
-                                {data.images.map((img, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="file"
-                                        className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
-                                        style={{ width: '100%' }}
-                                        onChange={e => {
-                                            const newImages = [...data.images];
-                                            newImages[idx] = e.target.files[0];
-                                            setData('images', newImages);
-                                        }}
-                                    />
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={() => setData('images', [...data.images, null])}
-                                    className="mt-2 text-blue-300 hover:text-blue-200 underline"
-                                >
-                                    + Add image
-                                </button>
                             </div>
 
-                            <button type="submit" className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
-                                                               transition duration-300 ease-in-out 
-                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                               bg-[#2e8eff]/20 flex items-center justify-center 
-                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                            {/* Category */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Category</h3>
+                                <div>
+                                    <label className="block mb-1 text-slate-300">Category</label>
+                                    <select
+                                        className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                        value={data.category}
+                                        onChange={(e) => setData('category', e.target.value)}
+                                    >
+                                        <option value="sport">Sport</option>
+                                        <option value="culture">Culture</option>
+                                        <option value="arts">Arts</option>
+                                        <option value="intramurals">Intramurals</option>
+                                        <option value="other">Other (please specify)</option>
+                                    </select>
+                                    {data.category === 'other' && (
+                                        <div className="mt-2">
+                                            <input
+                                                type="text"
+                                                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                placeholder="Please specify category"
+                                                value={data.other_category}
+                                                onChange={(e) => setData('other_category', e.target.value)}
+                                            />
+                                            {errors.other_category && <p className="text-red-500 text-xs mt-1">{errors.other_category}</p>}
+                                        </div>
+                                    )}
+                                    {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
+                                </div>
+                            </div>
+
+                            {/* Event Dates */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Event Dates</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Event Start Date & Time</label>
+                                        <DateTimePicker
+                                            value={data.event_date}
+                                            onChange={(value) => setData('event_date', value)}
+                                            label=""
+                                            placeholder="Select event date and time"
+                                        />
+                                        {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Event End Date</label>
+                                        <CalendarPicker
+                                            value={data.event_end_date}
+                                            onChange={(value) => setData('event_end_date', value)}
+                                            label=""
+                                            placeholder="Select event end date"
+                                        />
+                                        {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block mb-1 text-slate-300">Registration End Date & Time</label>
+                                        <DateTimePicker
+                                            value={data.registration_end_date}
+                                            onChange={(value) => setData('registration_end_date', value)}
+                                            label=""
+                                            placeholder="Select registration end date and time"
+                                        />
+                                        {errors.registration_end_date && <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Images */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Event Images</h3>
+                                <div className="mb-2">
+                                    <label className="block mb-1 text-slate-300">Image of the event</label>
+                                    {data.images.map((img, idx) => (
+                                        <input
+                                            key={idx}
+                                            type="file"
+                                            className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                            style={{ width: '100%' }}
+                                            onChange={e => {
+                                                const newImages = [...data.images];
+                                                newImages[idx] = e.target.files[0];
+                                                setData('images', newImages);
+                                            }}
+                                        />
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('images', [...data.images, null])}
+                                        className="mt-2 text-blue-300 hover:text-blue-200 underline"
+                                    >
+                                        + Add image
+                                    </button>
+                                    {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images}</p>}
+                                </div>
+                            </div>
+
+                            <button type="submit" className="w-[131px] h-[45px] rounded-[15px] cursor-pointer
+                                                               transition duration-300 ease-in-out
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0
+                                                               bg-[#2e8eff]/20 flex items-center justify-center
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
                                                                focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">
                                 Create Event
                             </button>

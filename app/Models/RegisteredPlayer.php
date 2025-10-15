@@ -17,6 +17,7 @@ class RegisteredPlayer extends Model
         'department',
         'age',
         'gdrive_link',
+        'team_name',
         'status', // optional if you track approval
     ];
 

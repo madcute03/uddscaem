@@ -110,6 +110,8 @@ class EventController extends Controller
             'event_end_date',
             'registration_end_date',
             'has_registration_end_date',
+            'registration_type',
+            'team_size',
             'required_players',
             'is_done',
             'allow_bracketing'
@@ -153,6 +155,8 @@ class EventController extends Controller
             'event_date',
             'registration_end_date',
             'has_registration_end_date',
+            'registration_type',
+            'team_size',
             'required_players',
             'is_done',
             'allow_bracketing',
@@ -207,11 +211,14 @@ class EventController extends Controller
             'category' => 'required|string|in:sport,culture,arts,intramurals,other',
             'other_category' => 'required_if:category,other|string|max:255|nullable',
             'event_type' => 'required|string|max:255',
+            'other_event_type' => 'nullable|string|max:255',
             'event_date' => 'required|date',
             'event_end_date' => 'nullable|date',
+            'registration_end_date' => 'nullable|date',
             'has_registration_end_date' => 'sometimes|boolean',
-            'registration_end_date' => 'required_if:event_type,tryouts|nullable|date',
-            'required_players' => 'required_if:event_type,tryouts|nullable|integer|min:1|max:20',
+            'registration_type' => 'nullable|in:single,team',
+            'team_size' => 'nullable|integer|min:2|max:50',
+            'required_players' => 'nullable|integer|min:1|max:20',
             'allow_bracketing' => 'sometimes|boolean',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -222,10 +229,17 @@ class EventController extends Controller
             $validated['registration_end_date'] = null;
         }
 
+        // Set defaults for tryouts events
+        if ($validated['event_type'] === 'tryouts') {
+            $validated['has_registration_end_date'] = $validated['has_registration_end_date'] ?? true;
+            $validated['registration_type'] = $validated['registration_type'] ?? 'single';
+            $validated['required_players'] = $validated['required_players'] ?? 1;
+        }
+
         // Handle custom event type and category
         $eventType = $validated['event_type'];
-        if ($eventType === 'other' && !empty($request->input('other_event_type'))) {
-            $eventType = $request->input('other_event_type');
+        if ($eventType === 'other' && !empty($validated['other_event_type'])) {
+            $eventType = $validated['other_event_type'];
         }
         
         // Handle custom category
@@ -254,6 +268,8 @@ class EventController extends Controller
             'event_end_date' => $validated['event_end_date'] ?? null,
             'registration_end_date' => $validated['registration_end_date'] ?? null,
             'has_registration_end_date' => $validated['has_registration_end_date'] ?? false,
+            'registration_type' => $validated['registration_type'] ?? 'single',
+            'team_size' => $validated['team_size'] ?? null,
             'required_players' => $validated['required_players'] ?? null,
             'allow_bracketing' => $validated['allow_bracketing'] ?? false,
             'is_done' => false,
@@ -301,6 +317,8 @@ class EventController extends Controller
                 'event_date' => 'required|date',
                 'event_end_date' => 'nullable|date|after_or_equal:event_date',
                 'has_registration_end_date' => 'sometimes|boolean',
+                'registration_type' => 'required_if:has_registration_end_date,true|in:single,team',
+                'team_size' => 'required_if:registration_type,team|nullable|integer|min:2|max:50',
                 'registration_end_date' => 'nullable|date|required_if:has_registration_end_date,1',
                 'required_players' => 'nullable|integer|min:1|max:20',
                 'images' => 'nullable|array',
@@ -355,6 +373,8 @@ class EventController extends Controller
                 'event_end_date' => $data['event_end_date'] ?? null,
                 'registration_end_date' => $data['has_registration_end_date'] ? ($data['registration_end_date'] ?? null) : null,
                 'has_registration_end_date' => $data['has_registration_end_date'] ?? false,
+                'registration_type' => $data['registration_type'] ?? 'single',
+                'team_size' => $data['team_size'] ?? null,
                 'required_players' => $data['required_players'] ?? null,
                 'allow_bracketing' => $data['allow_bracketing'] ?? false,
             ]);
@@ -454,6 +474,8 @@ class EventController extends Controller
             'event_date',
             'registration_end_date',
             'has_registration_end_date',
+            'registration_type',
+            'team_size',
             'required_players',
             'is_done',
             'allow_bracketing'

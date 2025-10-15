@@ -149,6 +149,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Player Status Management
     Route::post('/player/update-status', [PlayerController::class, 'updateStatus'])->name('player.updateStatus');
+    Route::post('/player/send-message', [PlayerController::class, 'sendMessage'])->name('player.sendMessage');
 
     // User Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

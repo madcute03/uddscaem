@@ -9,16 +9,20 @@ export default function RegisterEvent({ event }) {
         department: '',
         age: '',
         gdrive_link: '',
+        team_name: '',
+        team_members: event.registration_type === 'team' ? Array((event.team_size || 2)).fill('').map(() => ({
+            student_id: '',
+            name: '',
+            email: '',
+            department: '',
+            age: '',
+            gdrive_link: ''
+        })) : [''],
+        is_team_registration: event.registration_type === 'team',
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        // Simple email check before submission
-        if (!data.email.endsWith('@cdd.edu.ph')) {
-            alert('Email must end with @cdd.edu.ph');
-            return;
-        }
 
         post(route('eventregistrations.store', event.id), {
             onSuccess: () => {
@@ -32,6 +36,35 @@ export default function RegisterEvent({ event }) {
                 console.error('Registration error:', errors);
             }
         });
+    };
+
+    const updateTeamMember = (index, field, value) => {
+        const updatedMembers = [...data.team_members];
+        if (!updatedMembers[index]) {
+            updatedMembers[index] = {};
+        }
+        updatedMembers[index] = { ...updatedMembers[index], [field]: value };
+        setData('team_members', updatedMembers);
+    };
+
+    const addTeamMember = () => {
+        if (data.team_members.length < (event.team_size || 2)) {
+            setData('team_members', [...data.team_members, {
+                student_id: '',
+                name: '',
+                email: '',
+                department: '',
+                age: '',
+                gdrive_link: ''
+            }]);
+        }
+    };
+
+    const removeTeamMember = (index) => {
+        if (data.team_members.length > 1) {
+            const updatedMembers = data.team_members.filter((_, i) => i !== index);
+            setData('team_members', updatedMembers);
+        }
     };
 
     return (
@@ -62,130 +95,297 @@ export default function RegisterEvent({ event }) {
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <input
-                            type="text"
-                            placeholder="Student ID"
-                            value={data.student_id}
-                            onChange={(e) => setData('student_id', e.target.value)}
-                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                            pattern="[0-9\-]+"
-                            title="Only numbers and dashes allowed, e.g., 2025-001"
-                            required
-                        />
-                        {errors.student_id && (
-                            <p className="text-red-400 text-sm mt-1">{errors.student_id}</p>
-                        )}
+                        {event.registration_type === 'team' ? (
+                            // Team Registration Form
+                            <>
+                                <div className="mb-6 p-4 bg-blue-950/20 border border-blue-800/30 rounded-lg">
+                                    <h3 className="text-lg font-semibold text-blue-300 mb-2">Team Registration</h3>
+                                    <p className="text-sm text-blue-200 mb-4">
+                                        Team Size: {event.team_size} players • Event: {event.title}
+                                    </p>
 
-                        <input
-                            type="text"
-                            placeholder="Full Name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                            required
-                        />
+                                    <div className="mb-4">
+                                        <label className="block mb-1 text-slate-200">Team Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter team name"
+                                            value={data.team_name}
+                                            onChange={(e) => setData('team_name', e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                            required
+                                        />
+                                        {errors.team_name && (
+                                            <p className="text-red-400 text-sm mt-1">{errors.team_name}</p>
+                                        )}
+                                    </div>
 
-                        <input
-                            type="email"
-                            placeholder="Email (must end with @cdd.edu.ph)"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                            pattern="^[a-zA-Z0-9._%+-]+@cdd\\.edu\\.ph$"
-                            title="Email must be a valid @cdd.edu.ph address"
-                            required
-                        />
-                        {errors.email && (
-                            <p className="text-red-400 text-sm mt-1">{errors.email}</p>
-                        )}
+                                    <div className="space-y-4">
+                                        <h4 className="font-medium text-slate-200">Team Members</h4>
+                                        {data.team_members.map((member, index) => (
+                                            <div key={index} className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h5 className="font-medium text-slate-200">Player {index + 1}</h5>
+                                                    {data.team_members.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeTeamMember(index)}
+                                                            className="text-red-400 hover:text-red-300 text-sm"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </div>
 
-                        <div className="space-y-2">
-                            <select
-                                value={data.department.startsWith('Other: ') ? 'Other' : data.department}
-                                onChange={(e) => {
-                                    const value =
-                                        e.target.value === 'Other' ? 'Other: ' : e.target.value;
-                                    setData('department', value);
-                                }}
-                                className="w-full bg-white/10 border border-white/20 text-slate-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                required
-                            >
-                                <option value="">Select Department</option>
-                                <option value="School of Information Technology">
-                                    School of Information Technology
-                                </option>
-                                <option value="School of Engineering">
-                                    School of Engineering
-                                </option>
-                                <option value="School of Teacher Education">
-                                    School of Teacher Education
-                                </option>
-                                <option value="School of Business and Accountancy">
-                                    School of Business and Accountancy
-                                </option>
-                                <option value="School of International Hospitality Management">
-                                    School of International Hospitality Management
-                                </option>
-                                <option value="School of Humanities">
-                                    School of Humanities
-                                </option>
-                                <option value="School of Health and Sciences">
-                                    School of Health and Sciences
-                                </option>
-                                <option value="School of Criminology">
-                                    School of Criminology
-                                </option>
-                                <option value="Other">Other (Please specify)</option>
-                            </select>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Student ID"
+                                                            value={member.student_id || ''}
+                                                            onChange={(e) => updateTeamMember(index, 'student_id', e.target.value)}
+                                                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                            pattern="[0-9\-]+"
+                                                            title="Only numbers and dashes allowed"
+                                                            required
+                                                        />
+                                                        {errors[`team_members.${index}.student_id`] && (
+                                                            <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.student_id`]}</p>
+                                                        )}
+                                                    </div>
 
-                            {data.department.startsWith('Other: ') || data.department === 'Other' ? (
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Full Name"
+                                                        value={member.name || ''}
+                                                        onChange={(e) => updateTeamMember(index, 'name', e.target.value)}
+                                                        className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                        required
+                                                    />
+
+                                                    <div>
+                                                        <input
+                                                            type="email"
+                                                            placeholder="Email"
+                                                            value={member.email || ''}
+                                                            onChange={(e) => updateTeamMember(index, 'email', e.target.value)}
+                                                            className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                            required
+                                                        />
+                                                        {errors[`team_members.${index}.email`] && (
+                                                            <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.email`]}</p>
+                                                        )}
+                                                    </div>
+
+                                                    <select
+                                                        value={member.department?.startsWith('Other: ') ? 'Other' : (member.department || '')}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value === 'Other' ? 'Other: ' : e.target.value;
+                                                            updateTeamMember(index, 'department', value);
+                                                        }}
+                                                        className="bg-white/10 border border-white/20 text-slate-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                        required
+                                                    >
+                                                        <option value="">Select Department</option>
+                                                        <option value="School of Information Technology">
+                                                            School of Information Technology
+                                                        </option>
+                                                        <option value="School of Engineering">
+                                                            School of Engineering
+                                                        </option>
+                                                        <option value="School of Teacher Education">
+                                                            School of Teacher Education
+                                                        </option>
+                                                        <option value="School of Business and Accountancy">
+                                                            School of Business and Accountancy
+                                                        </option>
+                                                        <option value="School of International Hospitality Management">
+                                                            School of International Hospitality Management
+                                                        </option>
+                                                        <option value="School of Humanities">
+                                                            School of Humanities
+                                                        </option>
+                                                        <option value="School of Health and Sciences">
+                                                            School of Health and Sciences
+                                                        </option>
+                                                        <option value="School of Criminology">
+                                                            School of Criminology
+                                                        </option>
+                                                        <option value="Other">Other (Please specify)</option>
+                                                    </select>
+
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Age"
+                                                        value={member.age || ''}
+                                                        onChange={(e) => updateTeamMember(index, 'age', e.target.value)}
+                                                        className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                        required
+                                                    />
+
+                                                    <input
+                                                        type="url"
+                                                        placeholder="Google Drive link"
+                                                        value={member.gdrive_link || ''}
+                                                        onChange={(e) => updateTeamMember(index, 'gdrive_link', e.target.value)}
+                                                        className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                        pattern="https?://.+"
+                                                        title="Enter a valid link (include https://)"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                {member.department?.startsWith('Other: ') || member.department === 'Other' ? (
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Please specify department"
+                                                        value={member.department?.startsWith('Other: ') ? member.department.substring(8) : ''}
+                                                        onChange={(e) => updateTeamMember(index, 'department', 'Other: ' + e.target.value)}
+                                                        className="w-full mt-2 bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                        required
+                                                    />
+                                                ) : null}
+                                            </div>
+                                        ))}
+
+                                        {data.team_members.length < (event.team_size || 2) && (
+                                            <button
+                                                type="button"
+                                                onClick={addTeamMember}
+                                                className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded transition"
+                                            >
+                                                + Add Team Member
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            // Individual Registration Form
+                            <>
                                 <input
                                     type="text"
-                                    placeholder="Please specify department"
-                                    value={
-                                        data.department.startsWith('Other: ')
-                                            ? data.department.substring(8)
-                                            : ''
-                                    }
-                                    onChange={(e) =>
-                                        setData('department', 'Other: ' + e.target.value)
-                                    }
-                                    className="w-full mt-2 bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                    placeholder="Student ID"
+                                    value={data.student_id}
+                                    onChange={(e) => setData('student_id', e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                    pattern="[0-9\-]+"
+                                    title="Only numbers and dashes allowed, e.g., 2025-001"
                                     required
                                 />
-                            ) : null}
-                        </div>
+                                {errors.student_id && (
+                                    <p className="text-red-400 text-sm mt-1">{errors.student_id}</p>
+                                )}
 
-                        <input
-                            type="number"
-                            placeholder="Age"
-                            value={data.age}
-                            onChange={(e) => setData('age', e.target.value)}
-                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                            required
-                        />
+                                <input
+                                    type="text"
+                                    placeholder="Full Name"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                    required
+                                />
 
-                        <div>
-                            <label className="block mb-1 text-slate-200">
-                                Google Drive link (Whiteform/PDS/Medical in one folder)
-                            </label>
-                            <input
-                                type="url"
-                                placeholder="https://drive.google.com/..."
-                                value={data.gdrive_link}
-                                onChange={(e) => setData('gdrive_link', e.target.value)}
-                                className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                pattern="https?://.+"
-                                title="Enter a valid link (include https://)"
-                                required
-                            />
-                            {errors.gdrive_link && (
-                                <p className="text-red-400 text-sm mt-1">{errors.gdrive_link}</p>
-                            )}
-                            <p className="text-xs text-slate-300 mt-1">
-                                Make sure sharing is set to “Anyone with the link can view.”
-                            </p>
-                        </div>
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                    required
+                                />
+                                {errors.email && (
+                                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                                )}
+
+                                <div className="space-y-2">
+                                    <select
+                                        value={data.department.startsWith('Other: ') ? 'Other' : data.department}
+                                        onChange={(e) => {
+                                            const value =
+                                                e.target.value === 'Other' ? 'Other: ' : e.target.value;
+                                            setData('department', value);
+                                        }}
+                                        className="w-full bg-white/10 border border-white/20 text-slate-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                        required
+                                    >
+                                        <option value="">Select Department</option>
+                                        <option value="School of Information Technology">
+                                            School of Information Technology
+                                        </option>
+                                        <option value="School of Engineering">
+                                            School of Engineering
+                                        </option>
+                                        <option value="School of Teacher Education">
+                                            School of Teacher Education
+                                        </option>
+                                        <option value="School of Business and Accountancy">
+                                            School of Business and Accountancy
+                                        </option>
+                                        <option value="School of International Hospitality Management">
+                                            School of International Hospitality Management
+                                        </option>
+                                        <option value="School of Humanities">
+                                            School of Humanities
+                                        </option>
+                                        <option value="School of Health and Sciences">
+                                            School of Health and Sciences
+                                        </option>
+                                        <option value="School of Criminology">
+                                            School of Criminology
+                                        </option>
+                                        <option value="Other">Other (Please specify)</option>
+                                    </select>
+
+                                    {data.department.startsWith('Other: ') || data.department === 'Other' ? (
+                                        <input
+                                            type="text"
+                                            placeholder="Please specify department"
+                                            value={
+                                                data.department.startsWith('Other: ')
+                                                    ? data.department.substring(8)
+                                                    : ''
+                                            }
+                                            onChange={(e) =>
+                                                setData('department', 'Other: ' + e.target.value)
+                                            }
+                                            className="w-full mt-2 bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                            required
+                                        />
+                                    ) : null}
+                                </div>
+
+                                <input
+                                    type="number"
+                                    placeholder="Age"
+                                    value={data.age}
+                                    onChange={(e) => setData('age', e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                    required
+                                />
+
+                                <div>
+                                    <label className="block mb-1 text-slate-200">
+                                        Google Drive link (Whiteform/PDS/Medical in one folder)
+                                    </label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://drive.google.com/..."
+                                        value={data.gdrive_link}
+                                        onChange={(e) => setData('gdrive_link', e.target.value)}
+                                        className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                        pattern="https?://.+"
+                                        title="Enter a valid link (include https://)"
+                                        required
+                                    />
+                                    {errors.gdrive_link && (
+                                        <p className="text-red-400 text-sm mt-1">{errors.gdrive_link}</p>
+                                    )}
+                                    <p className="text-xs text-slate-300 mt-1">
+                                        Make sure sharing is set to "Anyone with the link can view."
+                                    </p>
+                                </div>
+                            </>
+                        )}
 
                         <button
                             type="submit"

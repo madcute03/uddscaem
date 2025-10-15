@@ -61,6 +61,16 @@ class NewsController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug logging
+        \Log::info('News store request received', [
+            'all_data' => $request->all(),
+            'title' => $request->title,
+            'title_length' => strlen($request->title ?? ''),
+            'description_length' => strlen($request->description ?? ''),
+            'has_title' => $request->has('title'),
+            'has_description' => $request->has('description'),
+        ]);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',

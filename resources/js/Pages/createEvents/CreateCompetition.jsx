@@ -598,6 +598,8 @@ export default function CreateCompetition({ auth, events = [] }) {
         allow_bracketing: false,
         images: [],
         required_players: '',
+        registration_type: 'single', // 'single' or 'team'
+        team_size: '', // Number of players per team
     });
 
     const [editingEventId, setEditingEventId] = useState(null);
@@ -613,6 +615,8 @@ export default function CreateCompetition({ auth, events = [] }) {
         registration_end_date: '', // 
         images: [],
         required_players: '',
+        registration_type: 'single',
+        team_size: '',
     });
 
     const checkDateAndSubmit = (e) => {
@@ -652,11 +656,8 @@ export default function CreateCompetition({ auth, events = [] }) {
             } else if (key === 'registration_end_date' && !data.has_registration_end_date) {
                 // Skip registration end date if not enabled
                 return;
-            } else if (key === 'required_players' && !data.has_required_players) {
-                // Skip required players if not enabled
-                return;
-            } else if (key === 'other_event_type' && data.event_type !== 'other') {
-                // Skip other_event_type if event_type is not 'other'
+            } else if (key === 'team_size' && data.registration_type !== 'team') {
+                // Skip team size if not team registration
                 return;
             } else if (value !== null && value !== undefined) {
                 // Handle all other fields
@@ -708,6 +709,8 @@ export default function CreateCompetition({ auth, events = [] }) {
             images: [], // bagong uploads
             existingImages: event.images_path || [], // existing images
             required_players: event.required_players,
+            registration_type: event.registration_type || 'single',
+            team_size: event.team_size || '',
         });
     };
 
@@ -728,6 +731,9 @@ export default function CreateCompetition({ auth, events = [] }) {
                     .forEach((participant, index) => {
                         formData.append(`participants[${index}]`, participant);
                     });
+            } else if (key === 'team_size' && editData.registration_type !== 'team') {
+                // Skip team size if not team registration
+                return;
             } else {
                 formData.append(key, val);
             }
@@ -823,36 +829,7 @@ export default function CreateCompetition({ auth, events = [] }) {
                     {/* Create Event Form */}
                     <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-xl shadow-lg shadow-blue-950/30">
                         <div className="flex flex-col space-y-4">
-                            <div className="flex flex-col space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-sm text-slate-300">Enable Bracketing</span>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                className="sr-only peer" 
-                                                checked={data.allow_bracketing}
-                                                onChange={(e) => setData('allow_bracketing', e.target.checked)}
-                                            />
-                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-sm text-slate-300">Enable Registration</span>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                className="sr-only peer" 
-                                                checked={data.has_registration_end_date}
-                                                onChange={(e) => setData('has_registration_end_date', e.target.checked)}
-                                            />
-                                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Event Type Selector - Moved to top */}
                             <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
                                 <EventTypeSelector
                                     value={{
@@ -874,196 +851,327 @@ export default function CreateCompetition({ auth, events = [] }) {
                                     <p className="mt-1 text-sm text-red-500">{errors.other_event_type}</p>
                                 )}
                             </div>
+
+                            {/* Registration Settings */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Settings</h3>
+                                <div className="flex flex-col space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-sm text-slate-300">Enable Registration</span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={data.has_registration_end_date}
+                                                    onChange={(e) => setData('has_registration_end_date', e.target.checked)}
+                                                />
+                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Registration Type Selection - Only show if registration is enabled */}
+                                    {data.has_registration_end_date && (
+                                        <div className="ml-4">
+                                            <label className="block mb-3 text-slate-300">Registration Type</label>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        id="single-registration"
+                                                        name="registration_type"
+                                                        value="single"
+                                                        checked={data.registration_type === 'single'}
+                                                        onChange={(e) => {
+                                                            setData('registration_type', e.target.value);
+                                                            if (e.target.value === 'single') {
+                                                                setData('team_size', '');
+                                                            }
+                                                        }}
+                                                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                    <label htmlFor="single-registration" className="text-slate-300">
+                                                        Single Registration (Individual participants)
+                                                    </label>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        id="team-registration"
+                                                        name="registration_type"
+                                                        value="team"
+                                                        checked={data.registration_type === 'team'}
+                                                        onChange={(e) => setData('registration_type', e.target.value)}
+                                                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                    <label htmlFor="team-registration" className="text-slate-300">
+                                                        Team Registration
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            {errors.registration_type && (
+                                                <p className="text-red-500 text-xs mt-1">{errors.registration_type}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Team Size Input - Only show if team registration is selected */}
+                                    {data.has_registration_end_date && data.registration_type === 'team' && (
+                                        <div className="ml-4">
+                                            <label className="block mb-1 text-slate-300">Number of Players per Team</label>
+                                            <input
+                                                type="number"
+                                                min="2"
+                                                max="50"
+                                                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                value={data.team_size}
+                                                onChange={(e) => setData('team_size', e.target.value)}
+                                                placeholder="Enter number of players per team"
+                                            />
+                                            {errors.team_size && (
+                                                <p className="text-red-500 text-xs mt-1">{errors.team_size}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-sm text-slate-300">Enable Bracketing</span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={data.allow_bracketing}
+                                                    onChange={(e) => setData('allow_bracketing', e.target.checked)}
+                                                />
+                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <form onSubmit={checkDateAndSubmit} encType="multipart/form-data" className="mt-4">
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Event Title</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.title}
-                                    onChange={e => setData('title', e.target.value)}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Description</label>
-                                <textarea
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.description}
-                                    onChange={e => setData('description', e.target.value)}
-                                    rows={10}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Coordinator</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.coordinator_name}
-                                    onChange={e => setData('coordinator_name', e.target.value)}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Venue</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.venue}
-                                    onChange={e => setData('venue', e.target.value)}
-                                    placeholder="Enter event venue"
-                                />
-                                {errors.venue && <p className="text-red-500 text-xs mt-1">{errors.venue}</p>}
-                            </div>
-                            <div className="mb-4">
-                                <label className="block mb-2 text-slate-300">Participants</label>
-                                <div className="space-y-2">
-                                    {data.participants.map((participant, index) => {
-                                        const trimmedError = (() => {
-                                            if (!errors) return null;
-                                            if (Array.isArray(errors.participants)) {
-                                                return errors.participants[index] || null;
-                                            }
-                                            return (
-                                                errors[`participants.${index}`] ||
-                                                (typeof errors.participants === 'string' ? errors.participants : null)
-                                            );
-                                        })();
-
-                                        return (
-                                            <div key={index} className="space-y-1">
-                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <input
-                                                        type="text"
-                                                        className="flex-1 bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                                        value={participant}
-                                                        placeholder={`Participant ${index + 1}`}
-                                                        onChange={e => {
-                                                            const updated = [...data.participants];
-                                                            updated[index] = e.target.value;
-                                                            setData('participants', updated);
-                                                        }}
-                                                    />
-                                                    {data.participants.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            className="px-3 py-2 text-sm text-red-300 hover:text-red-200"
-                                                            onClick={() => {
-                                                                const updated = data.participants.filter((_, idx) => idx !== index);
-                                                                setData('participants', updated.length > 0 ? updated : ['']);
-                                                            }}
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {trimmedError && (
-                                                    <p className="text-xs text-red-500">{trimmedError}</p>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    type="button"
-                                    className="mt-3 text-blue-300 hover:text-blue-200 underline"
-                                    onClick={() => setData('participants', [...data.participants, ''])}
-                                >
-                                    + Add participant
-                                </button>
-                            </div>
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Category</label>
-                                <select
-                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                    value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
-                                >
-                                    <option value="sport">Sport</option>
-                                    <option value="culture">Culture</option>
-                                    <option value="arts">Arts</option>
-                                    <option value="intramurals">Intramurals</option>
-                                    <option value="other">Other (please specify)</option>
-                                </select>
-                                {data.category === 'other' && (
-                                    <div className="mt-2">
+                        <form onSubmit={checkDateAndSubmit} encType="multipart/form-data" className="mt-6 space-y-6">
+                            {/* Basic Information */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Basic Information</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block mb-1 text-slate-300">Event Title</label>
                                         <input
                                             type="text"
                                             className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                            placeholder="Please specify category"
-                                            value={data.other_category}
-                                            onChange={(e) => setData('other_category', e.target.value)}
+                                            value={data.title}
+                                            onChange={e => setData('title', e.target.value)}
+                                            placeholder="Enter event title"
                                         />
+                                        {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
                                     </div>
-                                )}
-                            </div>
-                            <div className="mb-4">
-                                <label className="block mb-1 text-slate-300">Event Start Date & Time</label>
-                                <DateTimePicker
-                                    value={data.event_date}
-                                    onChange={(value) => setData('event_date', value)}
-                                    label=""
-                                    placeholder="Select event date and time"
-                                />
-                                {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
+                                    <div className="md:col-span-2">
+                                        <label className="block mb-1 text-slate-300">Description</label>
+                                        <textarea
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.description}
+                                            onChange={e => setData('description', e.target.value)}
+                                            rows={4}
+                                            placeholder="Enter event description"
+                                        />
+                                        {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Coordinator</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.coordinator_name}
+                                            onChange={e => setData('coordinator_name', e.target.value)}
+                                            placeholder="Enter coordinator name"
+                                        />
+                                        {errors.coordinator_name && <p className="text-red-500 text-xs mt-1">{errors.coordinator_name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Venue</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.venue}
+                                            onChange={e => setData('venue', e.target.value)}
+                                            placeholder="Enter event venue"
+                                        />
+                                        {errors.venue && <p className="text-red-500 text-xs mt-1">{errors.venue}</p>}
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="mb-4">
-                                <label className="block mb-1 text-slate-300">Event End Date</label>
-                                <CalendarPicker
-                                    value={data.event_end_date}
-                                    onChange={(value) => setData('event_end_date', value)}
-                                    placeholder="Select event end date"
-                                />
-                                {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
+                            {/* Category & Participants */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Category & Participants</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Category</label>
+                                        <select
+                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                            value={data.category}
+                                            onChange={(e) => setData('category', e.target.value)}
+                                        >
+                                            <option value="sport">Sport</option>
+                                            <option value="culture">Culture</option>
+                                            <option value="arts">Arts</option>
+                                            <option value="intramurals">Intramurals</option>
+                                            <option value="other">Other (please specify)</option>
+                                        </select>
+                                        {data.category === 'other' && (
+                                            <div className="mt-2">
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                    placeholder="Please specify category"
+                                                    value={data.other_category}
+                                                    onChange={(e) => setData('other_category', e.target.value)}
+                                                />
+                                                {errors.other_category && <p className="text-red-500 text-xs mt-1">{errors.other_category}</p>}
+                                            </div>
+                                        )}
+                                        {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2 text-slate-300">Participants</label>
+                                        <div className="space-y-2">
+                                            {data.participants.map((participant, index) => {
+                                                const trimmedError = (() => {
+                                                    if (!errors) return null;
+                                                    if (Array.isArray(errors.participants)) {
+                                                        return errors.participants[index] || null;
+                                                    }
+                                                    return (
+                                                        errors[`participants.${index}`] ||
+                                                        (typeof errors.participants === 'string' ? errors.participants : null)
+                                                    );
+                                                })();
+
+                                                return (
+                                                    <div key={index} className="space-y-1">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                            <input
+                                                                type="text"
+                                                                className="flex-1 bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                                value={participant}
+                                                                placeholder={`Participant ${index + 1}`}
+                                                                onChange={e => {
+                                                                    const updated = [...data.participants];
+                                                                    updated[index] = e.target.value;
+                                                                    setData('participants', updated);
+                                                                }}
+                                                            />
+                                                            {data.participants.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="px-3 py-2 text-sm text-red-300 hover:text-red-200"
+                                                                    onClick={() => {
+                                                                        const updated = data.participants.filter((_, idx) => idx !== index);
+                                                                        setData('participants', updated.length > 0 ? updated : ['']);
+                                                                    }}
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        {trimmedError && (
+                                                            <p className="text-xs text-red-500">{trimmedError}</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="mt-3 text-blue-300 hover:text-blue-200 underline"
+                                            onClick={() => setData('participants', [...data.participants, ''])}
+                                        >
+                                            + Add participant
+                                        </button>
+                                        {errors.participants && <p className="text-red-500 text-xs mt-1">{errors.participants}</p>}
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Registration End Date - Only show if registration is enabled */}
-                            {data.has_registration_end_date && (
-                                <div className="mb-4">
-                                    <label className="block mb-1 text-slate-300">Registration End Date</label>
-                                    <DateTimePicker
-                                        value={data.registration_end_date}
-                                        onChange={(value) => setData('registration_end_date', value)}
-                                        label=""
-                                        placeholder="Select registration end date and time"
-                                    />
-                                    {errors.registration_end_date && (
-                                        <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>
+                            {/* Event Dates */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Event Dates</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Event Start Date & Time</label>
+                                        <DateTimePicker
+                                            value={data.event_date}
+                                            onChange={(value) => setData('event_date', value)}
+                                            label=""
+                                            placeholder="Select event date and time"
+                                        />
+                                        {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block mb-1 text-slate-300">Event End Date</label>
+                                        <CalendarPicker
+                                            value={data.event_end_date}
+                                            onChange={(value) => setData('event_end_date', value)}
+                                            placeholder="Select event end date"
+                                        />
+                                        {errors.event_end_date && <p className="text-red-500 text-xs mt-1">{errors.event_end_date}</p>}
+                                    </div>
+                                    {/* Registration End Date - Only show if registration is enabled */}
+                                    {data.has_registration_end_date && (
+                                        <div className="md:col-span-2">
+                                            <label className="block mb-1 text-slate-300">Registration End Date & Time</label>
+                                            <DateTimePicker
+                                                value={data.registration_end_date}
+                                                onChange={(value) => setData('registration_end_date', value)}
+                                                label=""
+                                                placeholder="Select registration end date and time"
+                                            />
+                                            {errors.registration_end_date && (
+                                                <p className="text-red-500 text-xs mt-1">{errors.registration_end_date}</p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
-                            )}
-
-                            {/* Images */}
-                            <div className="mb-2">
-                                <label className="block mb-1 text-slate-300">Image of the event</label>
-                                {data.images.map((img, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="file"
-                                        className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
-                                        style={{width: '100%'}}
-                                        onChange={e => {
-                                            const newImages = [...data.images];
-                                            newImages[idx] = e.target.files[0];
-                                            setData('images', newImages);
-                                        }}
-                                    />
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={() => setData('images', [...data.images, null])}
-                                    className="mt-2 text-blue-300 hover:text-blue-200 underline"
-                                >
-                                    + Add image
-                                </button>
                             </div>
 
-                            <button type="submit" className="w-[131px] h-[45px] rounded-[15px] cursor-pointer 
-                                                               transition duration-300 ease-in-out 
-                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                               bg-[#2e8eff]/20 flex items-center justify-center 
-                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                            {/* Images */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Event Images</h3>
+                                <div className="mb-2">
+                                    <label className="block mb-1 text-slate-300">Image of the event</label>
+                                    {data.images.map((img, idx) => (
+                                        <input
+                                            key={idx}
+                                            type="file"
+                                            className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                            style={{width: '100%'}}
+                                            onChange={e => {
+                                                const newImages = [...data.images];
+                                                newImages[idx] = e.target.files[0];
+                                                setData('images', newImages);
+                                            }}
+                                        />
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('images', [...data.images, null])}
+                                        className="mt-2 text-blue-300 hover:text-blue-200 underline"
+                                    >
+                                        + Add image
+                                    </button>
+                                    {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images}</p>}
+                                </div>
+                            </div>
+
+                            <button type="submit" className="w-[131px] h-[45px] rounded-[15px] cursor-pointer
+                                                               transition duration-300 ease-in-out
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0
+                                                               bg-[#2e8eff]/20 flex items-center justify-center
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
                                                                focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">
                                 Create Event
                             </button>

@@ -664,6 +664,8 @@ function Dashboard() {
         has_required_players: false,
         allow_bracketing: false,
         images: [],
+        registration_type: 'single',
+        team_size: '',
     };
 
     const [editingEventId, setEditingEventId] = useState(null);
@@ -688,6 +690,8 @@ function Dashboard() {
         has_registration_end_date: false,
         required_players: '',
         has_required_players: false,
+        registration_type: 'team',
+        team_size: '',
     });
 
     const [successMessage, setSuccessMessage] = useState(null);
@@ -1084,6 +1088,8 @@ function Dashboard() {
             has_registration_end_date: !!event.registration_end_date,
             required_players: event.required_players ? String(event.required_players) : '',
             has_required_players: !!event.required_players,
+            registration_type: event.registration_type || 'team',
+            team_size: event.team_size || '',
         });
     };
 
@@ -1177,6 +1183,16 @@ function Dashboard() {
             formData.append('category', editData.category);
             formData.append('other_category', editData.other_category || '');
             formData.append('allow_bracketing', editData.allow_bracketing ? '1' : '0');
+
+            // Always send registration_type if has_registration_end_date is enabled
+            if (editData.has_registration_end_date) {
+                formData.append('registration_type', editData.registration_type || 'team');
+
+                // Send team_size only if registration type is team
+                if (editData.registration_type === 'team' && editData.team_size) {
+                    formData.append('team_size', editData.team_size);
+                }
+            }
 
             if (editData.event_date) {
                 const sanitizedEventDate = editData.event_date.length === 16
@@ -1446,305 +1462,388 @@ function Dashboard() {
                                 
                                 <div className="p-5">
                                     {editingEventId === event.id ? (
-                                    <form onSubmit={handleEditSubmit} encType="multipart/form-data" className="space-y-2">
-                                        <div>
-                                            <label className="block text-sm">Title</label>
-                                            <input
-                                                type="text"
-                                                value={editData.title}
-                                                onChange={e => setEditData({ ...editData, title: e.target.value })}
-                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm">Description</label>
-                                            <textarea
-                                                rows={10}
-                                                value={editData.description}
-                                                onChange={e => setEditData({ ...editData, description: e.target.value })}
-                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm">Coordinator Name</label>
-                                            <input
-                                                type="text"
-                                                value={editData.coordinator_name}
-                                                onChange={e => setEditData({ ...editData, coordinator_name: e.target.value })}
-                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm">Venue</label>
-                                            <input
-                                                type="text"
-                                                value={editData.venue || ''}
-                                                onChange={e => setEditData({ ...editData, venue: e.target.value })}
-                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                                placeholder="Enter venue location"
-                                            />
-                                        </div>
-
-                                        {!isTryouts && (
-                                            <div>
-                                                <label className="block text-sm">Participants</label>
-                                                <div className="space-y-2">
-                                                    {(Array.isArray(editData.participants) ? editData.participants : ['']).map((participant, index) => (
-                                                        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={participant}
-                                                                placeholder={`Participant ${index + 1}`}
-                                                                onChange={(e) => {
-                                                                    const updated = Array.isArray(editData.participants) ? [...editData.participants] : [''];
-                                                                    updated[index] = e.target.value;
-                                                                    setEditData({ ...editData, participants: updated });
-                                                                }}
-                                                                className="flex-1 border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                                            />
-                                                            {(editData.participants?.length ?? 0) > 1 && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const updated = (editData.participants || []).filter((_, idx) => idx !== index);
-                                                                        setEditData({ ...editData, participants: updated.length > 0 ? updated : [''] });
-                                                                    }}
-                                                                    className="text-sm text-red-300 hover:text-red-200"
-                                                                >
-                                                                    Remove
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                {(!editData.participants || editData.participants.length === 0) && (
-                                                    <p className="text-xs text-slate-400 mt-1">No participants listed.</p>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditData({
-                                                        ...editData,
-                                                        participants: [...(editData.participants || ['']), '']
-                                                    })}
-                                                    className="mt-2 text-blue-300 hover:text-blue-200 text-sm"
-                                                >
-                                                    + Add participant
-                                                </button>
-                                            </div>
-                                        )}
-
-
-
-                                        <div>
-                                            <label className="block text-sm">Category</label>
-                                            <select
-                                                value={editData.category}
-                                                onChange={e => setEditData({ ...editData, category: e.target.value })}
-                                                className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                            >
-                                                <option value="sport">Sport</option>
-                                                <option value="culture">Culture</option>
-                                                <option value="arts">Arts</option>
-                                                <option value="intramurals">Intramurals</option>
-                                                <option value="other">Other (please specify)</option>
-                                            </select>
-                                            {editData.category === 'other' && (
-                                                <div className="mt-2">
+                                    <form onSubmit={handleEditSubmit} encType="multipart/form-data" className="space-y-6">
+                                        {/* Basic Information Section */}
+                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Basic Information</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm text-slate-300 mb-1">Event Title</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-2 py-1 rounded focus:border-blue-500 focus:outline-none"
-                                                        placeholder="Please specify category"
-                                                        value={editData.other_category}
-                                                        onChange={e => setEditData({ ...editData, other_category: e.target.value })}
+                                                        value={editData.title}
+                                                        onChange={e => setEditData({ ...editData, title: e.target.value })}
+                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                        placeholder="Enter event title"
+                                                        required
                                                     />
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm">Event Start</label>
-                                            <DateTimePicker
-                                                value={editData.event_date}
-                                                onChange={handleEventDateTimeChange}
-                                                placeholder="Select event date and time"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm">Event End Date</label>
-                                            <DatePicker
-                                                value={editData.event_end_date}
-                                                onChange={(date) => setEditData({ ...editData, event_end_date: date })}
-                                                placeholder="Select event end date"
-                                            />
-                                        </div>
-
-                                        {isTryouts ? (
-                                            <div>
-                                                <label className="block text-sm">Registration End <span className="text-red-500">*</span></label>
-                                                <DateTimePicker
-                                                    value={editData.registration_end_date || ''}
-                                                    onChange={handleRegistrationEndDateChange}
-                                                    placeholder="Select registration end date"
-                                                    required
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm text-slate-300 mb-1">Description</label>
+                                                    <textarea
+                                                        rows={3}
+                                                        value={editData.description}
+                                                        onChange={e => setEditData({ ...editData, description: e.target.value })}
+                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                        placeholder="Enter event description"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-slate-300 mb-1">Coordinator</label>
                                                     <input
-                                                        type="checkbox"
-                                                        id={`has_registration_end_date_${editingEventId}`}
-                                                        checked={editData.has_registration_end_date}
-                                                        onChange={(e) => setEditData({ 
-                                                            ...editData, 
-                                                            has_registration_end_date: e.target.checked,
-                                                            // If enabling registration, set a default date if none exists
-                                                            registration_end_date: !editData.registration_end_date && e.target.checked 
-                                                                ? new Date().toISOString().slice(0, 16) 
-                                                                : editData.registration_end_date
-                                                        })}
-                                                        className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                                                        type="text"
+                                                        value={editData.coordinator_name}
+                                                        onChange={e => setEditData({ ...editData, coordinator_name: e.target.value })}
+                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                        placeholder="Enter coordinator name"
                                                     />
-                                                    <label htmlFor={`has_registration_end_date_${editingEventId}`} className="text-sm">
-                                                        Enable Registration End Date
-                                                    </label>
                                                 </div>
-                                                
-                                                {editData.has_registration_end_date && (
+                                                <div>
+                                                    <label className="block text-sm text-slate-300 mb-1">Venue</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editData.venue || ''}
+                                                        onChange={e => setEditData({ ...editData, venue: e.target.value })}
+                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                        placeholder="Enter venue location"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Category & Participants Section */}
+                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Category & Participants</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm text-slate-300 mb-1">Category</label>
+                                                    <select
+                                                        value={editData.category}
+                                                        onChange={e => setEditData({ ...editData, category: e.target.value })}
+                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                    >
+                                                        <option value="sport">Sport</option>
+                                                        <option value="culture">Culture</option>
+                                                        <option value="arts">Arts</option>
+                                                        <option value="intramurals">Intramurals</option>
+                                                        <option value="other">Other (please specify)</option>
+                                                    </select>
+                                                    {editData.category === 'other' && (
+                                                        <div className="mt-2">
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                                placeholder="Please specify category"
+                                                                value={editData.other_category}
+                                                                onChange={e => setEditData({ ...editData, other_category: e.target.value })}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {!isTryouts && (
                                                     <div>
-                                                        <label className="block text-sm">Registration End</label>
+                                                        <label className="block text-sm text-slate-300 mb-2">Participants</label>
+                                                        <div className="space-y-2">
+                                                            {(Array.isArray(editData.participants) ? editData.participants : ['']).map((participant, index) => (
+                                                                <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={participant}
+                                                                        placeholder={`Participant ${index + 1}`}
+                                                                        onChange={(e) => {
+                                                                            const updated = Array.isArray(editData.participants) ? [...editData.participants] : [''];
+                                                                            updated[index] = e.target.value;
+                                                                            setEditData({ ...editData, participants: updated });
+                                                                        }}
+                                                                        className="flex-1 border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                                    />
+                                                                    {(editData.participants?.length ?? 0) > 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const updated = (editData.participants || []).filter((_, idx) => idx !== index);
+                                                                                setEditData({ ...editData, participants: updated.length > 0 ? updated : [''] });
+                                                                            }}
+                                                                            className="px-3 py-2 text-sm text-red-300 hover:text-red-200 rounded-md hover:bg-slate-600"
+                                                                        >
+                                                                            Remove
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        {(!editData.participants || editData.participants.length === 0) && (
+                                                            <p className="text-xs text-slate-400 mt-1">No participants listed.</p>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditData({
+                                                                ...editData,
+                                                                participants: [...(editData.participants || ['']), '']
+                                                            })}
+                                                            className="mt-2 text-blue-300 hover:text-blue-200 text-sm underline"
+                                                        >
+                                                            + Add participant
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Event Dates Section */}
+                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Event Dates</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm text-slate-300 mb-1">Event Start</label>
+                                                    <DateTimePicker
+                                                        value={editData.event_date}
+                                                        onChange={handleEventDateTimeChange}
+                                                        placeholder="Select event date and time"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-slate-300 mb-1">Event End Date</label>
+                                                    <DatePicker
+                                                        value={editData.event_end_date}
+                                                        onChange={(date) => setEditData({ ...editData, event_end_date: date })}
+                                                        placeholder="Select event end date"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Registration Settings Section */}
+                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Settings</h3>
+                                            <div className="space-y-4">
+                                                {isTryouts ? (
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-1">Registration End <span className="text-red-500">*</span></label>
                                                         <DateTimePicker
-                                                            value={editData.registration_end_date}
+                                                            value={editData.registration_end_date || ''}
                                                             onChange={handleRegistrationEndDateChange}
                                                             placeholder="Select registration end date"
+                                                            required
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                id={`has_registration_end_date_${editingEventId}`}
+                                                                checked={editData.has_registration_end_date}
+                                                                onChange={(e) => setEditData({
+                                                                    ...editData,
+                                                                    has_registration_end_date: e.target.checked,
+                                                                    registration_end_date: !editData.registration_end_date && e.target.checked
+                                                                        ? new Date().toISOString().slice(0, 16)
+                                                                        : editData.registration_end_date
+                                                                })}
+                                                                className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                                                            />
+                                                            <label htmlFor={`has_registration_end_date_${editingEventId}`} className="text-sm text-slate-300">
+                                                                Enable Registration End Date
+                                                            </label>
+                                                        </div>
+
+                                                        {editData.has_registration_end_date && (
+                                                            <div>
+                                                                <label className="block text-sm text-slate-300 mb-1">Registration End</label>
+                                                                <DateTimePicker
+                                                                    value={editData.registration_end_date}
+                                                                    onChange={handleRegistrationEndDateChange}
+                                                                    placeholder="Select registration end date"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Registration Type Selection - Only show if registration is enabled and not a tryout event */}
+                                                {editData.has_registration_end_date && !isTryouts && (
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-3">Registration Type</label>
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center">
+                                                                <input
+                                                                    type="radio"
+                                                                    id={`single-registration-${editingEventId}`}
+                                                                    name={`registration_type-${editingEventId}`}
+                                                                    value="single"
+                                                                    checked={editData.registration_type === 'single'}
+                                                                    onChange={(e) => {
+                                                                        setEditData(prev => ({
+                                                                            ...prev,
+                                                                            registration_type: e.target.value,
+                                                                            team_size: e.target.value === 'single' ? '' : prev.team_size
+                                                                        }));
+                                                                    }}
+                                                                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                                                                />
+                                                                <label htmlFor={`single-registration-${editingEventId}`} className="text-slate-300">
+                                                                    Single Registration
+                                                                </label>
+                                                            </div>
+                                                            <div className="flex items-center">
+                                                                <input
+                                                                    type="radio"
+                                                                    id={`team-registration-${editingEventId}`}
+                                                                    name={`registration_type-${editingEventId}`}
+                                                                    value="team"
+                                                                    checked={editData.registration_type === 'team'}
+                                                                    onChange={(e) => setEditData(prev => ({ ...prev, registration_type: e.target.value }))}
+                                                                    className="mr-2 text-blue-600 focus:ring-blue-500"
+                                                                />
+                                                                <label htmlFor={`team-registration-${editingEventId}`} className="text-slate-300">
+                                                                    Team Registration
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Team Size Input - Only show if team registration is selected */}
+                                                {editData.has_registration_end_date && editData.registration_type === 'team' && (
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-1">Number of Players per Team</label>
+                                                        <input
+                                                            type="number"
+                                                            min="2"
+                                                            max="50"
+                                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                            value={editData.team_size}
+                                                            onChange={(e) => setEditData(prev => ({ ...prev, team_size: e.target.value }))}
+                                                            placeholder="Enter number of players per team"
                                                         />
                                                     </div>
                                                 )}
-                                            </div>
-                                        )}
 
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                id={`allow_bracketing_${editingEventId}`}
-                                                checked={editData.allow_bracketing}
-                                                onChange={(e) => setEditData({ ...editData, allow_bracketing: e.target.checked })}
-                                                className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                                            />
-                                            <label htmlFor={`allow_bracketing_${editingEventId}`} className="text-sm">Allow Bracketing</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`allow_bracketing_${editingEventId}`}
+                                                        checked={editData.allow_bracketing}
+                                                        onChange={(e) => setEditData({ ...editData, allow_bracketing: e.target.checked })}
+                                                        className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                                                    />
+                                                    <label htmlFor={`allow_bracketing_${editingEventId}`} className="text-sm text-slate-300">Allow Bracketing</label>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <label className="block text-sm font-medium text-slate-300">Event Images</label>
+                                        {/* Event Images Section */}
+                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Event Images</h3>
+                                            <div className="space-y-4">
+                                                {/* New Images Upload */}
+                                                <div className="flex items-center justify-center w-full">
+                                                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-slate-800/50 border-slate-700 hover:bg-slate-800/70">
+                                                        <div className="flex flex-col items-center justify-center px-4 py-3">
+                                                            <svg className="w-6 h-6 mb-1 text-slate-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                                                            </svg>
+                                                            <p className="text-xs text-slate-400"><span className="font-semibold">Click to upload</span></p>
+                                                            <p className="text-[10px] text-slate-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                                                        </div>
+                                                        <input
+                                                            id="dropzone-file"
+                                                            type="file"
+                                                            className="hidden"
+                                                            multiple
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const files = Array.from(e.target.files);
+                                                                setEditData(prev => ({
+                                                                    ...prev,
+                                                                    images: [...prev.images, ...files]
+                                                                }));
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
 
-                                            {/* New Images Upload - Made smaller */}
-                                            <div className="flex items-center justify-center w-full">
-                                                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-slate-800/50 border-slate-700 hover:bg-slate-800/70">
-                                                    <div className="flex flex-col items-center justify-center px-4 py-3">
-                                                        <svg className="w-6 h-6 mb-1 text-slate-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                                        </svg>
-                                                        <p className="text-xs text-slate-400"><span className="font-semibold">Click to upload</span></p>
-                                                        <p className="text-[10px] text-slate-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                                                {/* Existing Images Grid */}
+                                                {editData.existingImages && editData.existingImages.length > 0 && (
+                                                    <div>
+                                                        <p className="text-sm text-slate-400 mb-2">Current Images:</p>
+                                                        <div className="grid grid-cols-4 gap-2">
+                                                            {editData.existingImages.map((img, i) => (
+                                                                <div key={i} className="relative aspect-square">
+                                                                    <img
+                                                                        src={`/storage/${img.image_path}`}
+                                                                        alt={`Event ${i + 1}`}
+                                                                        className="w-full h-full object-cover rounded"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (confirm('Remove this image?')) {
+                                                                                setEditData(prev => ({
+                                                                                    ...prev,
+                                                                                    existingImages: prev.existingImages.filter((_, idx) => idx !== i)
+                                                                                }));
+                                                                            }
+                                                                        }}
+                                                                        className="absolute top-0.5 right-0.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                                                                    >
+                                                                        ×
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                    <input
-                                                        id="dropzone-file"
-                                                        type="file"
-                                                        className="hidden"
-                                                        multiple
-                                                        accept="image/*"
-                                                        onChange={(e) => {
-                                                            const files = Array.from(e.target.files);
-                                                            setEditData(prev => ({
-                                                                ...prev,
-                                                                images: [...prev.images, ...files]
-                                                            }));
-                                                        }}
-                                                    />
-                                                </label>
-                                            </div>
+                                                )}
 
-                                            {/* Existing Images Grid - Moved below upload */}
-                                            {editData.existingImages && editData.existingImages.length > 0 && (
-                                                <div className="mt-4">
-                                                    <p className="text-sm text-slate-400 mb-2">Current Images:</p>
-                                                    <div className="grid grid-cols-4 gap-2">
-                                                        {editData.existingImages.map((img, i) => (
-                                                            <div key={i} className="relative aspect-square">
-                                                                <img
-                                                                    src={`/storage/${img.image_path}`}
-                                                                    alt={`Event ${i + 1}`}
-                                                                    className="w-full h-full object-cover rounded"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (confirm('Remove this image?')) {
+                                                {/* New Images Preview */}
+                                                {safeImages.length > 0 && (
+                                                    <div>
+                                                        <p className="text-sm text-slate-400 mb-2">New images to upload:</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {safeImages.map((file, index) => (
+                                                                <div key={index} className="relative">
+                                                                    <img
+                                                                        src={URL.createObjectURL(file)}
+                                                                        alt={`Preview ${index + 1}`}
+                                                                        className="h-16 w-16 object-cover rounded"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newImages = [...safeImages];
+                                                                            newImages.splice(index, 1);
                                                                             setEditData(prev => ({
                                                                                 ...prev,
-                                                                                existingImages: prev.existingImages.filter((_, idx) => idx !== i)
+                                                                                images: newImages
                                                                             }));
-                                                                        }
-                                                                    }}
-                                                                    className="absolute top-0.5 right-0.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
-                                                                >
-                                                                    ×
-                                                                </button>
-                                                            </div>
-                                                        ))}
+                                                                        }}
+                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                                                    >
+                                                                        ×
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-
-                                            {/* New Images Preview */}
-                                            {safeImages.length > 0 && (
-                                                <div className="mt-4">
-                                                    <p className="text-sm text-slate-400 mb-2">New images to upload:</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {safeImages.map((file, index) => (
-                                                            <div key={index} className="relative">
-                                                                <img
-                                                                    src={URL.createObjectURL(file)}
-                                                                    alt={`Preview ${index + 1}`}
-                                                                    className="h-16 w-16 object-cover rounded"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newImages = [...safeImages];
-                                                                        newImages.splice(index, 1);
-                                                                        setEditData(prev => ({
-                                                                            ...prev,
-                                                                            images: newImages
-                                                                        }));
-                                                                    }}
-                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                                                                >
-                                                                    ×
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
 
-                                        <div className="flex gap-2 mt-2">
-                                            <button type="submit" className="w-[131px] h-[40px] rounded-[15px] cursor-pointer 
-                                                               transition duration-300 ease-in-out 
-                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                               bg-[#2e8eff]/20 flex items-center justify-center 
-                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                        <div className="flex gap-2 pt-4">
+                                            <button type="submit" className="w-[131px] h-[40px] rounded-[15px] cursor-pointer
+                                                               transition duration-300 ease-in-out
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0
+                                                               bg-[#2e8eff]/20 flex items-center justify-center
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
                                                                focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Save</button>
-                                            <button type="button" onClick={() => setEditingEventId(null)} className="w-[131px] h-[40px] rounded-[15px] cursor-pointer 
-                                                               transition duration-300 ease-in-out 
-                                                               bg-gradient-to-br from-[#8b0000] to-[#8b0000]/0 
-                                                               bg-[#8b0000]/20 flex items-center justify-center 
-                                                               hover:bg-[#8b0000]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                            <button type="button" onClick={() => setEditingEventId(null)} className="w-[131px] h-[40px] rounded-[15px] cursor-pointer
+                                                               transition duration-300 ease-in-out
+                                                               bg-gradient-to-br from-[#8b0000] to-[#8b0000]/0
+                                                               bg-[#8b0000]/20 flex items-center justify-center
+                                                               hover:bg-[#8b0000]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
                                                                focus:outline-none focus:bg-[#8b0000]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Cancel</button>
                                         </div>
                                     </form>

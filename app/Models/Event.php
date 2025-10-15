@@ -16,23 +16,24 @@ class Event extends Model
     protected static function booted()
     {
         static::deleting(function ($event) {
-            // Delete all associated images from storage and DB
+            // Delete all associated images from storage (but not from DB since cascade will handle it)
             $event->images->each(function ($image) use ($event) {
                 try {
                     if (Storage::disk('public')->exists($image->image_path)) {
                         Storage::disk('public')->delete($image->image_path);
                     }
-                    $image->delete();
                 } catch (\Exception $e) {
-                    \Log::error('Error deleting event image: ' . $e->getMessage(), [
+                    \Log::error('Error deleting event image from storage: ' . $e->getMessage(), [
                         'image_id' => $image->id,
                         'event_id' => $event->id
                     ]);
                 }
             });
 
-            // Also delete all player registrations when an event is deleted
-            $event->registrations()->each->delete();
+            // Delete all player registrations when an event is deleted
+            $event->registrations()->each(function ($registration) {
+                $registration->delete();
+            });
         });
     }
 
@@ -50,6 +51,8 @@ class Event extends Model
         'event_end_date',
         'registration_end_date',
         'has_registration_end_date',
+        'registration_type',
+        'team_size',
         'required_players',
         'is_done',
         'allow_bracketing',
@@ -73,6 +76,7 @@ class Event extends Model
         'is_done' => false,
         'allow_bracketing' => false,
         'has_registration_end_date' => false,
+        'registration_type' => 'single',
     ];
 
     protected $dates = [
@@ -96,7 +100,7 @@ class Event extends Model
      */
     public function registrations()
     {
-        return $this->hasMany(EventRegistration::class);
+        return $this->hasMany(RegisteredPlayer::class, 'event_id');
     }
 
     /**
