@@ -465,15 +465,14 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
                                         {Object.entries(groupedPlayers.teams).map(([teamName, teamMembers]) => (
                                             <div key={teamName} className="bg-white/5 border border-white/10 rounded-lg p-6">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-blue-300">{teamName}</h3>
-                                                        <p className="text-sm text-slate-300">{teamMembers.length} members</p>
-                                                    </div>
                                                     <div className="flex items-center gap-3">
+                                                        <h3 className="text-lg font-semibold text-blue-300">{teamName}</h3>
                                                         <span className={statusBadge(getTeamStatus(teamMembers))}>
                                                             {getTeamStatus(teamMembers)}
                                                         </span>
-                                                        {/* Temporarily show buttons for testing */}
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <p className="text-sm text-slate-300">{teamMembers.length} members</p>
                                                         <div className="flex gap-2">
                                                             <button
                                                                 className="btn-blue-glow"
@@ -503,7 +502,6 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
                                                                 <th className="px-3 py-2 text-left">Department</th>
                                                                 <th className="px-3 py-2 text-left">Age</th>
                                                                 <th className="px-3 py-2 text-left">Documents</th>
-                                                                <th className="px-3 py-2 text-center">Status</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -525,11 +523,6 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
                                                                                 Open link
                                                                             </a>
                                                                         )}
-                                                                    </td>
-                                                                    <td className="px-3 py-2 text-center">
-                                                                        <span className={statusBadge(player.status)}>
-                                                                            {player.status || "Pending"}
-                                                                        </span>
                                                                     </td>
                                                                 </tr>
                                                             ))}

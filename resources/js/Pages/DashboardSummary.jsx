@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import axios from 'axios';
 import { 
     CalendarDaysIcon, 
     ClockIcon,
@@ -74,6 +75,139 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
     };
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [registrationCounts, setRegistrationCounts] = useState({});
+    const [notifications, setNotifications] = useState({});
+    const [dismissedNotifications, setDismissedNotifications] = useState(() => {
+        // Load dismissed notifications from localStorage on initialization
+        try {
+            const saved = localStorage.getItem('dismissedNotifications');
+            return saved ? new Set(JSON.parse(saved)) : new Set();
+        } catch (error) {
+            console.error('Error loading dismissed notifications from localStorage:', error);
+            return new Set();
+        }
+    });
+    const [acknowledgedCounts, setAcknowledgedCounts] = useState(() => {
+        // Load acknowledged counts from localStorage
+        try {
+            const saved = localStorage.getItem('acknowledgedCounts');
+            return saved ? JSON.parse(saved) : {};
+        } catch (error) {
+            console.error('Error loading acknowledged counts from localStorage:', error);
+            return {};
+        }
+    });
+
+    // Save acknowledged counts to localStorage whenever they change
+    useEffect(() => {
+        try {
+            localStorage.setItem('acknowledgedCounts', JSON.stringify(acknowledgedCounts));
+        } catch (error) {
+            console.error('Error saving acknowledged counts to localStorage:', error);
+        }
+    }, [acknowledgedCounts]);
+
+    // Keyboard shortcut to clear all dismissed notifications (Ctrl+Shift+R)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                if (confirm('Clear all dismissed notification history?')) {
+                    clearAllDismissedNotifications();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // Fetch registration counts for all events
+    useEffect(() => {
+        const fetchRegistrationCounts = async () => {
+            const counts = {};
+
+            for (const event of recentEvents) {
+                try {
+                    // Use axios to fetch registration count for this event
+                    const response = await axios.get(route('events.registrations.count', event.id));
+                    const newCount = response.data.count || 0;
+                    counts[event.id] = newCount;
+
+                    // Check if count increased from acknowledged count (what user has seen)
+                    const acknowledgedCount = acknowledgedCounts[event.id] || 0;
+                    if (newCount > acknowledgedCount) {
+                        // Check if this increase was already dismissed
+                        const increaseKey = `${event.id}-${newCount}`;
+                        if (!dismissedNotifications.has(increaseKey)) {
+                            addNotification(event.id, newCount - acknowledgedCount);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch registration count for event ${event.id}:`, error);
+                    counts[event.id] = acknowledgedCounts[event.id] || 0;
+                }
+            }
+
+            setRegistrationCounts(counts);
+        };
+
+        if (recentEvents.length > 0) {
+            fetchRegistrationCounts();
+
+            // Set up polling every 30 seconds to check for new registrations
+            const interval = setInterval(fetchRegistrationCounts, 30000);
+
+            return () => clearInterval(interval);
+        }
+    }, [recentEvents, dismissedNotifications, acknowledgedCounts]);
+
+    // Add notification for new registrations
+    const addNotification = (eventId, increase) => {
+        const notificationId = `${eventId}-${Date.now()}`;
+        setNotifications(prev => ({
+            ...prev,
+            [notificationId]: {
+                id: notificationId,
+                eventId,
+                increase,
+                timestamp: Date.now()
+            }
+        }));
+
+        // No auto-cleanup - notifications stay until clicked
+    };
+
+    // Remove notification when clicked and mark the increase as seen
+    const removeNotification = (notificationId) => {
+        setNotifications(prev => {
+            const updated = { ...prev };
+            const notification = updated[notificationId];
+
+            if (notification) {
+                // Update acknowledged count to current registration count
+                setAcknowledgedCounts(prevCounts => ({
+                    ...prevCounts,
+                    [notification.eventId]: registrationCounts[notification.eventId] || 0
+                }));
+
+                // Mark this specific increase as dismissed (for safety)
+                const increaseKey = `${notification.eventId}-${registrationCounts[notification.eventId]}`;
+                setDismissedNotifications(prevSet => new Set([...prevSet, increaseKey]));
+            }
+
+            delete updated[notificationId];
+            return updated;
+        });
+    };
+
+    // Clear all dismissed notifications (reset state)
+    const clearAllDismissedNotifications = () => {
+        setDismissedNotifications(new Set());
+        setAcknowledgedCounts({});
+        localStorage.removeItem('dismissedNotifications');
+        localStorage.removeItem('acknowledgedCounts');
+    };
 
     // Memoize filtered and paginated events
     const { ongoingEvents, upcomingEvents, completedEvents, filteredOngoing, filteredUpcoming, filteredCompleted } = useMemo(() => {
@@ -252,43 +386,89 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                 key={`mobile-${event.id}-${event.status}`}
                                 className="bg-slate-800/50 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
                             >
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-medium text-white truncate">
+                                <div className="space-y-2">
+                                    {/* Event Name */}
+                                    <div>
+                                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Event Name</span>
+                                        <h4 className="text-sm font-medium text-white mt-1">
                                             {event.name || 'Unnamed Event'}
                                         </h4>
-                                        <div className="mt-1 text-xs text-slate-400">
-                                            <div className="flex items-center">
-                                                <CalendarDaysIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                                                <span>{formatDate(event.date).split(', ')[0]}</span>
+                                    </div>
+
+                                    {/* Date & Time */}
+                                    <div>
+                                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Date & Time</span>
+                                        <div className="text-sm text-slate-300 mt-1">
+                                            {formatDate(event.date)}
+                                        </div>
+                                    </div>
+
+                                    {/* Location - only show if on larger mobile screens */}
+                                    <div className="md:hidden">
+                                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Location</span>
+                                        <div className="text-sm text-slate-300 mt-1">
+                                            {event.venue || 'TBD'}
+                                        </div>
+                                    </div>
+
+                                    {/* Status and Registered in same row */}
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Status</span>
+                                            <div className="mt-1">
+                                                <span 
+                                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                        event.status?.toLowerCase() === 'upcoming' 
+                                                            ? 'bg-blue-500/20 text-blue-400' 
+                                                            : event.status?.toLowerCase() === 'ongoing' || event.status?.toLowerCase() === 'in progress'
+                                                                ? 'bg-amber-500/20 text-amber-400'
+                                                                : event.status?.toLowerCase() === 'done'
+                                                                    ? 'bg-green-500/20 text-green-400'
+                                                                    : event.status?.toLowerCase() === 'cancelled'
+                                                                        ? 'bg-red-500/20 text-red-400'
+                                                                        : 'bg-slate-500/20 text-slate-400'
+                                                    }`}
+                                                >
+                                                    {event.status === 'Done' ? 'Done' : 
+                                                     event.status === 'Ongoing' ? 'In Progress' : 'Scheduled'}
+                                                </span>
                                             </div>
-                                            <div className="flex items-center mt-1">
-                                                <svg className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <span className="truncate">{event.venue || 'TBD'}</span>
+                                        </div>
+
+                                        <div className="flex-1 text-right">
+                                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Registered:</span>
+                                            <div className="text-sm text-slate-300 mt-1 relative inline-block">
+                                                {registrationCounts[event.id] !== undefined ? registrationCounts[event.id] : '0'}
+                                                {/* Notification badge positioned on the count number */}
+                                                {Object.values(notifications)
+                                                    .filter(notification => notification.eventId === event.id)
+                                                    .map(notification => (
+                                                        <div
+                                                            key={notification.id}
+                                                            className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center cursor-pointer hover:bg-green-600 transition-colors"
+                                                            style={{
+                                                                animation: 'notificationBounce 0.6s ease-out forwards'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Navigate to registered players page for this event
+                                                                router.get(route('events.players', event.id));
+                                                                // Dismiss the notification since user clicked it
+                                                                removeNotification(notification.id);
+                                                            }}
+                                                            title={`View ${notification.increase} new registration${notification.increase > 1 ? 's' : ''} for ${event.name}`}
+                                                        >
+                                                            +{notification.increase}
+                                                        </div>
+                                                    ))
+                                                }
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="ml-2 flex-shrink-0 flex flex-col items-end">
-                                        <span 
-                                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${
-                                                event.status?.toLowerCase() === 'upcoming' 
-                                                    ? 'bg-blue-500/20 text-blue-400' 
-                                                    : event.status?.toLowerCase() === 'ongoing' || event.status?.toLowerCase() === 'in progress'
-                                                        ? 'bg-amber-500/20 text-amber-400'
-                                                        : event.status?.toLowerCase() === 'done'
-                                                            ? 'bg-green-500/20 text-green-400'
-                                                            : event.status?.toLowerCase() === 'cancelled'
-                                                                ? 'bg-red-500/20 text-red-400'
-                                                                : 'bg-slate-500/20 text-slate-400'
-                                            }`}
-                                        >
-                                            {event.status === 'Done' ? 'Done' : 
-                                             event.status === 'Ongoing' ? 'In Progress' : 'Scheduled'}
-                                        </span>
-                                        {event.status === 'Done' && (
+
+                                    {/* Delete button for completed events */}
+                                    {event.status === 'Done' && (
+                                        <div className="flex justify-end pt-2">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -300,11 +480,8 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             >
                                                 <TrashIcon className="h-4 w-4" />
                                             </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="mt-2 text-xs text-slate-400">
-                                    {formatDate(event.date).split(', ').slice(1).join(', ')}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -312,7 +489,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
 
                     {/* Desktop View - Table Layout */}
                     <div className="hidden sm:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-700">
+                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800/80">
                             <thead className="bg-slate-800/80">
                                 <tr>
                                     <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
@@ -328,11 +505,11 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                         Status
                                     </th>
                                     <th scope="col" className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                        Actions
+                                        Registered
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-700 bg-slate-800/50">
+                            <tbody className="divide-y divide-slate-700">
                                 {paginatedEvents.map((event) => (
                                     <tr 
                                         key={`${event.id}-${event.status}`} 
@@ -375,6 +552,37 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                  event.status === 'Ongoing' ? 'In Progress' : 'Scheduled'
                                                 }
                                             </span>
+                                        </td>
+                                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right relative">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <div className="text-sm text-slate-300 relative">
+                                                    {registrationCounts[event.id] !== undefined ? registrationCounts[event.id] : '0'}
+                                                    {/* Notification badge positioned on the count number */}
+                                                    {Object.values(notifications)
+                                                        .filter(notification => notification.eventId === event.id)
+                                                        .map(notification => (
+                                                            <div
+                                                                key={notification.id}
+                                                                className="absolute -top-3 -right-5 bg-green-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center cursor-pointer hover:bg-green-600 transition-colors"
+                                                                style={{
+                                                                    animation: 'notificationBounce 0.5s ease-out forwards',
+                                                                    fontSize: '10px'
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    // Navigate to registered players page for this event
+                                                                    router.get(route('events.players', event.id));
+                                                                    // Dismiss the notification since user clicked it
+                                                                    removeNotification(notification.id);
+                                                                }}
+                                                                title={`View ${notification.increase} new registration${notification.increase > 1 ? 's' : ''} for ${event.name}`}
+                                                            >
+                                                                +{notification.increase}
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
                                             {event.status === 'Done' && (
@@ -676,6 +884,14 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                         </ErrorBoundary>
                     </div>
                 </div>
+
+                <style jsx>{`
+                    @keyframes notificationBounce {
+                        0% { transform: scale(0) rotate(0deg); opacity: 0; }
+                        50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+                        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+                    }
+                `}</style>
             </AuthenticatedLayout>
         </ErrorBoundary>
     );
@@ -696,6 +912,7 @@ DashboardSummary.propTypes = {
             status: PropTypes.string,
             date: PropTypes.string,
             venue: PropTypes.string,
+            registered_count: PropTypes.number,
         })
     ),
     loading: PropTypes.bool,

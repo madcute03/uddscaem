@@ -114,7 +114,8 @@ class EventController extends Controller
             'team_size',
             'required_players',
             'is_done',
-            'allow_bracketing'
+            'allow_bracketing',
+            'rulebook_path'
         )
             ->with('images')
             ->orderBy('event_date')
@@ -162,6 +163,7 @@ class EventController extends Controller
             'allow_bracketing',
             'category',
             'other_category',
+            'rulebook_path'
         )
             ->with('images')
             ->orderBy('event_date')
@@ -222,6 +224,7 @@ class EventController extends Controller
             'allow_bracketing' => 'sometimes|boolean',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'rulebook' => 'nullable|file|mimes:pdf,doc,docx,txt|max:5120',
         ]);
 
         // Handle the registration end date based on the toggle
@@ -285,6 +288,15 @@ class EventController extends Controller
             }
         }
 
+        // Handle rulebook file upload
+        if ($request->hasFile('rulebook')) {
+            $rulebook = $request->file('rulebook');
+            if ($rulebook->isValid()) {
+                $rulebookPath = $rulebook->store('rulebooks', 'public');
+                $event->update(['rulebook_path' => $rulebookPath]);
+            }
+        }
+
         // Redirect to dashboard so the new event appears immediately
         return redirect()->route('dashboard')->with('success', 'Event created successfully.');
     }
@@ -323,6 +335,7 @@ class EventController extends Controller
                 'required_players' => 'nullable|integer|min:1|max:20',
                 'images' => 'nullable|array',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'rulebook' => 'nullable|file|mimes:pdf,doc,docx,txt|max:5120',
                 'allow_bracketing' => 'sometimes|boolean',
                 'existing_images' => 'nullable|array',
                 'existing_images.*' => 'string',
@@ -408,6 +421,20 @@ class EventController extends Controller
             }
         }
 
+        // Handle rulebook file upload
+        if ($request->hasFile('rulebook')) {
+            $rulebook = $request->file('rulebook');
+            if ($rulebook->isValid()) {
+                // Delete existing rulebook if it exists
+                if ($event->rulebook_path) {
+                    Storage::disk('public')->delete($event->rulebook_path);
+                }
+                $rulebookPath = $rulebook->store('rulebooks', 'public');
+                $event->update(['rulebook_path' => $rulebookPath]);
+                Log::info('Uploaded new rulebook:', ['path' => $rulebookPath]);
+            }
+        }
+
             $event = $event->fresh('images');
             $successMessage = 'Event updated successfully.';
 
@@ -478,7 +505,8 @@ class EventController extends Controller
             'team_size',
             'required_players',
             'is_done',
-            'allow_bracketing'
+            'allow_bracketing',
+            'rulebook_path'
         )
             ->with('images')
             ->orderBy('event_date')
@@ -514,5 +542,34 @@ class EventController extends Controller
         $event->save();
 
         return response()->json(['message' => 'Event marked as undone']);
+    }
+
+    /**
+     * Serve rulebook file for an event
+     */
+    public function downloadRulebook(Event $event)
+    {
+        if (!$event->rulebook_path) {
+            abort(404, 'Rulebook not found');
+        }
+
+        $filePath = storage_path('app/public/' . $event->rulebook_path);
+
+        if (!file_exists($filePath)) {
+            abort(404, 'Rulebook file not found');
+        }
+
+        // Get file mime type
+        $mimeType = mime_content_type($filePath);
+
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType ?: 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . basename($event->rulebook_path) . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'Accept-Ranges' => 'bytes',
+            'Content-Length' => filesize($filePath)
+        ]);
     }
 }

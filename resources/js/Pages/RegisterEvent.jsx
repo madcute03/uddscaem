@@ -1,4 +1,5 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function RegisterEvent({ event }) {
@@ -21,8 +22,40 @@ export default function RegisterEvent({ event }) {
         is_team_registration: event.registration_type === 'team',
     });
 
+    const [duplicateErrors, setDuplicateErrors] = useState({});
+
+    const checkForDuplicates = () => {
+        const errors = {};
+        const seenEmails = new Set();
+        const seenStudentIds = new Set();
+
+        data.team_members.forEach((member, index) => {
+            const email = member.email?.trim().toLowerCase();
+            const studentId = member.student_id?.trim();
+
+            if (email && seenEmails.has(email)) {
+                errors[`${index}_email`] = 'Duplicate email found in team members.';
+            } else if (email) {
+                seenEmails.add(email);
+            }
+
+            if (studentId && seenStudentIds.has(studentId)) {
+                errors[`${index}_student_id`] = 'Duplicate student ID found in team members.';
+            } else if (studentId) {
+                seenStudentIds.add(studentId);
+            }
+        });
+
+        setDuplicateErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (!checkForDuplicates()) {
+            return; // Prevent submission if duplicates exist
+        }
 
         post(route('eventregistrations.store', event.id), {
             onSuccess: () => {
@@ -45,6 +78,7 @@ export default function RegisterEvent({ event }) {
         }
         updatedMembers[index] = { ...updatedMembers[index], [field]: value };
         setData('team_members', updatedMembers);
+        checkForDuplicates(); // Check for duplicates after update
     };
 
     const addTeamMember = () => {
@@ -57,6 +91,7 @@ export default function RegisterEvent({ event }) {
                 age: '',
                 gdrive_link: ''
             }]);
+            checkForDuplicates(); // Check for duplicates after adding
         }
     };
 
@@ -64,6 +99,7 @@ export default function RegisterEvent({ event }) {
         if (data.team_members.length > 1) {
             const updatedMembers = data.team_members.filter((_, i) => i !== index);
             setData('team_members', updatedMembers);
+            checkForDuplicates(); // Check for duplicates after removing
         }
     };
 
@@ -86,7 +122,7 @@ export default function RegisterEvent({ event }) {
             </Head>
 
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 py-8 px-4">
-                <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-6 md:p-8">
+                <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-8 md:p-10">
                     <h1 className="text-2xl font-semibold text-center mb-2">
                         Register for {event.title}
                     </h1>
@@ -125,18 +161,9 @@ export default function RegisterEvent({ event }) {
                                             <div key={index} className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <h5 className="font-medium text-slate-200">Player {index + 1}</h5>
-                                                    {data.team_members.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeTeamMember(index)}
-                                                            className="text-red-400 hover:text-red-300 text-sm"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    )}
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                     <div>
                                                         <input
                                                             type="text"
@@ -150,6 +177,9 @@ export default function RegisterEvent({ event }) {
                                                         />
                                                         {errors[`team_members.${index}.student_id`] && (
                                                             <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.student_id`]}</p>
+                                                        )}
+                                                        {duplicateErrors[`${index}_student_id`] && (
+                                                            <p className="text-red-400 text-sm mt-1">{duplicateErrors[`${index}_student_id`]}</p>
                                                         )}
                                                     </div>
 
@@ -173,6 +203,9 @@ export default function RegisterEvent({ event }) {
                                                         />
                                                         {errors[`team_members.${index}.email`] && (
                                                             <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.email`]}</p>
+                                                        )}
+                                                        {duplicateErrors[`${index}_email`] && (
+                                                            <p className="text-red-400 text-sm mt-1">{duplicateErrors[`${index}_email`]}</p>
                                                         )}
                                                     </div>
 
@@ -222,16 +255,21 @@ export default function RegisterEvent({ event }) {
                                                         required
                                                     />
 
-                                                    <input
-                                                        type="url"
-                                                        placeholder="Google Drive link"
-                                                        value={member.gdrive_link || ''}
-                                                        onChange={(e) => updateTeamMember(index, 'gdrive_link', e.target.value)}
-                                                        className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                                        pattern="https?://.+"
-                                                        title="Enter a valid link (include https://)"
-                                                        required
-                                                    />
+                                                    <div>
+                                                        <label className="block mb-1 text-slate-200">
+                                                            {event.event_type === 'competition' ? 'Upload your whiteform image' : 'Google Drive link (Whiteform/PDS/Medical in one folder)'}
+                                                        </label>
+                                                        <input
+                                                            type="url"
+                                                            placeholder="https://drive.google.com/..."
+                                                            value={member.gdrive_link || ''}
+                                                            onChange={(e) => updateTeamMember(index, 'gdrive_link', e.target.value)}
+                                                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                            pattern="https?://.+"
+                                                            title="Enter a valid link (include https://)"
+                                                            required
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 {member.department?.startsWith('Other: ') || member.department === 'Other' ? (
@@ -365,7 +403,7 @@ export default function RegisterEvent({ event }) {
 
                                 <div>
                                     <label className="block mb-1 text-slate-200">
-                                        Google Drive link (Whiteform/PDS/Medical in one folder)
+                                        {event.event_type === 'competition' ? 'Upload your whiteform image' : 'Google Drive link (Whiteform/PDS/Medical in one folder)'}
                                     </label>
                                     <input
                                         type="url"

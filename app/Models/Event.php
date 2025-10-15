@@ -30,6 +30,20 @@ class Event extends Model
                 }
             });
 
+            // Delete rulebook file if it exists
+            if ($event->rulebook_path) {
+                try {
+                    if (Storage::disk('public')->exists($event->rulebook_path)) {
+                        Storage::disk('public')->delete($event->rulebook_path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error deleting event rulebook from storage: ' . $e->getMessage(), [
+                        'rulebook_path' => $event->rulebook_path,
+                        'event_id' => $event->id
+                    ]);
+                }
+            }
+
             // Delete all player registrations when an event is deleted
             $event->registrations()->each(function ($registration) {
                 $registration->delete();
@@ -58,6 +72,7 @@ class Event extends Model
         'allow_bracketing',
         'bracket_type',
         'teams',
+        'rulebook_path',
     ];
 
     protected $casts = [

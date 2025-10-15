@@ -85,6 +85,7 @@ class EventRegistrationController extends Controller
                         'gdrive_link' => $member['gdrive_link'],
                         'team_name' => $validated['team_name'],
                         'status' => 'pending',
+                        'registered_at' => now(),
                     ]);
                 }
             });
@@ -134,6 +135,7 @@ class EventRegistrationController extends Controller
                 'age' => $validated['age'],
                 'gdrive_link' => $validated['gdrive_link'],
                 'status' => 'pending',
+                'registered_at' => now(),
             ]);
 
             return redirect()
@@ -152,6 +154,18 @@ class EventRegistrationController extends Controller
         return Inertia::render('Registrations/RegisteredPlayers', [
             'players' => $players,
             'event' => $event,
+        ]);
+    }
+
+    // Get registration count for an event (for dashboard)
+    public function getRegistrationCount(Event $event)
+    {
+        $count = RegisteredPlayer::where('event_id', $event->id)->count();
+        $newCount = RegisteredPlayer::getNewRegistrationsCount($event->id, 24); // New registrations in last 24 hours
+
+        return response()->json([
+            'count' => $count,
+            'new_count' => $newCount
         ]);
     }
 

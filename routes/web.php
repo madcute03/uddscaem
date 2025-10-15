@@ -126,6 +126,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('/events/{id}/mark-done', [EventController::class, 'markDone'])->name('events.markDone');
     Route::post('/events/{id}/mark-undone', [EventController::class, 'markUndone'])->name('events.markUndone');
+    Route::get('/events/{event}/rulebook/download', [EventController::class, 'downloadRulebook'])->name('events.rulebook.download');
 
     // Bracket Management
     Route::get('/dashboard/bracket', [CreateBracketController::class, 'bracket'])->name('bracket');
@@ -150,6 +151,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Player Status Management
     Route::post('/player/update-status', [PlayerController::class, 'updateStatus'])->name('player.updateStatus');
     Route::post('/player/send-message', [PlayerController::class, 'sendMessage'])->name('player.sendMessage');
+
+    // Event Registration Count (for dashboard)
+    Route::get('/events/{event}/registrations/count', [EventRegistrationController::class, 'getRegistrationCount'])->name('events.registrations.count');
 
     // User Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

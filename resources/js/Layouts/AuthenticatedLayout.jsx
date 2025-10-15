@@ -13,16 +13,18 @@ export default function AuthenticatedLayout({ header, children }) {
     const handleNavClick = () => setShowingNavigationDropdown(false);
 
     const navigationLinks = [
-        {
-            label: 'Dashboard',
-            href: route('dashboard.summary'),
-            active: route().current('dashboard.summary'),
-            icon: (
-                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-            ),
-        },
+        ...(user.role !== 'writer' ? [
+            {
+                label: 'Dashboard',
+                href: route('dashboard.summary'),
+                active: route().current('dashboard.summary'),
+                icon: (
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                ),
+            },
+        ] : []),
         ...(user.role !== 'writer' ? [
             {
                 label: 'Events',
@@ -75,7 +77,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </svg>
                 </button>
                 <Link
-                    href="/dashboard"
+                    href={user.role === 'admin' ? route('dashboard.summary') : (user.role === 'writer' ? "/admin/news" : "/dashboard")}
                     className="flex items-center gap-2"
                     onClick={() => setShowingNavigationDropdown(false)}
                 >
@@ -181,7 +183,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 <div className="hidden sm:block fixed inset-x-0 top-0 z-40 sm:z-50 bg-slate-900/70 backdrop-blur border-b border-slate-800/60 shadow-lg shadow-blue-950/20">
                     <div className="flex items-center gap-6 px-4 md:px-6 lg:px-8 py-4">
                         <div className="flex-1 flex items-center gap-6 min-w-0">
-                            <Link href="/dashboard" className="flex items-center gap-3 flex-none text-left">
+                            <Link href={user.role === 'admin' ? route('dashboard.summary') : (user.role === 'writer' ? "/admin/news" : "/dashboard")} className="flex items-center gap-3 flex-none text-left">
                                 <img
                                     src="/images/sems.png"
                                     alt="SCAEMS logo"

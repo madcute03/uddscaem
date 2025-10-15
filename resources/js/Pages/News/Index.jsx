@@ -7,6 +7,7 @@ export default function NewsIndex({ news }) {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [isMobile, setIsMobile] = useState(false);
     const [expandedCards, setExpandedCards] = useState({});
+    const [cardsInView, setCardsInView] = useState({});
     const contentRefs = useRef({});
 
     // Check if mobile on component mount and window resize
@@ -33,6 +34,36 @@ export default function NewsIndex({ news }) {
         const matchesCategory = !selectedCategory || article.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
+
+    // Intersection Observer for scroll-based zoom effect
+    useEffect(() => {
+        const observers = [];
+
+        Object.keys(contentRefs.current).forEach(articleId => {
+            const element = contentRefs.current[articleId];
+            if (element) {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        setCardsInView(prev => ({
+                            ...prev,
+                            [articleId]: entry.isIntersecting
+                        }));
+                    },
+                    {
+                        threshold: 0.1,
+                        rootMargin: '-50px 0px -50px 0px'
+                    }
+                );
+
+                observer.observe(element);
+                observers.push(observer);
+            }
+        });
+
+        return () => {
+            observers.forEach(observer => observer.disconnect());
+        };
+    }, [filteredNews]);
 
     // Format date to be more readable
     const formatDate = (dateString) => {
@@ -103,7 +134,22 @@ export default function NewsIndex({ news }) {
                             {filteredNews.map((article) => (
                                 <article
                                     key={article.id}
-                                    className="h-full flex flex-col bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-zoom-in"
+                                    ref={el => contentRefs.current[article.id] = el}
+                                    className={`h-full flex flex-col bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:border-blue-500/50`}
+                                    style={{
+                                        transform: `scale(${cardsInView[article.id] ? 1.0 : 0.3}) ${cardsInView[article.id] ? 'translateY(-4px)' : 'translateY(0px)'}`,
+                                        transition: 'transform 0.75s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = `scale(${cardsInView[article.id] ? 1.05 : 0.01}) translateY(-8px)`;
+                                        e.currentTarget.style.boxShadow = '0 20px 40px rgba(59, 130, 246, 0.3)';
+                                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = `scale(${cardsInView[article.id] ? 1.0 : 0.3}) translateY(${cardsInView[article.id] ? '-4px' : '0px'})`;
+                                        e.currentTarget.style.boxShadow = cardsInView[article.id] ? '0 10px 20px rgba(59, 130, 246, 0.2)' : '0 10px 20px rgba(30, 58, 138, 0.2)';
+                                        e.currentTarget.style.borderColor = cardsInView[article.id] ? 'rgba(59, 130, 246, 0.5)' : 'rgba(71, 85, 105, 0.5)';
+                                    }}
                                 >
                                     <div className="relative overflow-hidden flex-shrink-0">
                                         <div className="aspect-w-16 aspect-h-9 w-full">

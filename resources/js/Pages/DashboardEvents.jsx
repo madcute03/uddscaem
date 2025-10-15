@@ -6,12 +6,12 @@ import { usePage, Link, router } from '@inertiajs/react'
 const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and time" }) => {
     const parseTime = (timeStr) => {
         if (!timeStr) return { hour: 12, minute: 0, period: 'AM' };
-        
+
         const [hours, minutes] = timeStr.split(':').map(Number);
         const period = hours >= 12 ? 'PM' : 'AM';
         let hour = hours % 12;
         if (hour === 0) hour = 12; // Convert 0 to 12 for 12-hour format
-        
+
         return {
             hour: hour,
             minute: minutes || 0,
@@ -62,7 +62,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [activeTab, setActiveTab] = useState('date'); // 'date' or 'time'
     const [isMobile, setIsMobile] = useState(false);
-    
+
     // Generate time options
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);
     const minutes = Array.from({ length: 60 }, (_, i) => i); // 0 to 59
@@ -72,13 +72,13 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         const checkIfMobile = () => {
             setIsMobile(window.innerWidth <= 768);
         };
-        
+
         // Initial check
         checkIfMobile();
-        
+
         // Add event listener for window resize
         window.addEventListener('resize', checkIfMobile);
-        
+
         // Cleanup
         return () => window.removeEventListener('resize', checkIfMobile);
     }, []);
@@ -112,7 +112,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
     const handleTimeChange = (field, value) => {
         const newTime = { ...time, [field]: value };
         setTime(newTime);
-        
+
         // Convert to 24-hour format for storage
         let hour24 = newTime.hour;
         if (newTime.period === 'PM' && hour24 < 12) {
@@ -120,7 +120,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
         } else if (newTime.period === 'AM' && hour24 === 12) {
             hour24 = 0;
         }
-        
+
         const formattedTime = `${String(hour24).padStart(2, '0')}:${String(newTime.minute).padStart(2, '0')}`;
         setTimeValue(formattedTime);
         updateDateTime(dateValue, formattedTime);
@@ -635,7 +635,7 @@ function Dashboard() {
     const { auth, events = [], flash = {} } = usePage().props;
     const user = auth.user;
     const [currentSlide, setCurrentSlide] = useState({});
-    
+
     // Effect to update event statuses in real-time
     useEffect(() => {
         // Update event statuses every minute
@@ -664,6 +664,7 @@ function Dashboard() {
         has_required_players: false,
         allow_bracketing: false,
         images: [],
+        rulebook: null,
         registration_type: 'single',
         team_size: '',
     };
@@ -686,6 +687,7 @@ function Dashboard() {
         participants: [''],
         images: [],
         existingImages: [],
+        rulebook: null,
         allow_bracketing: false,
         has_registration_end_date: false,
         required_players: '',
@@ -720,30 +722,30 @@ function Dashboard() {
 
     // Categorize events
     const now = new Date();
-    
+
     const categorizedEvents = events.reduce((acc, event) => {
         const eventStart = new Date(event.event_date);
         const eventEnd = event.event_end_date ? new Date(event.event_end_date) : new Date(eventStart);
-        
+
         // If current time is after the event end date, it's completed
         if (now > eventEnd) {
             acc.completed.push(event);
-        } 
+        }
         // If current time is between start and end (or just after start if no end date), it's ongoing
         else if (now >= eventStart && now <= eventEnd) {
             acc.ongoing.push(event);
-        } 
+        }
         // Otherwise, it's upcoming
         else {
             acc.upcoming.push(event);
         }
-        
+
         return acc;
     }, { upcoming: [], ongoing: [], completed: [] });
-    
+
     // Get events based on active filter
     const getFilteredEvents = () => {
-        switch(activeFilter) {
+        switch (activeFilter) {
             case 'upcoming':
                 return categorizedEvents.upcoming;
             case 'ongoing':
@@ -795,7 +797,7 @@ function Dashboard() {
 
     const getEventStatus = (event) => {
         const now = new Date();
-        
+
         try {
             // Parse start date
             const startDate = new Date(event.event_date);
@@ -828,7 +830,7 @@ function Dashboard() {
                     className: 'bg-amber-500 text-white'
                 };
             }
-            
+
             // If current time is after event end time
             if (now > endDate) {
                 return {
@@ -836,7 +838,7 @@ function Dashboard() {
                     className: 'bg-gray-500 text-white'
                 };
             }
-            
+
             // If we're between start and end time
             return {
                 label: 'ONGOING',
@@ -923,38 +925,38 @@ function Dashboard() {
     const formatDateTime = (dateTimeString, includeTime = true) => {
         const parsed = parseDateTimeValue(dateTimeString);
         if (!parsed) return '';
-        
+
         const options = {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour12: true
         };
-        
+
         if (includeTime) {
             options.hour = '2-digit';
             options.minute = '2-digit';
         }
-        
+
         // For mobile view, always include time in 12-hour format with AM/PM
         const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-        
+
         if (isMobile || includeTime) {
             options.hour = '2-digit';
             options.minute = '2-digit';
             options.hour12 = true;
         }
-        
+
         return parsed.toLocaleString('en-US', options);
     };
 
     const formatDateOnly = (dateString) => {
         const parsed = parseDateTimeValue(`${dateString ?? ''}T00:00`);
         if (!parsed) return '';
-        
+
         // Check if we're on mobile
         const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-        
+
         // For mobile, include time in 12-hour format with AM/PM
         if (isMobile) {
             return parsed.toLocaleString('en-US', {
@@ -966,7 +968,7 @@ function Dashboard() {
                 hour12: true
             });
         }
-        
+
         // For desktop, just show the date
         return parsed.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -1084,6 +1086,7 @@ function Dashboard() {
                 : [''],
             images: [],
             existingImages: buildExistingImages(event),
+            rulebook: null, // New rulebook file uploads will go here
             allow_bracketing: !!event.allow_bracketing,
             has_registration_end_date: !!event.registration_end_date,
             required_players: event.required_players ? String(event.required_players) : '',
@@ -1256,6 +1259,11 @@ function Dashboard() {
                 });
             }
 
+            // Handle rulebook file upload
+            if (editData.rulebook instanceof File) {
+                formData.append('rulebook', editData.rulebook);
+            }
+
             console.log('Submitting form with data:');
             for (let pair of formData.entries()) {
                 console.log(pair[0] + ': ', pair[1]);
@@ -1340,7 +1348,7 @@ function Dashboard() {
                     ))}
                 </div>
             )}
-           
+
 
             <div>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -1384,25 +1392,25 @@ function Dashboard() {
 
                 {/* Filter Buttons */}
                 <div className="flex flex-wrap gap-2 mb-6">
-                    <button 
+                    <button
                         onClick={() => setActiveFilter('all')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
                     >
                         All Events
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveFilter('upcoming')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
                     >
                         Upcoming ({categorizedEvents.upcoming.length})
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveFilter('ongoing')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'ongoing' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
                     >
                         Ongoing ({categorizedEvents.ongoing.length})
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveFilter('completed')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === 'completed' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
                     >
@@ -1456,572 +1464,656 @@ function Dashboard() {
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        
+
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-5">
                                     {editingEventId === event.id ? (
-                                    <form onSubmit={handleEditSubmit} encType="multipart/form-data" className="space-y-6">
-                                        {/* Basic Information Section */}
-                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
-                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Basic Information</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="md:col-span-2">
-                                                    <label className="block text-sm text-slate-300 mb-1">Event Title</label>
-                                                    <input
-                                                        type="text"
-                                                        value={editData.title}
-                                                        onChange={e => setEditData({ ...editData, title: e.target.value })}
-                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                        placeholder="Enter event title"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="md:col-span-2">
-                                                    <label className="block text-sm text-slate-300 mb-1">Description</label>
-                                                    <textarea
-                                                        rows={3}
-                                                        value={editData.description}
-                                                        onChange={e => setEditData({ ...editData, description: e.target.value })}
-                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                        placeholder="Enter event description"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm text-slate-300 mb-1">Coordinator</label>
-                                                    <input
-                                                        type="text"
-                                                        value={editData.coordinator_name}
-                                                        onChange={e => setEditData({ ...editData, coordinator_name: e.target.value })}
-                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                        placeholder="Enter coordinator name"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm text-slate-300 mb-1">Venue</label>
-                                                    <input
-                                                        type="text"
-                                                        value={editData.venue || ''}
-                                                        onChange={e => setEditData({ ...editData, venue: e.target.value })}
-                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                        placeholder="Enter venue location"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Category & Participants Section */}
-                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
-                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Category & Participants</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm text-slate-300 mb-1">Category</label>
-                                                    <select
-                                                        value={editData.category}
-                                                        onChange={e => setEditData({ ...editData, category: e.target.value })}
-                                                        className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                    >
-                                                        <option value="sport">Sport</option>
-                                                        <option value="culture">Culture</option>
-                                                        <option value="arts">Arts</option>
-                                                        <option value="intramurals">Intramurals</option>
-                                                        <option value="other">Other (please specify)</option>
-                                                    </select>
-                                                    {editData.category === 'other' && (
-                                                        <div className="mt-2">
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                                placeholder="Please specify category"
-                                                                value={editData.other_category}
-                                                                onChange={e => setEditData({ ...editData, other_category: e.target.value })}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {!isTryouts && (
-                                                    <div>
-                                                        <label className="block text-sm text-slate-300 mb-2">Participants</label>
-                                                        <div className="space-y-2">
-                                                            {(Array.isArray(editData.participants) ? editData.participants : ['']).map((participant, index) => (
-                                                                <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={participant}
-                                                                        placeholder={`Participant ${index + 1}`}
-                                                                        onChange={(e) => {
-                                                                            const updated = Array.isArray(editData.participants) ? [...editData.participants] : [''];
-                                                                            updated[index] = e.target.value;
-                                                                            setEditData({ ...editData, participants: updated });
-                                                                        }}
-                                                                        className="flex-1 border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                                                    />
-                                                                    {(editData.participants?.length ?? 0) > 1 && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                const updated = (editData.participants || []).filter((_, idx) => idx !== index);
-                                                                                setEditData({ ...editData, participants: updated.length > 0 ? updated : [''] });
-                                                                            }}
-                                                                            className="px-3 py-2 text-sm text-red-300 hover:text-red-200 rounded-md hover:bg-slate-600"
-                                                                        >
-                                                                            Remove
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        {(!editData.participants || editData.participants.length === 0) && (
-                                                            <p className="text-xs text-slate-400 mt-1">No participants listed.</p>
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setEditData({
-                                                                ...editData,
-                                                                participants: [...(editData.participants || ['']), '']
-                                                            })}
-                                                            className="mt-2 text-blue-300 hover:text-blue-200 text-sm underline"
-                                                        >
-                                                            + Add participant
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Event Dates Section */}
-                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
-                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Event Dates</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm text-slate-300 mb-1">Event Start</label>
-                                                    <DateTimePicker
-                                                        value={editData.event_date}
-                                                        onChange={handleEventDateTimeChange}
-                                                        placeholder="Select event date and time"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm text-slate-300 mb-1">Event End Date</label>
-                                                    <DatePicker
-                                                        value={editData.event_end_date}
-                                                        onChange={(date) => setEditData({ ...editData, event_end_date: date })}
-                                                        placeholder="Select event end date"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Registration Settings Section */}
-                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
-                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Settings</h3>
-                                            <div className="space-y-4">
-                                                {isTryouts ? (
-                                                    <div>
-                                                        <label className="block text-sm text-slate-300 mb-1">Registration End <span className="text-red-500">*</span></label>
-                                                        <DateTimePicker
-                                                            value={editData.registration_end_date || ''}
-                                                            onChange={handleRegistrationEndDateChange}
-                                                            placeholder="Select registration end date"
+                                        <form onSubmit={handleEditSubmit} encType="multipart/form-data" className="space-y-6">
+                                            {/* Basic Information Section */}
+                                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                                <h3 className="text-lg font-medium text-slate-200 mb-4">Basic Information</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-sm text-slate-300 mb-1">Event Title</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editData.title}
+                                                            onChange={e => setEditData({ ...editData, title: e.target.value })}
+                                                            className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                            placeholder="Enter event title"
                                                             required
                                                         />
                                                     </div>
-                                                ) : (
-                                                    <div className="space-y-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                id={`has_registration_end_date_${editingEventId}`}
-                                                                checked={editData.has_registration_end_date}
-                                                                onChange={(e) => setEditData({
-                                                                    ...editData,
-                                                                    has_registration_end_date: e.target.checked,
-                                                                    registration_end_date: !editData.registration_end_date && e.target.checked
-                                                                        ? new Date().toISOString().slice(0, 16)
-                                                                        : editData.registration_end_date
-                                                                })}
-                                                                className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                                                            />
-                                                            <label htmlFor={`has_registration_end_date_${editingEventId}`} className="text-sm text-slate-300">
-                                                                Enable Registration End Date
-                                                            </label>
-                                                        </div>
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-sm text-slate-300 mb-1">Description</label>
+                                                        <textarea
+                                                            rows={3}
+                                                            value={editData.description}
+                                                            onChange={e => setEditData({ ...editData, description: e.target.value })}
+                                                            className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                            placeholder="Enter event description"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-1">Coordinator</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editData.coordinator_name}
+                                                            onChange={e => setEditData({ ...editData, coordinator_name: e.target.value })}
+                                                            className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                            placeholder="Enter coordinator name"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-1">Venue</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editData.venue || ''}
+                                                            onChange={e => setEditData({ ...editData, venue: e.target.value })}
+                                                            className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                            placeholder="Enter venue location"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                                        {editData.has_registration_end_date && (
-                                                            <div>
-                                                                <label className="block text-sm text-slate-300 mb-1">Registration End</label>
-                                                                <DateTimePicker
-                                                                    value={editData.registration_end_date}
-                                                                    onChange={handleRegistrationEndDateChange}
-                                                                    placeholder="Select registration end date"
+                                            {/* Category & Participants Section */}
+                                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                                <h3 className="text-lg font-medium text-slate-200 mb-4">Category & Participants</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-1">Category</label>
+                                                        <select
+                                                            value={editData.category}
+                                                            onChange={e => setEditData({ ...editData, category: e.target.value })}
+                                                            className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                        >
+                                                            <option value="sport">Sport</option>
+                                                            <option value="culture">Culture</option>
+                                                            <option value="arts">Arts</option>
+                                                            <option value="intramurals">Intramurals</option>
+                                                            <option value="other">Other (please specify)</option>
+                                                        </select>
+                                                        {editData.category === 'other' && (
+                                                            <div className="mt-2">
+                                                                <input
+                                                                    type="text"
+                                                                    className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                                    placeholder="Please specify category"
+                                                                    value={editData.other_category}
+                                                                    onChange={e => setEditData({ ...editData, other_category: e.target.value })}
                                                                 />
                                                             </div>
                                                         )}
                                                     </div>
-                                                )}
 
-                                                {/* Registration Type Selection - Only show if registration is enabled and not a tryout event */}
-                                                {editData.has_registration_end_date && !isTryouts && (
-                                                    <div>
-                                                        <label className="block text-sm text-slate-300 mb-3">Registration Type</label>
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center">
-                                                                <input
-                                                                    type="radio"
-                                                                    id={`single-registration-${editingEventId}`}
-                                                                    name={`registration_type-${editingEventId}`}
-                                                                    value="single"
-                                                                    checked={editData.registration_type === 'single'}
-                                                                    onChange={(e) => {
-                                                                        setEditData(prev => ({
-                                                                            ...prev,
-                                                                            registration_type: e.target.value,
-                                                                            team_size: e.target.value === 'single' ? '' : prev.team_size
-                                                                        }));
-                                                                    }}
-                                                                    className="mr-2 text-blue-600 focus:ring-blue-500"
-                                                                />
-                                                                <label htmlFor={`single-registration-${editingEventId}`} className="text-slate-300">
-                                                                    Single Registration
-                                                                </label>
+                                                    {!isTryouts && (
+                                                        <div>
+                                                            <label className="block text-sm text-slate-300 mb-2">Participants</label>
+                                                            <div className="space-y-2">
+                                                                {(Array.isArray(editData.participants) ? editData.participants : ['']).map((participant, index) => (
+                                                                    <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={participant}
+                                                                            placeholder={`Participant ${index + 1}`}
+                                                                            onChange={(e) => {
+                                                                                const updated = Array.isArray(editData.participants) ? [...editData.participants] : [''];
+                                                                                updated[index] = e.target.value;
+                                                                                setEditData({ ...editData, participants: updated });
+                                                                            }}
+                                                                            className="flex-1 border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                                        />
+                                                                        {(editData.participants?.length ?? 0) > 1 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const updated = (editData.participants || []).filter((_, idx) => idx !== index);
+                                                                                    setEditData({ ...editData, participants: updated.length > 0 ? updated : [''] });
+                                                                                }}
+                                                                                className="px-3 py-2 text-sm text-red-300 hover:text-red-200 rounded-md hover:bg-slate-600"
+                                                                            >
+                                                                                Remove
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                            <div className="flex items-center">
-                                                                <input
-                                                                    type="radio"
-                                                                    id={`team-registration-${editingEventId}`}
-                                                                    name={`registration_type-${editingEventId}`}
-                                                                    value="team"
-                                                                    checked={editData.registration_type === 'team'}
-                                                                    onChange={(e) => setEditData(prev => ({ ...prev, registration_type: e.target.value }))}
-                                                                    className="mr-2 text-blue-600 focus:ring-blue-500"
-                                                                />
-                                                                <label htmlFor={`team-registration-${editingEventId}`} className="text-slate-300">
-                                                                    Team Registration
-                                                                </label>
-                                                            </div>
+                                                            {(!editData.participants || editData.participants.length === 0) && (
+                                                                <p className="text-xs text-slate-400 mt-1">No participants listed.</p>
+                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditData({
+                                                                    ...editData,
+                                                                    participants: [...(editData.participants || ['']), '']
+                                                                })}
+                                                                className="mt-2 text-blue-300 hover:text-blue-200 text-sm underline"
+                                                            >
+                                                                + Add participant
+                                                            </button>
                                                         </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Team Size Input - Only show if team registration is selected */}
-                                                {editData.has_registration_end_date && editData.registration_type === 'team' && (
-                                                    <div>
-                                                        <label className="block text-sm text-slate-300 mb-1">Number of Players per Team</label>
-                                                        <input
-                                                            type="number"
-                                                            min="2"
-                                                            max="50"
-                                                            className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
-                                                            value={editData.team_size}
-                                                            onChange={(e) => setEditData(prev => ({ ...prev, team_size: e.target.value }))}
-                                                            placeholder="Enter number of players per team"
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`allow_bracketing_${editingEventId}`}
-                                                        checked={editData.allow_bracketing}
-                                                        onChange={(e) => setEditData({ ...editData, allow_bracketing: e.target.checked })}
-                                                        className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                                                    />
-                                                    <label htmlFor={`allow_bracketing_${editingEventId}`} className="text-sm text-slate-300">Allow Bracketing</label>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Event Images Section */}
-                                        <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
-                                            <h3 className="text-lg font-medium text-slate-200 mb-4">Event Images</h3>
-                                            <div className="space-y-4">
-                                                {/* New Images Upload */}
-                                                <div className="flex items-center justify-center w-full">
-                                                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-slate-800/50 border-slate-700 hover:bg-slate-800/70">
-                                                        <div className="flex flex-col items-center justify-center px-4 py-3">
-                                                            <svg className="w-6 h-6 mb-1 text-slate-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                                            </svg>
-                                                            <p className="text-xs text-slate-400"><span className="font-semibold">Click to upload</span></p>
-                                                            <p className="text-[10px] text-slate-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
-                                                        </div>
-                                                        <input
-                                                            id="dropzone-file"
-                                                            type="file"
-                                                            className="hidden"
-                                                            multiple
-                                                            accept="image/*"
-                                                            onChange={(e) => {
-                                                                const files = Array.from(e.target.files);
-                                                                setEditData(prev => ({
-                                                                    ...prev,
-                                                                    images: [...prev.images, ...files]
-                                                                }));
-                                                            }}
-                                                        />
-                                                    </label>
-                                                </div>
-
-                                                {/* Existing Images Grid */}
-                                                {editData.existingImages && editData.existingImages.length > 0 && (
+                                            {/* Event Dates Section */}
+                                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                                <h3 className="text-lg font-medium text-slate-200 mb-4">Event Dates</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <p className="text-sm text-slate-400 mb-2">Current Images:</p>
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            {editData.existingImages.map((img, i) => (
-                                                                <div key={i} className="relative aspect-square">
-                                                                    <img
-                                                                        src={`/storage/${img.image_path}`}
-                                                                        alt={`Event ${i + 1}`}
-                                                                        className="w-full h-full object-cover rounded"
+                                                        <label className="block text-sm text-slate-300 mb-1">Event Start</label>
+                                                        <DateTimePicker
+                                                            value={editData.event_date}
+                                                            onChange={handleEventDateTimeChange}
+                                                            placeholder="Select event date and time"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm text-slate-300 mb-1">Event End Date</label>
+                                                        <DatePicker
+                                                            value={editData.event_end_date}
+                                                            onChange={(date) => setEditData({ ...editData, event_end_date: date })}
+                                                            placeholder="Select event end date"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Registration Settings Section */}
+                                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                                <h3 className="text-lg font-medium text-slate-200 mb-4">Settings</h3>
+                                                <div className="space-y-4">
+                                                    {isTryouts ? (
+                                                        <div>
+                                                            <label className="block text-sm text-slate-300 mb-1">Registration End <span className="text-red-500">*</span></label>
+                                                            <DateTimePicker
+                                                                value={editData.registration_end_date || ''}
+                                                                onChange={handleRegistrationEndDateChange}
+                                                                placeholder="Select registration end date"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={`has_registration_end_date_${editingEventId}`}
+                                                                    checked={editData.has_registration_end_date}
+                                                                    onChange={(e) => setEditData({
+                                                                        ...editData,
+                                                                        has_registration_end_date: e.target.checked,
+                                                                        registration_end_date: !editData.registration_end_date && e.target.checked
+                                                                            ? new Date().toISOString().slice(0, 16)
+                                                                            : editData.registration_end_date
+                                                                    })}
+                                                                    className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                                                                />
+                                                                <label htmlFor={`has_registration_end_date_${editingEventId}`} className="text-sm text-slate-300">
+                                                                    Enable Registration End Date
+                                                                </label>
+                                                            </div>
+
+                                                            {editData.has_registration_end_date && (
+                                                                <div>
+                                                                    <label className="block text-sm text-slate-300 mb-1">Registration End</label>
+                                                                    <DateTimePicker
+                                                                        value={editData.registration_end_date}
+                                                                        onChange={handleRegistrationEndDateChange}
+                                                                        placeholder="Select registration end date"
                                                                     />
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (confirm('Remove this image?')) {
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Registration Type Selection - Only show if registration is enabled and not a tryout event */}
+                                                    {editData.has_registration_end_date && !isTryouts && (
+                                                        <div>
+                                                            <label className="block text-sm text-slate-300 mb-3">Registration Type</label>
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center">
+                                                                    <input
+                                                                        type="radio"
+                                                                        id={`single-registration-${editingEventId}`}
+                                                                        name={`registration_type-${editingEventId}`}
+                                                                        value="single"
+                                                                        checked={editData.registration_type === 'single'}
+                                                                        onChange={(e) => {
+                                                                            setEditData(prev => ({
+                                                                                ...prev,
+                                                                                registration_type: e.target.value,
+                                                                                team_size: e.target.value === 'single' ? '' : prev.team_size
+                                                                            }));
+                                                                        }}
+                                                                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                                                                    />
+                                                                    <label htmlFor={`single-registration-${editingEventId}`} className="text-slate-300">
+                                                                        Single Registration
+                                                                    </label>
+                                                                </div>
+                                                                <div className="flex items-center">
+                                                                    <input
+                                                                        type="radio"
+                                                                        id={`team-registration-${editingEventId}`}
+                                                                        name={`registration_type-${editingEventId}`}
+                                                                        value="team"
+                                                                        checked={editData.registration_type === 'team'}
+                                                                        onChange={(e) => setEditData(prev => ({ ...prev, registration_type: e.target.value }))}
+                                                                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                                                                    />
+                                                                    <label htmlFor={`team-registration-${editingEventId}`} className="text-slate-300">
+                                                                        Team Registration
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Team Size Input - Only show if team registration is selected */}
+                                                    {editData.has_registration_end_date && editData.registration_type === 'team' && (
+                                                        <div>
+                                                            <label className="block text-sm text-slate-300 mb-1">Number of Players per Team</label>
+                                                            <input
+                                                                type="number"
+                                                                min="2"
+                                                                max="50"
+                                                                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                                value={editData.team_size}
+                                                                onChange={(e) => setEditData(prev => ({ ...prev, team_size: e.target.value }))}
+                                                                placeholder="Enter number of players per team"
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`allow_bracketing_${editingEventId}`}
+                                                            checked={editData.allow_bracketing}
+                                                            onChange={(e) => setEditData({ ...editData, allow_bracketing: e.target.checked })}
+                                                            className="h-4 w-4 rounded border-gray-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                                                        />
+                                                        <label htmlFor={`allow_bracketing_${editingEventId}`} className="text-sm text-slate-300">Allow Bracketing</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Event Images Section */}
+                                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                                <h3 className="text-lg font-medium text-slate-200 mb-4">Event Images</h3>
+                                                <div className="space-y-4">
+                                                    {/* New Images Upload */}
+                                                    <div className="flex items-center justify-center w-full">
+                                                        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-slate-800/50 border-slate-700 hover:bg-slate-800/70">
+                                                            <div className="flex flex-col items-center justify-center px-4 py-3">
+                                                                <svg className="w-6 h-6 mb-1 text-slate-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                                                                </svg>
+                                                                <p className="text-xs text-slate-400"><span className="font-semibold">Click to upload</span></p>
+                                                                <p className="text-[10px] text-slate-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                                                            </div>
+                                                            <input
+                                                                id="dropzone-file"
+                                                                type="file"
+                                                                className="hidden"
+                                                                multiple
+                                                                accept="image/*"
+                                                                onChange={(e) => {
+                                                                    const files = Array.from(e.target.files);
+                                                                    setEditData(prev => ({
+                                                                        ...prev,
+                                                                        images: [...prev.images, ...files]
+                                                                    }));
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Existing Images Grid */}
+                                                    {editData.existingImages && editData.existingImages.length > 0 && (
+                                                        <div>
+                                                            <p className="text-sm text-slate-400 mb-2">Current Images:</p>
+                                                            <div className="grid grid-cols-4 gap-2">
+                                                                {editData.existingImages.map((img, i) => (
+                                                                    <div key={i} className="relative aspect-square">
+                                                                        <img
+                                                                            src={`/storage/${img.image_path}`}
+                                                                            alt={`Event ${i + 1}`}
+                                                                            className="w-full h-full object-cover rounded"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (confirm('Remove this image?')) {
+                                                                                    setEditData(prev => ({
+                                                                                        ...prev,
+                                                                                        existingImages: prev.existingImages.filter((_, idx) => idx !== i)
+                                                                                    }));
+                                                                                }
+                                                                            }}
+                                                                            className="absolute top-0.5 right-0.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                                                                        >
+                                                                            ×
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* New Images Preview */}
+                                                    {safeImages.length > 0 && (
+                                                        <div>
+                                                            <p className="text-sm text-slate-400 mb-2">New images to upload:</p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {safeImages.map((file, index) => (
+                                                                    <div key={index} className="relative">
+                                                                        <img
+                                                                            src={URL.createObjectURL(file)}
+                                                                            alt={`Preview ${index + 1}`}
+                                                                            className="h-16 w-16 object-cover rounded"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const newImages = [...safeImages];
+                                                                                newImages.splice(index, 1);
                                                                                 setEditData(prev => ({
                                                                                     ...prev,
-                                                                                    existingImages: prev.existingImages.filter((_, idx) => idx !== i)
+                                                                                    images: newImages
                                                                                 }));
-                                                                            }
-                                                                        }}
-                                                                        className="absolute top-0.5 right-0.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
-                                                                    >
-                                                                        ×
-                                                                    </button>
-                                                                </div>
-                                                            ))}
+                                                                            }}
+                                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                                                        >
+                                                                            ×
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
+                                            </div>
 
-                                                {/* New Images Preview */}
-                                                {safeImages.length > 0 && (
-                                                    <div>
-                                                        <p className="text-sm text-slate-400 mb-2">New images to upload:</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {safeImages.map((file, index) => (
-                                                                <div key={index} className="relative">
-                                                                    <img
-                                                                        src={URL.createObjectURL(file)}
-                                                                        alt={`Preview ${index + 1}`}
-                                                                        className="h-16 w-16 object-cover rounded"
-                                                                    />
+                                            {/* Rulebook Document Section */}
+                                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                                <h3 className="text-lg font-medium text-slate-200 mb-4">Rulebook Document (Optional)</h3>
+                                                <div className="space-y-4">
+                                                    {/* Existing Rulebook Display */}
+                                                    {event.rulebook_path && !editData.rulebook && (
+                                                        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                    </svg>
+                                                                    <span className="text-sm text-green-300">Current rulebook: {event.rulebook_path.split('/').pop()}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => window.open(route("events.rulebook.download", event.id), '_blank', 'noopener,noreferrer')}
+                                                                        className="text-blue-400 hover:text-blue-300 text-sm underline"
+                                                                    >
+                                                                        View
+                                                                    </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
-                                                                            const newImages = [...safeImages];
-                                                                            newImages.splice(index, 1);
-                                                                            setEditData(prev => ({
-                                                                                ...prev,
-                                                                                images: newImages
-                                                                            }));
+                                                                            if (confirm('Replace current rulebook?')) {
+                                                                                // File input will be triggered to upload new file
+                                                                                document.getElementById('rulebook-file')?.click();
+                                                                            }
                                                                         }}
-                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                                                        className="text-orange-400 hover:text-orange-300 text-sm"
                                                                     >
-                                                                        ×
+                                                                        Replace
                                                                     </button>
                                                                 </div>
-                                                            ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
+                                                    )}
 
-                                        <div className="flex gap-2 pt-4">
-                                            <button type="submit" className="w-[131px] h-[40px] rounded-[15px] cursor-pointer
+                                                    <div className="flex items-center justify-center w-full">
+                                                            {/* New Rulebook Display */}
+                                                            {editData.rulebook && (
+                                                                <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                            </svg>
+                                                                            <span className="text-sm text-blue-300">New rulebook: {editData.rulebook.name}</span>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEditData(prev => ({ ...prev, rulebook: null }))}
+                                                                            className="text-red-400 hover:text-red-300 text-sm"
+                                                                        >
+                                                                            Remove
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            <input
+                                                                id="rulebook-file"
+                                                                type="file"
+                                                                className="hidden"
+                                                                accept=".pdf,.doc,.docx,.txt"
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files[0];
+                                                                    setEditData(prev => ({
+                                                                        ...prev,
+                                                                        rulebook: file || null
+                                                                    }));
+                                                                }}
+                                                            />
+                                                    </div>
+
+
+                                                    {/* No Rulebook Message */}
+                                                    {!event.rulebook_path && !editData.rulebook && (
+                                                        <p className="text-xs text-slate-400 text-center">No rulebook uploaded</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2 pt-4">
+                                                <button type="submit" className="w-[131px] h-[40px] rounded-[15px] cursor-pointer
                                                                transition duration-300 ease-in-out
                                                                bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0
                                                                bg-[#2e8eff]/20 flex items-center justify-center
                                                                hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
                                                                focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Save</button>
-                                            <button type="button" onClick={() => setEditingEventId(null)} className="w-[131px] h-[40px] rounded-[15px] cursor-pointer
+                                                <button type="button" onClick={() => setEditingEventId(null)} className="w-[131px] h-[40px] rounded-[15px] cursor-pointer
                                                                transition duration-300 ease-in-out
                                                                bg-gradient-to-br from-[#8b0000] to-[#8b0000]/0
                                                                bg-[#8b0000]/20 flex items-center justify-center
                                                                hover:bg-[#8b0000]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
                                                                focus:outline-none focus:bg-[#8b0000]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Cancel</button>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    <div className="h-full flex flex-col">
-                                        <div className="flex-1">
-                                            <div className="mb-3">
-                                                <div className="flex flex-col gap-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <h3 className="text-lg font-semibold text-white">{event.title}</h3>
-                                                    </div>
-                                                </div>
                                             </div>
-
-                                            <div className="text-sm text-gray-400 space-y-3 mb-4">
-                                                <div className="flex items-start gap-2">
-                                                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 3H7a2 2 0 00-2 2v6l7 9 7-9V5a2 2 0 00-2-2z" />
-                                                    </svg>
-                                                    <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">Category</p>
-                                                        <p className="text-slate-200">{getCategoryLabel(event)}</p>
+                                        </form>
+                                    ) : (
+                                        <div className="h-full flex flex-col">
+                                            <div className="flex-1">
+                                                <div className="mb-3">
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <h3 className="text-lg font-semibold text-white">{event.title}</h3>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-start gap-2">
-                                                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <div>
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">Event Start</p>
-                                                        <p className="text-slate-200">{event.event_date ? formatDateTime(event.event_date) : 'TBD'}</p>
-                                                    </div>
-                                                </div>
-
-                                                {event.event_end_date && (
+                                                <div className="text-sm text-gray-400 space-y-3 mb-4">
                                                     <div className="flex items-start gap-2">
                                                         <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8h18M3 12h18m-9 4h9" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 3H7a2 2 0 00-2 2v6l7 9 7-9V5a2 2 0 00-2-2z" />
                                                         </svg>
                                                         <div>
-                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Event Ends</p>
-                                                            <p className="text-slate-200">{formatDateOnly(event.event_end_date)}</p>
+                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Category</p>
+                                                            <p className="text-slate-200">{getCategoryLabel(event)}</p>
                                                         </div>
                                                     </div>
-                                                )}
 
-                                                {event.venue && (
                                                     <div className="flex items-start gap-2">
                                                         <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
                                                         <div>
-                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Venue</p>
-                                                            <p className="text-slate-200">{event.venue}</p>
+                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Event Start</p>
+                                                            <p className="text-slate-200">{event.event_date ? formatDateTime(event.event_date) : 'TBD'}</p>
                                                         </div>
                                                     </div>
-                                                )}
-                                                <div className="flex items-start gap-2">
-                                                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                    </svg>
-                                                    <div className="py-4">
-                                                        <p className="text-xs uppercase tracking-wide text-slate-500">Coordinator</p>
-                                                        <p className="text-slate-200">{event.coordinator_name || 'TBD'}</p>
-                                                    </div>
-                                                </div>
 
-                                                {event.registration_end_date && (
-                                                    <div className="flex items-start gap-2">
-                                                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        <div>
-                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Registration Ends</p>
-                                                            <p className="text-slate-200">{formatDateTime(event.registration_end_date)}</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-
-                                                {participants.length > 0 && (
-                                                    <div className="flex items-start gap-2">
-                                                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                        </svg>
-                                                        <div className="w-full">
-                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Participants</p>
-                                                            <div className="mt-1 flex flex-wrap gap-2">
-                                                                {participants.map((participant, idx) => (
-                                                                    <span
-                                                                        key={`${event.id}-participant-${idx}`}
-                                                                        className="inline-flex items-center rounded-full bg-slate-700/60 px-2.5 py-0.5 text-xs text-slate-200 border border-slate-600"
-                                                                    >
-                                                                        {participant}
-                                                                    </span>
-                                                                ))}
+                                                    {event.event_end_date && (
+                                                        <div className="flex items-start gap-2">
+                                                            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8h18M3 12h18m-9 4h9" />
+                                                            </svg>
+                                                            <div>
+                                                                <p className="text-xs uppercase tracking-wide text-slate-500">Event Ends</p>
+                                                                <p className="text-slate-200">{formatDateOnly(event.event_end_date)}</p>
                                                             </div>
                                                         </div>
+                                                    )}
+
+                                                    {event.venue && (
+                                                        <div className="flex items-start gap-2">
+                                                            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                            <div>
+                                                                <p className="text-xs uppercase tracking-wide text-slate-500">Venue</p>
+                                                                <p className="text-slate-200">{event.venue}</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-start gap-2">
+                                                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                        </svg>
+                                                        <div className="py-4">
+                                                            <p className="text-xs uppercase tracking-wide text-slate-500">Coordinator</p>
+                                                            <p className="text-slate-200">{event.coordinator_name || 'TBD'}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {event.registration_end_date && (
+                                                        <div className="flex items-start gap-2">
+                                                            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <div>
+                                                                <p className="text-xs uppercase tracking-wide text-slate-500">Registration Ends</p>
+                                                                <p className="text-slate-200">{formatDateTime(event.registration_end_date)}</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+
+                                                    {participants.length > 0 && (
+                                                        <div className="flex items-start gap-2">
+                                                            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                            <div className="w-full">
+                                                                <p className="text-xs uppercase tracking-wide text-slate-500">Participants</p>
+                                                                <div className="mt-1 flex flex-wrap gap-2">
+                                                                    {participants.map((participant, idx) => (
+                                                                        <span
+                                                                            key={`${event.id}-participant-${idx}`}
+                                                                            className="inline-flex items-center rounded-full bg-slate-700/60 px-2.5 py-0.5 text-xs text-slate-200 border border-slate-600"
+                                                                        >
+                                                                            {participant}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {cardImages.length > 0 && (
+                                                    <div className="mt-3 relative h-60 overflow-hidden rounded-lg bg-slate-700/30 group">
+                                                        <div className="absolute inset-0 flex transition-transform duration-300 ease-in-out"
+                                                            style={{ transform: `translateX(-${currentSlide[event.id] || 0}%)` }}>
+                                                            {cardImages.map((imgPath, idx) => (
+                                                                <div key={idx} className="min-w-full h-full">
+                                                                    <img
+                                                                        src={imgPath}
+                                                                        alt={`Event ${idx + 1}`}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {cardImages.length > 0 && (
-                                                <div className="mt-3 relative h-60 overflow-hidden rounded-lg bg-slate-700/30 group">
-                                                    <div className="absolute inset-0 flex transition-transform duration-300 ease-in-out"
-                                                        style={{ transform: `translateX(-${currentSlide[event.id] || 0}%)` }}>
-                                                        {cardImages.map((imgPath, idx) => (
-                                                            <div key={idx} className="min-w-full h-full">
-                                                                <img
-                                                                    src={imgPath}
-                                                                    alt={`Event ${idx + 1}`}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-4">
-                                            {event.has_registration_end_date && (
-                                                <div className="space-y-1">
-                                                    <p className="text-xs font-medium text-slate-400">Registration Status</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`w-2 h-2 rounded-full ${event.registration_end_date && new Date(event.registration_end_date) > new Date() ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                                        <span className="text-sm">
-                                                            {event.registration_end_date && new Date(event.registration_end_date) > new Date() 
-                                                                ? 'Open until ' + formatDateTime(event.registration_end_date)
-                                                                : 'Registration closed'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            
-                                            <div className="col-span-2 flex justify-between items-center pt-2">
+                                            <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-4">
                                                 {event.has_registration_end_date && (
-                                                    <Link
-                                                        href={`/events/${event.id}/registrations`}
-                                                        className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
-                                                    >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                        </svg>
-                                                        View Registrations
-                                                    </Link>
+                                                    <div className="space-y-1">
+                                                        <p className="text-xs font-medium text-slate-400">Registration Status</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-2 h-2 rounded-full ${event.registration_end_date && new Date(event.registration_end_date) > new Date() ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                                            <span className="text-sm">
+                                                                {event.registration_end_date && new Date(event.registration_end_date) > new Date()
+                                                                    ? 'Open until ' + formatDateTime(event.registration_end_date)
+                                                                    : 'Registration closed'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 )}
-                                                
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => startEdit(event)}
-                                                        className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
-                                                    >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                        Edit
-                                                    </button>
-                                                    
-                                                    <button
-                                                        onClick={() => handleDelete(event.id)}
-                                                        className="text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-2.5 py-1 rounded border border-red-500/30 transition-colors flex items-center gap-1"
-                                                    >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                        Delete
-                                                    </button>
+
+                                                <div className="col-span-2 flex justify-between items-center pt-2">
+                                                    {event.has_registration_end_date && (
+                                                        <Link
+                                                            href={`/events/${event.id}/registrations`}
+                                                            className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                            View Registrations
+                                                        </Link>
+                                                    )}
+
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => startEdit(event)}
+                                                            className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                            Edit
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => handleDelete(event.id)}
+                                                            className="text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-2.5 py-1 rounded border border-red-500/30 transition-colors flex items-center gap-1"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                            Delete
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                                
-                                
+                                    )}
+
+
                                 </div>
                             </div>
                         );

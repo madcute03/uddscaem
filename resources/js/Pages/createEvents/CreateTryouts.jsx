@@ -537,6 +537,7 @@ export default function CreateTryouts({ auth, events = [] }) {
         team_size: null, // Added missing field
         allow_bracketing: false,
         images: [],
+        rulebook: null,
         required_players: 1, // Changed from '1' to 1 (integer)
         venue: '',
     });
@@ -593,6 +594,11 @@ export default function CreateTryouts({ auth, events = [] }) {
                         formData.append(`images[${index}]`, image);
                     }
                 });
+            } else if (key === 'rulebook') {
+                // Handle rulebook file upload
+                if (value instanceof File) {
+                    formData.append('rulebook', value);
+                }
             } else if (key === 'registration_end_date' && !data.has_registration_end_date) {
                 // Skip registration end date if not enabled
                 return;
@@ -963,6 +969,31 @@ export default function CreateTryouts({ auth, events = [] }) {
                                         + Add image
                                     </button>
                                     {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images}</p>}
+                                </div>
+                            </div>
+                            {/* Rulebook Document */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-slate-700">
+                                <h3 className="text-lg font-medium text-slate-200 mb-4">Rulebook Document (Optional)</h3>
+                                <div className="mb-2">
+                                    <label className="block mb-1 text-slate-300">Upload rulebook document</label>
+                                    <input
+                                        type="file"
+                                        className="bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md mt-1 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-700 file:text-slate-100 hover:file:bg-slate-600"
+                                        style={{width: '100%'}}
+                                        accept=".pdf,.doc,.docx,.txt"
+                                        onChange={e => {
+                                            setData('rulebook', e.target.files[0] || null);
+                                        }}
+                                    />
+                                    {data.rulebook && (
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            Selected: {data.rulebook.name}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        Accepted formats: PDF, DOC, DOCX, TXT (optional)
+                                    </p>
+                                    {errors.rulebook && <p className="text-red-500 text-xs mt-1">{errors.rulebook}</p>}
                                 </div>
                             </div>
 
