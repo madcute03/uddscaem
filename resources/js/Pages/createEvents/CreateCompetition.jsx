@@ -975,7 +975,7 @@ export default function CreateCompetition({ auth, events = [] }) {
                                             className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
                                             value={data.description}
                                             onChange={e => setData('description', e.target.value)}
-                                            rows={4}
+                                            rows={10}
                                             placeholder="Enter event description"
                                         />
                                         {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}

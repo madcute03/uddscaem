@@ -607,15 +607,15 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
                                                                 {player.status || "Pending"}
                                                             </span>
                                                         </td>
-                                                        <td className="px-3 py-2 text-center space-x-2">
+                                                        <td className="px-2 py-3 text-center gap-2 flex justify-center">
                                                             {/* Temporarily show buttons for testing */}
                                                             <button
-                                                                className="btn-blue-glow mr-2"
+                                                                className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-white-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
                                                                 onClick={() =>
                                                                     openModal(
                                                                         player.id,
                                                                         player.email,
-                                                                        "approved"
+                                                                        "approve"
                                                                     )
                                                                 }
                                                                 disabled={loading}
@@ -623,7 +623,7 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
                                                                 Approve
                                                             </button>
                                                             <button
-                                                                className="btn-blue-glow"
+                                                                className="text-[11px] bg-red-500/20 hover:bg-red-500/30 text-red-300 px-2.5 py-1 rounded border border-red-500/30 transition-colors flex items-center gap-1"
                                                                 onClick={() =>
                                                                     openModal(
                                                                         player.id,
@@ -645,7 +645,7 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
                                                                     ) <
                                                                     10000 && (
                                                                 <button
-                                                                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded text-sm transition-colors ml-2"
+                                                                    className="text-[11px] bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 px-2.5 py-1 rounded border border-yellow-500/30 transition-colors flex items-center gap-1"
                                                                     onClick={() => {
                                                                         setPlayers((current) =>
                                                                             current.map((p) =>
@@ -679,9 +679,9 @@ export default function RegisteredPlayers({ players: initialPlayers, event }) {
             {/* ✅ Status Modal */}
             {modal.isOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
+                    <div className="bg-blue-300 p-6 rounded shadow max-w-md w-full text-center">
                         <h2 className="text-lg font-bold mb-4 capitalize">
-                            {modal.action} Confirmation
+                           Confirmation of Approval 
                         </h2>
                         <p className="mb-4">
                             {modal.showMessage

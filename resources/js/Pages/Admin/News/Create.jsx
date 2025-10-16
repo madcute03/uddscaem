@@ -597,7 +597,7 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                 }
 
                 .ql-editor {
-                    color:rgb(24, 87, 170) !important;
+                    color:rgba(255, 255, 255, 1) !important;
                     min-height: 200px;
                 }
 
@@ -608,6 +608,7 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                 /* Style for header dropdown to show "Normal" option clearly */
                 .ql-header option[value=""]::before {
                     content: "Normal";
+                    
                 }
 
                 .ql-header .ql-picker-label::before {
@@ -620,7 +621,7 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
 
                 /* Ensure all toolbar buttons are visible */
                 .ql-toolbar .ql-picker {
-                    color:rgb(7, 34, 70) !important;
+                    color:rgba(33, 78, 184, 1) !important;
                 }
 
                 .ql-toolbar button {
@@ -796,7 +797,12 @@ export default function CreateNews({ auth, existingCategories: propCategories = 
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        className={`w-[131px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)] ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         {processing ? 'Creating...' : 'Create News'}
                                     </button>
