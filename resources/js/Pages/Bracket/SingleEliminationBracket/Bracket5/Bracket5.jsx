@@ -28,12 +28,14 @@ export default function FiveTeamBracketVerticalSF({ eventId }) {
                 if (data.matches) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
+                    // Load teams in seeding order: 1-5
+                    // Seed 1 bye to SF1.p1, Seed 2 bye to SF2.p1, 2v3 in SF2, 4v5 in R1 (winner to SF1.p2)
                     const initialTeams = [
-                        data.matches.SF1?.p1?.name || "", // bye team
-                        data.matches.SF2?.p1?.name || "",
-                        data.matches.SF2?.p2?.name || "",
-                        data.matches.R1?.p1?.name || "",
-                        data.matches.R1?.p2?.name || "",
+                        data.matches.SF1?.p1?.name || "", // Seed 1 (bye to SF)
+                        data.matches.SF2?.p1?.name || "", // Seed 2 (bye to SF)
+                        data.matches.SF2?.p2?.name || "", // Seed 3
+                        data.matches.R1?.p1?.name || "",  // Seed 4
+                        data.matches.R1?.p2?.name || "",  // Seed 5
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -49,14 +51,17 @@ export default function FiveTeamBracketVerticalSF({ eventId }) {
 
     const applyTeams = () => {
         const updated = { ...defaultMatches };
+        // Challonge-style seeding for 5 teams:
+        // Seeds 1 & 2 get byes to semifinals
+        // R1: 4v5, winner faces Seed 1 in SF1
+        // SF2: 2v3
+        updated.R1.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.R1.p2.name = teamsInput[4] || "TBD"; // Seed 5
 
-        updated.R1.p1.name = teamsInput[3] || "TBD";
-        updated.R1.p2.name = teamsInput[4] || "TBD";
-
-        updated.SF1.p1.name = teamsInput[0] || "TBD"; // bye team
-        updated.SF1.p2.name = "TBD"; // winner R1
-        updated.SF2.p1.name = teamsInput[1] || "TBD";
-        updated.SF2.p2.name = teamsInput[2] || "TBD";
+        updated.SF1.p1.name = teamsInput[0] || "TBD"; // Seed 1 (bye)
+        updated.SF1.p2.name = "TBD"; // Winner of R1 (4v5)
+        updated.SF2.p1.name = teamsInput[1] || "TBD"; // Seed 2 (bye)
+        updated.SF2.p2.name = teamsInput[2] || "TBD"; // Seed 3
 
         setMatches(updated);
         setChampion(null);

@@ -72,13 +72,16 @@ class BracketController extends Controller
         $bracketMap = [
             'single' => 'SingleElimination',
             'double' => 'DoubleElimination',
+            'round'  => 'RoundRobin',
         ];
 
         $normalizedType = strtolower($bracketType);
         $bracketFolder = $bracketMap[$normalizedType] ?? 'DoubleElimination';
 
         // Build correct path
-        $pagePath = "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowBracket";
+        $pagePath = $bracketFolder === 'RoundRobin'
+            ? "Bracket/RoundRobinBracket/ShowBracket"
+            : "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowBracket";
 
         $bracket = $event->bracket;
 
@@ -103,13 +106,16 @@ class BracketController extends Controller
         $bracketMap = [
             'single' => 'SingleElimination',
             'double' => 'DoubleElimination',
+            'round'  => 'RoundRobin',
         ];
 
         $normalizedType = strtolower($bracketType);
         $bracketFolder = $bracketMap[$normalizedType] ?? 'DoubleElimination';
 
         // Build correct path
-        $pagePath = "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowStanding";
+        $pagePath = $bracketFolder === 'RoundRobin'
+            ? "Bracket/RoundRobinBracket/ShowStanding"
+            : "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowStanding";
 
         $bracket = $event->bracket;
 
@@ -135,7 +141,7 @@ class BracketController extends Controller
     public function storeBracketSettings(Request $request, $eventId)
     {
         $validated = $request->validate([
-            'bracket_type' => 'required|in:single,double',
+            'bracket_type' => 'required|in:single,double,round',
             'teams' => 'required|integer|min:2|max:8',
             'reset' => 'sometimes|boolean'
         ]);

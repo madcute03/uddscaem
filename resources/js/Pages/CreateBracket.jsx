@@ -22,6 +22,9 @@ import SEBracket6 from "@/Pages/Bracket/SingleEliminationBracket/Bracket6/Bracke
 import SEBracket7 from "@/Pages/Bracket/SingleEliminationBracket/Bracket7/Bracket7";
 import SEBracket8 from "@/Pages/Bracket/SingleEliminationBracket/Bracket8/Bracket8";
 
+// Round Robin (generic)
+import RrBracket from "@/Pages/Bracket/RoundRobinBracket/RoundRobin";
+
 export default function CreateBracket({ events = [] }) {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [bracketType, setBracketType] = useState(null); // "single" or "double"
@@ -120,7 +123,9 @@ export default function CreateBracket({ events = [] }) {
                 ? teamCount
                     ? singleEliminationBrackets[teamCount]
                     : null
-                : null;
+                : bracketType === "round"
+                    ? RrBracket
+                    : null;
 
     return (
         <AuthenticatedLayout>
@@ -394,6 +399,13 @@ export default function CreateBracket({ events = [] }) {
                                     >
                                         Double Elimination
                                     </button>
+
+                                    <button
+                                        onClick={() => setBracketType("round")}
+                                        className="block w-full bg-blue-600 text-white px-4 py-2 rounded text-center hover:bg-blue-700 transition-colors"
+                                    >
+                                        Round Robin
+                                    </button>
                                 </div>
 
                                 <button
@@ -419,7 +431,9 @@ export default function CreateBracket({ events = [] }) {
                                 <div className="grid grid-cols-2 gap-3">
                                     {(bracketType === "single"
                                         ? [2, 3, 4, 5, 6, 7, 8]
-                                        : [3, 4, 5, 6, 7, 8]
+                                        : bracketType === "double"
+                                            ? [3, 4, 5, 6, 7, 8]
+                                            : [3, 4, 5, 6, 7, 8]
                                     ).map((count) => (
                                         <button
                                             key={count}
@@ -427,7 +441,9 @@ export default function CreateBracket({ events = [] }) {
                                             className={
                                                 bracketType === "single"
                                                     ? "block bg-green-600 text-white px-4 py-2 rounded text-center hover:bg-green-700"
-                                                    : "block bg-purple-600 text-white px-4 py-2 rounded text-center hover:bg-purple-700"
+                                                    : bracketType === "double"
+                                                        ? "block bg-purple-600 text-white px-4 py-2 rounded text-center hover:bg-purple-700"
+                                                        : "block bg-blue-600 text-white px-4 py-2 rounded text-center hover:bg-blue-700"
                                             }
                                         >
                                             {count} Teams

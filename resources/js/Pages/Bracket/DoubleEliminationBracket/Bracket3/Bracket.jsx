@@ -13,6 +13,7 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
     const [matches, setMatches] = useState(defaultMatches);
     const [champion, setChampion] = useState(null);
     const [lines, setLines] = useState([]);
+    const matchCounterRef = useRef(0);
     const [showPopup, setShowPopup] = useState(false);
     const [modalMatch, setModalMatch] = useState(null);
     const [scoreInputs, setScoreInputs] = useState({ p1: "", p2: "" });
@@ -28,10 +29,12 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
 
+                    // Load teams in seeding order: 1-3
+                    // Seed 1 gets bye to UB2.p1, Seeds 2v3 play UB1
                     const initialTeams = [
-                        data.matches.UB1?.p1?.name || "",
-                        data.matches.UB1?.p2?.name || "",
-                        data.matches.UB2?.p2?.name || "",
+                        data.matches.UB2?.p1?.name || "", // Seed 1 (bye to UB2)
+                        data.matches.UB1?.p1?.name || "", // Seed 2
+                        data.matches.UB1?.p2?.name || "", // Seed 3
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -47,9 +50,10 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
 
     const applyTeams = () => {
         const updated = { ...matches };
-        updated.UB1.p1.name = teamsInput[0] || "TBD";
-        updated.UB1.p2.name = teamsInput[1] || "TBD";
-        updated.UB2.p2.name = teamsInput[2] || "TBD"; // Team 3
+        // Challonge-style seeding: Seed 1 gets bye, Seeds 2v3 play
+        updated.UB2.p1.name = teamsInput[0] || "TBD"; // Seed 1 (bye to UB2)
+        updated.UB1.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.UB1.p2.name = teamsInput[2] || "TBD"; // Seed 3
         setMatches(updated);
         setChampion(null);
     };
@@ -128,6 +132,7 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const matchNumber = ++matchCounterRef.current;
 
         return (
             <div
@@ -135,7 +140,7 @@ export default function ThreeTeamDoubleElimination({ eventId, teamCount = 3 }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{`Match ${matchNumber}`}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}

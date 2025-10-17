@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect, useMemo } from "react";
 import { router } from "@inertiajs/react";
 
 export default function SixTeamDoubleElimination({ eventId }) {
@@ -19,6 +19,19 @@ export default function SixTeamDoubleElimination({ eventId }) {
     const [matches, setMatches] = useState(structuredClone(defaultMatches));
     const [champion, setChampion] = useState(null);
     const [lines, setLines] = useState([]);
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB4: "Match 4",
+        UB5: "Match 5",
+        LB1: "Match 6",
+        LB2: "Match 7",
+        LB3: "Match 8",
+        LB4: "Match 9",
+        LB5: "Match 10",
+        GF:  "Match 11",
+    }), []);
     const [showPopup, setShowPopup] = useState(false);
     const [activeMatch, setActiveMatch] = useState(null);
     const [scoreInputs, setScoreInputs] = useState({ p1: 0, p2: 0 });
@@ -35,13 +48,15 @@ export default function SixTeamDoubleElimination({ eventId }) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
 
+                    // Load teams in seeding order: 1-6
+                    // Seeds 1&2 get byes, UB1: 3v6, UB2: 4v5
                     const initialTeams = [
-                        data.matches.UB1?.p1?.name || "",
-                        data.matches.UB1?.p2?.name || "",
-                        data.matches.UB2?.p1?.name || "",
-                        data.matches.UB2?.p2?.name || "",
-                        data.matches.UB3?.p1?.name || "",
-                        data.matches.UB4?.p1?.name || "",
+                        data.matches.UB3?.p1?.name || "", // Seed 1 (bye to UB3)
+                        data.matches.UB4?.p1?.name || "", // Seed 2 (bye to UB4)
+                        data.matches.UB1?.p1?.name || "", // Seed 3
+                        data.matches.UB2?.p1?.name || "", // Seed 4
+                        data.matches.UB2?.p2?.name || "", // Seed 5
+                        data.matches.UB1?.p2?.name || "", // Seed 6
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -77,12 +92,14 @@ export default function SixTeamDoubleElimination({ eventId }) {
 
     const applyTeams = () => {
         const updated = structuredClone(defaultMatches);
-        updated.UB1.p1.name = teamsInput[0] || "TBD";
-        updated.UB1.p2.name = teamsInput[1] || "TBD";
-        updated.UB2.p1.name = teamsInput[2] || "TBD";
-        updated.UB2.p2.name = teamsInput[3] || "TBD";
-        updated.UB3.p1.name = teamsInput[4] || "TBD";
-        updated.UB4.p1.name = teamsInput[5] || "TBD";
+        // Challonge-style seeding for 6 teams:
+        // Seeds 1&2 get byes, UB1: 3v6, UB2: 4v5
+        updated.UB3.p1.name = teamsInput[0] || "TBD"; // Seed 1 (bye to UB3)
+        updated.UB4.p1.name = teamsInput[1] || "TBD"; // Seed 2 (bye to UB4)
+        updated.UB1.p1.name = teamsInput[2] || "TBD"; // Seed 3
+        updated.UB2.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.UB2.p2.name = teamsInput[4] || "TBD"; // Seed 5
+        updated.UB1.p2.name = teamsInput[5] || "TBD"; // Seed 6
         setMatches(updated);
         setChampion(null);
     };
@@ -108,18 +125,18 @@ export default function SixTeamDoubleElimination({ eventId }) {
 
         // Upper bracket propagation
         switch (activeMatch) {
-            case "UB1": updated.UB3.p2.name = winnerName; updated.LB1.p1.name = loserName; break;
-            case "UB2": updated.UB4.p2.name = winnerName; updated.LB1.p2.name = loserName; break;
-            case "UB3": updated.UB5.p1.name = winnerName; updated.LB2.p1.name = loserName; break;
-            case "UB4": updated.UB5.p2.name = winnerName; updated.LB3.p2.name = loserName; break;
+            case "UB1": updated.UB3.p2.name = winnerName; updated.LB1.p1.name = loserName; break; // Match 1 loser → Match 6
+            case "UB2": updated.UB4.p2.name = winnerName; updated.LB2.p1.name = loserName; break; // Match 2 loser → Match 7
+            case "UB3": updated.UB5.p1.name = winnerName; updated.LB1.p2.name = loserName; break; // Match 3 loser → Match 6
+            case "UB4": updated.UB5.p2.name = winnerName; updated.LB2.p2.name = loserName; break; // Match 4 loser → Match 7
             case "UB5": updated.GF.p1.name = winnerName; updated.LB4.p2.name = loserName; break;
         }
 
         // Lower bracket propagation
         switch (activeMatch) {
-            case "LB1": updated.LB2.p2.name = winnerName; break;
-            case "LB2": updated.LB3.p1.name = winnerName; break;
-            case "LB3": updated.LB4.p1.name = winnerName; break;
+            case "LB1": updated.LB3.p1.name = winnerName; break; // Match 6 winner → Match 8
+            case "LB2": updated.LB3.p2.name = winnerName; break; // Match 7 winner → Match 8
+            case "LB3": updated.LB4.p1.name = winnerName; break; // Match 8 winner → Match 9
             case "LB4": updated.GF.p2.name = winnerName; break;
             case "GF": setChampion(winnerName); break;
         }
@@ -131,6 +148,7 @@ export default function SixTeamDoubleElimination({ eventId }) {
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const label = matchLabelMap[id] || id;
 
         return (
             <div
@@ -138,7 +156,7 @@ export default function SixTeamDoubleElimination({ eventId }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}
@@ -265,15 +283,15 @@ export default function SixTeamDoubleElimination({ eventId }) {
                             <div>
                                 <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
                                 <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-                                    <div className="space-y-2 sm:space-y-3">
-                                        <div className="h-8"></div>
+                                    <div className="space-y-4 sm:space-y-4">
+                                        <div className="h-10 mt-50"></div>
                                         {renderMatch("LB1")}
                                         {renderMatch("LB2")}
                                     </div>
-                                    <div className="mt-8">
+                                    <div className="mt-24">
                                         {renderMatch("LB3")}
                                     </div>
-                                    <div className="mt-16">
+                                    <div className="mt-8">
                                         {renderMatch("LB4")}
                                     </div>
                                 </div>

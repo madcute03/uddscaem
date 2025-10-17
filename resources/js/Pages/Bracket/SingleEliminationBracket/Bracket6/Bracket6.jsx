@@ -29,13 +29,15 @@ export default function SixTeamBracket({ eventId }) {
                 if (data.matches) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
+                    // Load teams in seeding order: 1-6
+                    // Seeds 1&2 get byes, R1A: 3v6, R1B: 4v5
                     const initialTeams = [
-                        data.matches.SF1?.p1?.name || "", // bye team
-                        data.matches.R1A?.p1?.name || "",
-                        data.matches.R1A?.p2?.name || "",
-                        data.matches.R1B?.p1?.name || "",
-                        data.matches.R1B?.p2?.name || "",
-                        data.matches.SF2?.p2?.name || "", // bye team
+                        data.matches.SF1?.p1?.name || "", // Seed 1 (bye to SF)
+                        data.matches.SF2?.p1?.name || "", // Seed 2 (bye to SF)
+                        data.matches.R1A?.p1?.name || "", // Seed 3
+                        data.matches.R1B?.p1?.name || "", // Seed 4
+                        data.matches.R1B?.p2?.name || "", // Seed 5
+                        data.matches.R1A?.p2?.name || "", // Seed 6
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -51,18 +53,21 @@ export default function SixTeamBracket({ eventId }) {
 
     const applyTeams = () => {
         const updated = { ...defaultMatches };
-
+        // Challonge-style seeding for 6 teams:
+        // Seeds 1&2 get byes to semifinals
+        // R1A: 3v6, R1B: 4v5
+        
         // Round 1
-        updated.R1A.p1.name = teamsInput[1] || "TBD";
-        updated.R1A.p2.name = teamsInput[2] || "TBD";
-        updated.R1B.p1.name = teamsInput[3] || "TBD";
-        updated.R1B.p2.name = teamsInput[4] || "TBD";
+        updated.R1A.p1.name = teamsInput[2] || "TBD"; // Seed 3
+        updated.R1A.p2.name = teamsInput[5] || "TBD"; // Seed 6
+        updated.R1B.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.R1B.p2.name = teamsInput[4] || "TBD"; // Seed 5
 
         // Semi-Finals
-        updated.SF1.p1.name = teamsInput[0] || "TBD"; // bye team
-        updated.SF1.p2.name = "TBD"; // winner R1A
-        updated.SF2.p1.name = "TBD"; // winner R1B
-        updated.SF2.p2.name = teamsInput[5] || "TBD"; // bye team
+        updated.SF1.p1.name = teamsInput[0] || "TBD"; // Seed 1 (bye)
+        updated.SF1.p2.name = "TBD"; // Winner of R1A (3v6)
+        updated.SF2.p1.name = teamsInput[1] || "TBD"; // Seed 2 (bye)
+        updated.SF2.p2.name = "TBD"; // Winner of R1B (4v5)
 
         setMatches(updated);
         setChampion(null);
@@ -91,7 +96,7 @@ export default function SixTeamBracket({ eventId }) {
 
             switch (currentMatch) {
                 case "R1A": updated.SF1.p2.name = winnerName; break;
-                case "R1B": updated.SF2.p1.name = winnerName; break;
+                case "R1B": updated.SF2.p2.name = winnerName; break;
                 case "SF1": updated.GF.p1.name = winnerName; break;
                 case "SF2": updated.GF.p2.name = winnerName; break;
                 case "GF": setChampion(winnerName); break;

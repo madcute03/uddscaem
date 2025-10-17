@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect, useMemo } from "react";
 import { router } from "@inertiajs/react";
 
 export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
@@ -19,6 +19,17 @@ export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
     const [showPopup, setShowPopup] = useState(false);
     const boxRefs = useRef({});
     const [lines, setLines] = useState([]);
+    // Deterministic match labels in visual order (left-to-right, top-to-bottom)
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB4: "Match 4",
+        LB1: "Match 5",
+        LB2: "Match 6",
+        LB3: "Match 7",
+        GF:  "Match 8",
+    }), []);
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -36,13 +47,14 @@ export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
                 if (data.matches) setMatches({ ...defaultMatches, ...data.matches });
                 if (data.champion) setChampion(data.champion);
 
-                // For 5-team bracket, pick the first 5 players from their positions
+                // Load teams in seeding order: 1-5
+                // Seeds 1&2 get byes, UB1: 4v5, UB2: 2v3, UB3: 1 vs winner of UB1
                 const initialTeams = [
-                    data.matches.UB1?.p1?.name || "",
-                    data.matches.UB1?.p2?.name || "",
-                    data.matches.UB2?.p1?.name || "",
-                    data.matches.UB2?.p2?.name || "",
-                    data.matches.UB3?.p1?.name || ""
+                    data.matches.UB3?.p1?.name || "", // Seed 1 (bye to UB3)
+                    data.matches.UB2?.p1?.name || "", // Seed 2 (bye to UB2)
+                    data.matches.UB2?.p2?.name || "", // Seed 3
+                    data.matches.UB1?.p1?.name || "", // Seed 4
+                    data.matches.UB1?.p2?.name || ""  // Seed 5
                 ];
                 setTeamsInput(initialTeams);
             })
@@ -74,11 +86,13 @@ export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
 
     const applyTeams = () => {
         const updated = { ...matches };
-        updated.UB1.p1.name = teamsInput[0] || "TBD";
-        updated.UB1.p2.name = teamsInput[1] || "TBD";
-        updated.UB2.p1.name = teamsInput[2] || "TBD";
-        updated.UB2.p2.name = teamsInput[3] || "TBD";
-        updated.UB3.p1.name = teamsInput[4] || "TBD";
+        // Challonge-style seeding for 5 teams:
+        // Seeds 1&2 get byes, UB1: 4v5, UB2: 2v3
+        updated.UB3.p1.name = teamsInput[0] || "TBD"; // Seed 1 (bye to UB3)
+        updated.UB2.p1.name = teamsInput[1] || "TBD"; // Seed 2 (bye to UB2)
+        updated.UB2.p2.name = teamsInput[2] || "TBD"; // Seed 3
+        updated.UB1.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.UB1.p2.name = teamsInput[4] || "TBD"; // Seed 5
         setMatches(updated);
         setChampion(null);
     };
@@ -132,6 +146,7 @@ export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const label = matchLabelMap[id] || id;
 
         return (
             <div
@@ -139,7 +154,7 @@ export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}
@@ -252,6 +267,16 @@ export default function FiveTeamDoubleElimination({ eventId, teamCount = 5 }) {
                                 <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
                             ))}
                         </svg>
+
+                        {/* Column headers */}
+                        <div className="flex text-xs text-gray-300 mb-2 pl-1">
+                            <div className="w-3/4 flex">
+                                <div className="w-1/3 text-center">Round 1</div>
+                                <div className="w-1/3 text-center">Round 2</div>
+                                <div className="w-1/3 text-center">Semi Finals</div>
+                            </div>
+                            <div className="w-1/4 text-center">Finals</div>
+                        </div>
 
                         <div className="flex gap-4 sm:gap-6 w-full">
                         {/* Left Column - Brackets */}

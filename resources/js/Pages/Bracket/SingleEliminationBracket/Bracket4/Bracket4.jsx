@@ -28,11 +28,13 @@ export default function FourTeamBracket({ eventId }) {
                 if (data.matches) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
+                    // Load teams in seeding order: 1, 2, 3, 4
+                    // SF1 has seeds 1 and 4, SF2 has seeds 2 and 3
                     setTeamsInput([
-                        data.matches.SF1?.p1?.name || "",
-                        data.matches.SF1?.p2?.name || "",
-                        data.matches.SF2?.p1?.name || "",
-                        data.matches.SF2?.p2?.name || "",
+                        data.matches.SF1?.p1?.name || "", // Seed 1
+                        data.matches.SF2?.p1?.name || "", // Seed 2
+                        data.matches.SF2?.p2?.name || "", // Seed 3
+                        data.matches.SF1?.p2?.name || "", // Seed 4
                     ]);
                 }
             })
@@ -47,10 +49,13 @@ export default function FourTeamBracket({ eventId }) {
 
     const applyTeams = () => {
         const updated = { ...defaultMatches };
-        updated.SF1.p1.name = teamsInput[0] || "TBD";
-        updated.SF1.p2.name = teamsInput[1] || "TBD";
-        updated.SF2.p1.name = teamsInput[2] || "TBD";
-        updated.SF2.p2.name = teamsInput[3] || "TBD";
+        // Challonge-style seeding: 1v4, 2v3
+        // SF1: Seed 1 vs Seed 4
+        // SF2: Seed 2 vs Seed 3
+        updated.SF1.p1.name = teamsInput[0] || "TBD"; // Seed 1
+        updated.SF1.p2.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.SF2.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.SF2.p2.name = teamsInput[2] || "TBD"; // Seed 3
         setMatches(updated);
         setChampion(null);
     };
@@ -205,6 +210,14 @@ export default function FourTeamBracket({ eventId }) {
                 <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                     {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                 </svg>
+
+                {/* Column headers */}
+                <div className="flex text-xs text-gray-300 mb-2 pl-1 max-w-full">
+                    <div className="flex w-full">
+                        <div className="w-1/2 text-center">Semi Finals</div>
+                        <div className="w-1/2 text-center">Finals</div>
+                    </div>
+                </div>
 
                 <div className="flex flex-col gap-6 min-w-max">
                     <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect, useMemo } from "react";
 import { router } from "@inertiajs/react";
 
 // ... (rest of the imports and component code remains the same)
@@ -23,6 +23,20 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
     const [matches, setMatches] = useState(defaultMatches);
     const [champion, setChampion] = useState(null);
     const [lines, setLines] = useState([]);
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB5: "Match 4",
+        UB6: "Match 5",
+        UB7: "Match 6",
+        LB1: "Match 7",
+        LB2: "Match 8",
+        LB3: "Match 9",
+        LB4: "Match 10",
+        LB5: "Match 11",
+        GF:  "Match 12",
+    }), []);
     const [showPopup, setShowPopup] = useState(false);
     const [modalMatch, setModalMatch] = useState(null);
     const [scoreInputs, setScoreInputs] = useState({ p1: "", p2: "" });
@@ -39,14 +53,16 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
 
+                    // Load teams in seeding order: 1-7
+                    // Seed 1 gets bye to UB5, UB1: 2v7, UB2: 3v6, UB3: 4v5
                     const initialTeams = [
-                        data.matches.UB1?.p1?.name || "",
-                        data.matches.UB1?.p2?.name || "",
-                        data.matches.UB2?.p1?.name || "",
-                        data.matches.UB2?.p2?.name || "",
-                        data.matches.UB3?.p1?.name || "",
-                        data.matches.UB3?.p2?.name || "",
-                        data.matches.UB5?.p2?.name || "",
+                        data.matches.UB5?.p2?.name || "", // Seed 1 (bye to UB5)
+                        data.matches.UB1?.p1?.name || "", // Seed 2
+                        data.matches.UB2?.p1?.name || "", // Seed 3
+                        data.matches.UB3?.p1?.name || "", // Seed 4
+                        data.matches.UB3?.p2?.name || "", // Seed 5
+                        data.matches.UB2?.p2?.name || "", // Seed 6
+                        data.matches.UB1?.p2?.name || "", // Seed 7
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -62,13 +78,15 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
 
     const applyTeams = () => {
         const updated = { ...matches };
-        updated.UB1.p1.name = teamsInput[0] || "TBD";
-        updated.UB1.p2.name = teamsInput[1] || "TBD";
-        updated.UB2.p1.name = teamsInput[2] || "TBD";
-        updated.UB2.p2.name = teamsInput[3] || "TBD";
-        updated.UB3.p1.name = teamsInput[4] || "TBD";
-        updated.UB3.p2.name = teamsInput[5] || "TBD";
-        updated.UB5.p2.name = teamsInput[6] || "TBD"; // Team 7 bye
+        // Challonge-style seeding for 7 teams:
+        // Seed 1 gets bye to UB5, UB1: 2v7, UB2: 3v6, UB3: 4v5
+        updated.UB5.p2.name = teamsInput[0] || "TBD"; // Seed 1 (bye to UB5)
+        updated.UB1.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.UB2.p1.name = teamsInput[2] || "TBD"; // Seed 3
+        updated.UB3.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.UB3.p2.name = teamsInput[4] || "TBD"; // Seed 5
+        updated.UB2.p2.name = teamsInput[5] || "TBD"; // Seed 6
+        updated.UB1.p2.name = teamsInput[6] || "TBD"; // Seed 7
         setMatches(updated);
         setChampion(null);
     };
@@ -104,21 +122,21 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
 
         // Upper Bracket propagation
         switch (modalMatch) {
-            case "UB1": updated.UB5.p1.name = m.winner; updated.LB2.p2.name = m.loser; break;
-            case "UB2": updated.UB6.p1.name = m.winner; updated.LB1.p1.name = m.loser; break;
-            case "UB3": updated.UB6.p2.name = m.winner; updated.LB1.p2.name = m.loser; break;
-            case "UB5": updated.UB7.p1.name = m.winner; updated.LB3.p1.name = m.loser; break;
-            case "UB6": updated.UB7.p2.name = m.winner; updated.LB2.p1.name = m.loser; break;
-            case "UB7": updated.GF.p1.name = m.winner; updated.LB5.p2.name = m.loser; break;
+            case "UB1": updated.UB5.p1.name = m.winner; updated.LB2.p1.name = m.loser; break; // Match 1 loser → Match 8
+            case "UB2": updated.UB6.p1.name = m.winner; updated.LB1.p1.name = m.loser; break; // Match 2 loser → Match 7
+            case "UB3": updated.UB6.p2.name = m.winner; updated.LB1.p2.name = m.loser; break; // Match 3 loser → Match 7
+            case "UB5": updated.UB7.p1.name = m.winner; updated.LB4.p1.name = m.loser; break; // Match 4 loser → Match 10
+            case "UB6": updated.UB7.p2.name = m.winner; updated.LB3.p1.name = m.loser; break; // Match 5 loser → Match 9
+            case "UB7": updated.GF.p1.name = m.winner; updated.LB5.p2.name = m.loser; break; // Match 6 loser → Match 11
         }
 
         // Lower Bracket propagation
         switch (modalMatch) {
-            case "LB1": updated.LB3.p2.name = m.winner; break;
-            case "LB2": updated.LB4.p2.name = m.winner; break;
-            case "LB3": updated.LB4.p1.name = m.winner; break;
-            case "LB4": updated.LB5.p1.name = m.winner; break;
-            case "LB5": updated.GF.p2.name = m.winner; break;
+            case "LB1": updated.LB2.p2.name = m.winner; break; // Match 7 winner → Match 8
+            case "LB2": updated.LB3.p2.name = m.winner; break; // Match 8 winner → Match 9
+            case "LB3": updated.LB4.p2.name = m.winner; break; // Match 9 winner → Match 10
+            case "LB4": updated.LB5.p1.name = m.winner; break; // Match 10 winner → Match 11
+            case "LB5": updated.GF.p2.name = m.winner; break; // Match 11 winner → Match 12 (GF)
             case "GF": setChampion(m.winner); break;
         }
 
@@ -145,6 +163,7 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const label = matchLabelMap[id] || id;
 
         return (
             <div
@@ -152,7 +171,7 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}
@@ -188,7 +207,7 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
 
             const connections = [
                 ["UB1", "UB5"], ["UB2", "UB6"], ["UB3", "UB6"], ["UB5", "UB7"], ["UB6", "UB7"], ["UB7", "GF"],
-                ["LB1", "LB3"], ["LB2", "LB4"], ["LB3", "LB4"], ["LB4", "LB5"], ["LB5", "GF"],
+                ["LB1", "LB2"], ["LB2", "LB3"], ["LB3", "LB4"], ["LB4", "LB5"], ["LB5", "GF"],
             ];
 
             const newLines = [];
@@ -255,17 +274,17 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                         <div className="mb-8">
                             <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
                             <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
-                                <div className="space-y-3 sm:space-y-4">
+                                <div className="space-y-6 sm:space-y-6">
                                     {renderMatch("UB1")}
                                     {renderMatch("UB2")}
                                     {renderMatch("UB3")}
                                 </div>
                                 <div className="mt-10">
                                     {renderMatch("UB5")}
-                                    <div className="h-24"></div>
+                                    <div className="h-10"></div>
                                     {renderMatch("UB6")}
                                 </div>
-                                <div className="mt-12">
+                                <div className="mt-40">
                                     {renderMatch("UB7")}
                                 </div>
                             </div>
@@ -278,14 +297,14 @@ export default function SevenTeamDoubleElimination({ eventId, teamCount = 7 }) {
                                 <div className="space-y-3 sm:space-y-4">
                                     <div className="h-8"></div>
                                     {renderMatch("LB1")}
-                                    {renderMatch("LB2")}
                                 </div>
                                 <div className="mt-10 space-y-10">
                                     {renderMatch("LB3")}
-                                    {renderMatch("LB4")}
+                                    {renderMatch("LB2")}
                                 </div>
-                                <div className="mt-12">
+                                <div className="mt-10 space-y-10">
                                     {renderMatch("LB5")}
+                                    {renderMatch("LB4")}
                                 </div>
                             </div>
                         </div>

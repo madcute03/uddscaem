@@ -31,15 +31,17 @@ export default function EightTeamSingleElimination({ eventId }) {
                 if (data.matches) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
+                    // Load teams in seeding order: 1-8
+                    // R1A: 1v8, R1B: 4v5, R1C: 2v7, R1D: 3v6
                     const initialTeams = [
-                        data.matches.R1A?.p1?.name || "",
-                        data.matches.R1A?.p2?.name || "",
-                        data.matches.R1B?.p1?.name || "",
-                        data.matches.R1B?.p2?.name || "",
-                        data.matches.R1C?.p1?.name || "",
-                        data.matches.R1C?.p2?.name || "",
-                        data.matches.R1D?.p1?.name || "",
-                        data.matches.R1D?.p2?.name || "",
+                        data.matches.R1A?.p1?.name || "", // Seed 1
+                        data.matches.R1C?.p1?.name || "", // Seed 2
+                        data.matches.R1D?.p1?.name || "", // Seed 3
+                        data.matches.R1B?.p1?.name || "", // Seed 4
+                        data.matches.R1B?.p2?.name || "", // Seed 5
+                        data.matches.R1D?.p2?.name || "", // Seed 6
+                        data.matches.R1C?.p2?.name || "", // Seed 7
+                        data.matches.R1A?.p2?.name || "", // Seed 8
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -55,14 +57,16 @@ export default function EightTeamSingleElimination({ eventId }) {
 
     const applyTeams = () => {
         const updated = { ...defaultMatches };
-        updated.R1A.p1.name = teamsInput[0] || "TBD";
-        updated.R1A.p2.name = teamsInput[1] || "TBD";
-        updated.R1B.p1.name = teamsInput[2] || "TBD";
-        updated.R1B.p2.name = teamsInput[3] || "TBD";
-        updated.R1C.p1.name = teamsInput[4] || "TBD";
-        updated.R1C.p2.name = teamsInput[5] || "TBD";
-        updated.R1D.p1.name = teamsInput[6] || "TBD";
-        updated.R1D.p2.name = teamsInput[7] || "TBD";
+        // Challonge-style seeding for 8 teams: 1v8, 4v5, 2v7, 3v6
+        // This ensures top seeds don't meet until later rounds
+        updated.R1A.p1.name = teamsInput[0] || "TBD"; // Seed 1
+        updated.R1A.p2.name = teamsInput[7] || "TBD"; // Seed 8
+        updated.R1B.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.R1B.p2.name = teamsInput[4] || "TBD"; // Seed 5
+        updated.R1C.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.R1C.p2.name = teamsInput[6] || "TBD"; // Seed 7
+        updated.R1D.p1.name = teamsInput[2] || "TBD"; // Seed 3
+        updated.R1D.p2.name = teamsInput[5] || "TBD"; // Seed 6
         setMatches(updated);
         setChampion(null);
     };
