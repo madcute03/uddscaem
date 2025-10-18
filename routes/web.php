@@ -6,6 +6,8 @@ use Inertia\Inertia;
 
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\WriterController;
+use App\Http\Controllers\BorrowController;
+use App\Http\Controllers\Admin\BorrowersController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CreateBracketController;
@@ -77,6 +79,14 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ============================================
+// Public Borrowing
+// ============================================
+Route::get('/borrow', [BorrowController::class, 'index'])->name('borrow.index');
+Route::get('/borrow/request', [BorrowController::class, 'create'])->name('borrow.request');
+Route::post('/borrow/request', [BorrowController::class, 'store'])->name('borrow.store');
+Route::get('/borrow/requests/search', [BorrowController::class, 'search'])->name('borrow.requests.search');
+
+// ============================================
 // Bracket Previews
 // ============================================
 Route::get('/bracket/single/{teams}', function ($teams) {
@@ -146,6 +156,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('news', NewsController::class)->except(['show']);
         Route::resource('writers', WriterController::class);
         Route::patch('/writers/{writer}/toggle-status', [WriterController::class, 'toggleStatus'])->name('writers.toggle-status');
+        // Borrowers Management
+        Route::get('/borrowers', [BorrowersController::class, 'index'])->name('borrowers.index');
+        Route::post('/items', [BorrowersController::class, 'storeItem'])->name('items.store');
+        Route::put('/items/{item}', [BorrowersController::class, 'updateItem'])->name('items.update');
+        Route::delete('/items/{item}', [BorrowersController::class, 'deleteItem'])->name('items.destroy');
+        Route::post('/borrow-requests/{borrowRequest}/approve', [BorrowersController::class, 'approve'])->name('borrow-requests.approve');
+        Route::post('/borrow-requests/{borrowRequest}/deny', [BorrowersController::class, 'deny'])->name('borrow-requests.deny');
+        Route::post('/borrow-requests/{borrowRequest}/returned', [BorrowersController::class, 'markReturned'])->name('borrow-requests.returned');
+        Route::delete('/borrow-requests/{borrowRequest}', [BorrowersController::class, 'delete'])->name('borrow-requests.delete');
+        Route::post('/send-message', [BorrowersController::class, 'sendMessage'])->name('send-message');
     });
 
     // Player Status Management

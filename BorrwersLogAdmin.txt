@@ -1,0 +1,33 @@
+==============================
+📊 INVENTORY DASHBOARD
+==============================
+
+Total Items: 102
+Borrowed Items: 38
+Pending Requests: 5
+
+------------------------------
+📦 INVENTORY MANAGEMENT
+------------------------------
+| Item ID | Item Name  | Quantity | Available | Actions        |
+|----------|-------------|-----------|------------|----------------|
+| 001      | Chromebook  | 10        | 4          | Edit / Delete  |
+| 002      | Projector   | 5         | 2          | Edit / Delete  |
+
+[+ Add New Item]
+
+------------------------------
+📨 BORROW REQUESTS
+------------------------------
+| Request ID | Student ID | Student Name | Email                   | Item        | Date          | Status   | Actions         |
+|-------------|-------------|---------------|--------------------------|-------------|----------------|----------|-----------------|
+| R101        | S001        | Jane Doe      | jane.doe@email.com       | Chromebook  | Oct 15, 2025  | Pending  | Approve / Deny  |
+| R102        | S002        | John Smith    | john.smith@email.com     | Projector   | Oct 16, 2025  | Approved | Return          |
+
+------------------------------
+📚 BORROWING LOGS
+------------------------------
+| Log ID | Student ID | Student Name | Email                   | Item        | Borrowed On | Returned On | Status    |
+|---------|-------------|---------------|--------------------------|--------------|--------------|-----------|
+| L001    | S001        | Jane Doe      | jane.doe@email.com       | Chromebook  | Oct 10       | Oct 15       | Returned  |
+| L002    | S002        | John Smith    | john.smith@email.com     | Projector   | Oct 12       | —            | Borrowed  |

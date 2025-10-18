@@ -802,7 +802,7 @@ function Dashboard() {
             // Parse start date
             const startDate = new Date(event.event_date);
             if (isNaN(startDate.getTime())) {
-                console.warn('Invalid start date for event:', event.id);
+                console.warn('Invalid start date for event:', event.id, 'Date:', event.event_date);
                 return {
                     label: 'UPCOMING',
                     className: 'bg-amber-500 text-white'
@@ -823,8 +823,23 @@ function Dashboard() {
                 endDate.setHours(23, 59, 59, 999);
             }
 
+            console.log('Event Status Debug:', {
+                eventId: event.id,
+                eventTitle: event.title,
+                eventDate: event.event_date,
+                eventEndDate: event.event_end_date,
+                parsedStart: startDate.toISOString(),
+                parsedEnd: endDate.toISOString(),
+                currentTime: now.toISOString(),
+                startComparison: now < startDate,
+                endComparison: now > endDate,
+                timeUntilStart: startDate.getTime() - now.getTime(),
+                timeUntilEnd: endDate.getTime() - now.getTime()
+            });
+
             // If current time is before event start time
             if (now < startDate) {
+                console.log('Event is UPCOMING - current time before start');
                 return {
                     label: 'UPCOMING',
                     className: 'bg-amber-500 text-white'
@@ -833,6 +848,7 @@ function Dashboard() {
 
             // If current time is after event end time
             if (now > endDate) {
+                console.log('Event is COMPLETED - current time after end');
                 return {
                     label: 'COMPLETED',
                     className: 'bg-gray-500 text-white'
@@ -840,13 +856,14 @@ function Dashboard() {
             }
 
             // If we're between start and end time
+            console.log('Event is ONGOING - current time between start and end');
             return {
                 label: 'ONGOING',
                 className: 'bg-emerald-500 text-white'
             };
 
         } catch (error) {
-            console.error('Error parsing event dates:', error);
+            console.error('Error parsing event dates for event:', event.id, error);
             return {
                 label: 'UPCOMING',
                 className: 'bg-amber-500 text-white'

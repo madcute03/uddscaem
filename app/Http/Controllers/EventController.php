@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\News;
+use App\Models\BorrowRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -76,13 +78,84 @@ class EventController extends Controller
                 ];
             });
 
+        // Get news data
+        $totalNews = News::count();
+        $activeNews = News::where('status', 'active')->count();
+        $pendingNews = News::where('status', 'pending')->count();
+
+        // Get recent news for the dashboard
+        $recentNews = News::select(
+                'id',
+                'title',
+                'category',
+                'status',
+                'date',
+                'writer_name'
+            )
+            ->orderBy('date', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($news) {
+                return [
+                    'id' => $news->id,
+                    'title' => $news->title,
+                    'category' => $news->category,
+                    'status' => $news->status,
+                    'date' => $news->date,
+                    'writer_name' => $news->writer_name,
+                ];
+            });
+
+        // Get borrow request data
+        $totalBorrowRequests = BorrowRequest::count();
+        $pendingBorrowRequests = BorrowRequest::where('status', 'pending')->count();
+        $approvedBorrowRequests = BorrowRequest::where('status', 'approved')->count();
+        $returnedBorrowRequests = BorrowRequest::where('status', 'returned')->count();
+
+        // Get recent borrow requests for the dashboard
+        $recentBorrowRequests = BorrowRequest::with('item')
+            ->select(
+                'id',
+                'student_name',
+                'student_id',
+                'item_id',
+                'status',
+                'requested_at',
+                'purpose',
+                'quantity'
+            )
+            ->orderBy('requested_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'student_name' => $request->student_name,
+                    'student_id' => $request->student_id,
+                    'item_name' => $request->item ? $request->item->name : 'Unknown Item',
+                    'status' => $request->status,
+                    'requested_at' => $request->requested_at,
+                    'purpose' => $request->purpose,
+                    'quantity' => $request->quantity,
+                ];
+            });
+
         return Inertia::render('DashboardSummary', [
             'stats' => [
                 'total_events' => $totalEvents,
                 'ongoing_events' => $ongoingEvents,
                 'upcoming_events' => $upcomingEvents,
+                'total_news' => $totalNews,
+                'active_news' => $activeNews,
+                'pending_news' => $pendingNews,
+                'total_borrow_requests' => $totalBorrowRequests,
+                'pending_borrow_requests' => $pendingBorrowRequests,
+                'approved_borrow_requests' => $approvedBorrowRequests,
+                'returned_borrow_requests' => $returnedBorrowRequests,
             ],
             'recentEvents' => $recentEvents,
+            'recentNews' => $recentNews,
+            'recentBorrowRequests' => $recentBorrowRequests,
             'loading' => false
         ]);
     }

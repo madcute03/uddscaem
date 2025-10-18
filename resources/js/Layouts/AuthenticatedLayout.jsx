@@ -2,15 +2,32 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
+    const { flash } = usePage().props;
+    const [visibleFlash, setVisibleFlash] = useState(flash);
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
     const handleNavClick = () => setShowingNavigationDropdown(false);
+
+    // Auto-dismiss flash messages after 5 seconds
+    useEffect(() => {
+        if (visibleFlash?.success || visibleFlash?.error) {
+            const timer = setTimeout(() => {
+                setVisibleFlash(null);
+            }, 5000); // 5 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [visibleFlash]);
+
+    // Update visible flash when page props change
+    useEffect(() => {
+        setVisibleFlash(flash);
+    }, [flash]);
 
     const navigationLinks = [
         ...(user.role !== 'writer' ? [
@@ -46,6 +63,16 @@ export default function AuthenticatedLayout({ header, children }) {
                 icon: (
                     <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                ),
+            },
+            {
+                label: 'Borrowers Management',
+                href: route('admin.borrowers.index'),
+                active: route().current('admin.borrowers.*'),
+                icon: (
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h14a2 2 0 012 2v8a2 2 0 01-2 2H7l-4 4V9a2 2 0 012-2z" />
                     </svg>
                 ),
             },
@@ -254,6 +281,23 @@ export default function AuthenticatedLayout({ header, children }) {
                             {header}
                         </div>
                     </header>
+                )}
+
+                {/* Flash Messages */}
+                {(visibleFlash?.success || visibleFlash?.error) && (
+                    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 sm:top-24">
+                        <div className={`px-6 py-3 rounded-lg shadow-lg ${visibleFlash.success ? 'bg-emerald-600 text-white shadow-emerald-900/30' : 'bg-red-600 text-white shadow-red-900/30'}`}>
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">{visibleFlash.success || visibleFlash.error}</span>
+                                <button
+                                    onClick={() => setVisibleFlash(null)}
+                                    className="ml-4 text-white hover:text-gray-200 text-sm font-bold"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 <main className="min-h-screen w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6">{children}</main>
