@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect, useMemo } from "react";
 import { router } from "@inertiajs/react";
 
 export default function FourTeamDoubleElimination({ eventId, teamCount }) {
@@ -64,12 +64,13 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
                     setChampion(data.champion);
                 }
 
-                // For 4-team bracket, pick the first 4 players from their positions
+                // Load teams in seeding order: 1-4
+                // UB1: 1v4, UB2: 2v3 (Challonge-style)
                 const initialTeams = [
-                    data.matches?.UB1?.p1?.name || "",
-                    data.matches?.UB1?.p2?.name || "",
-                    data.matches?.UB2?.p1?.name || "",
-                    data.matches?.UB2?.p2?.name || ""
+                    data.matches?.UB1?.p1?.name || "", // Seed 1
+                    data.matches?.UB2?.p1?.name || "", // Seed 2
+                    data.matches?.UB2?.p2?.name || "", // Seed 3
+                    data.matches?.UB1?.p2?.name || ""  // Seed 4
                 ];
                 setTeamsInput(initialTeams);
             } catch (err) {
@@ -119,10 +120,11 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
 
     const applyTeams = () => {
         const updated = structuredClone(defaultMatches);
-        updated.UB1.p1.name = teamsInput[0] || "TBD";
-        updated.UB1.p2.name = teamsInput[1] || "TBD";
-        updated.UB2.p1.name = teamsInput[2] || "TBD";
-        updated.UB2.p2.name = teamsInput[3] || "TBD";
+        // Challonge-style seeding: 1v4, 2v3
+        updated.UB1.p1.name = teamsInput[0] || "TBD"; // Seed 1
+        updated.UB1.p2.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.UB2.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.UB2.p2.name = teamsInput[2] || "TBD"; // Seed 3
         setMatches(updated);
         setChampion(null);
     };
@@ -158,9 +160,18 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
         setActiveMatch(null);
     };
 
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        LB1: "Match 4",
+        LB2: "Match 5",
+        GF:  "Match 6",
+    }), []);
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const label = matchLabelMap[id] || id;
 
         return (
             <div
@@ -168,7 +179,7 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}
@@ -270,6 +281,15 @@ export default function FourTeamDoubleElimination({ eventId, teamCount }) {
                                 <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
                             ))}
                         </svg>
+
+                        {/* Column headers */}
+                        <div className="flex text-xs text-gray-300 mb-2 pl-1">
+                            <div className="w-3/4 flex">
+                                <div className="w-1/2 text-center">Semi Finals</div>
+                                <div className="w-1/2 text-center">Finals</div>
+                            </div>
+                            <div className="w-1/4 text-center">Champion</div>
+                        </div>
 
                         <div className="flex gap-16 sm:gap-20 md:gap-24 w-full">
                         {/* Left Column - Brackets */}

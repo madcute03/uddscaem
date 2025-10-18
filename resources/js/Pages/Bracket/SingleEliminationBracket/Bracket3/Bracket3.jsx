@@ -26,10 +26,12 @@ export default function ThreeTeamBracket({ eventId }) {
                 if (data.matches) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
+                    // Load teams in seeding order: 1, 2, 3
+                    // Seed 1 gets bye to finals (GF.p1), Seeds 2v3 play SF
                     setTeamsInput([
-                        data.matches.SF?.p1?.name || "",
-                        data.matches.SF?.p2?.name || "",
-                        data.matches.GF?.p2?.name || ""
+                        data.matches.GF?.p1?.name || "", // Seed 1 (bye to finals)
+                        data.matches.SF?.p1?.name || "", // Seed 2
+                        data.matches.SF?.p2?.name || ""  // Seed 3
                     ]);
                 }
             })
@@ -44,10 +46,10 @@ export default function ThreeTeamBracket({ eventId }) {
 
     const applyTeams = () => {
         const updated = { ...defaultMatches };
-        updated.SF.p1.name = teamsInput[0] || "TBD";
-        updated.SF.p2.name = teamsInput[1] || "TBD";
-        updated.GF.p1.name = teamsInput[0] || "TBD"; // Winner of SF will go here
-        updated.GF.p2.name = teamsInput[2] || "TBD"; // Third team starts in GF
+        // Challonge-style seeding: Seed 1 gets bye, Seeds 2v3 play
+        updated.GF.p1.name = teamsInput[0] || "TBD"; // Seed 1 (bye to finals)
+        updated.SF.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.SF.p2.name = teamsInput[2] || "TBD"; // Seed 3
         setMatches(updated);
         setChampion(null);
     };
@@ -73,7 +75,7 @@ export default function ThreeTeamBracket({ eventId }) {
             const winnerName = m[winnerKey].name;
             m.winner = winnerName;
 
-            if (currentMatch === "SF") updated.GF.p1.name = winnerName;
+            if (currentMatch === "SF") updated.GF.p2.name = winnerName;
             else if (currentMatch === "GF") setChampion(winnerName);
         }
 

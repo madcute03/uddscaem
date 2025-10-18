@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect, useMemo } from "react";
 import { Head, Link } from "@inertiajs/react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
@@ -6,6 +6,19 @@ export default function ShowResult({ eventId, refreshTrigger }) {
     const boxRefs = useRef({});
     const [lines, setLines] = useState([]);
     const [champion, setChampion] = useState(null);
+    
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB4: "Match 4",
+        UB5: "Match 5",
+        LB1: "Match 6",
+        LB2: "Match 7",
+        LB3: "Match 8",
+        LB4: "Match 9",
+        GF:  "Match 10",
+    }), []);
 
     const emptyMatches = {
         UB1: { p1: { name: "TBD", score: 0 }, p2: { name: "TBD", score: 0 }, winner: null, loser: null },
@@ -42,13 +55,14 @@ export default function ShowResult({ eventId, refreshTrigger }) {
 
     const renderMatch = (id) => {
         const m = matches[id];
+        const label = matchLabelMap[id] || id;
         return (
             <div
                 id={id}
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-44 sm:w-52 md:w-60 lg:w-64 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}

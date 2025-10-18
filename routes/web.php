@@ -15,6 +15,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\DoubleEliminationController;
 use App\Http\Controllers\SingleEliminationController;
+use App\Http\Controllers\RoundRobinController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
 
@@ -44,6 +45,8 @@ Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])
 // Bracket Data (Public JSON endpoints)
 Route::get('/double-elimination/{event}', [DoubleEliminationController::class, 'show'])->name('double-elimination.show');
 Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])->name('single-elimination.show');
+// Round Robin (Public JSON)
+Route::get('/round-robin/{event}', [RoundRobinController::class, 'show'])->name('round-robin.show');
 
 // ============================================
 // Event Registration (Single Player Version)
@@ -143,6 +146,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/events/{event}/bracket-settings', [BracketController::class, 'storeBracketSettings'])->name('bracket.storeSettings');
     Route::post('/single-elimination/save', [SingleEliminationController::class, 'save'])->name('single-elimination.save');
     Route::post('/double-elimination/save', [DoubleEliminationController::class, 'save'])->name('double-elimination.save');
+    Route::post('/round-robin/save', [RoundRobinController::class, 'save'])->name('round-robin.save');
     Route::post('/brackets/save', [BracketController::class, 'save'])->name('bracket.save');
 
     // Complaints Management

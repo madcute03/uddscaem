@@ -1,5 +1,5 @@
 //ShowResult.jsx
-import React, { useState, useRef, useLayoutEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useMemo } from "react";
 import { Head,Link} from "@inertiajs/react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
@@ -8,6 +8,23 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
     const [matches, setMatches] = useState(initialMatches || {});
     const [lines, setLines] = useState([]);
     const [champion, setChampion] = useState(initialChampion || null);
+    
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB4: "Match 4",
+        UB5: "Match 5",
+        UB6: "Match 6",
+        UB7: "Match 7",
+        LB1: "Match 8",
+        LB2: "Match 9",
+        LB3: "Match 10",
+        LB4: "Match 11",
+        LB5: "Match 12",
+        LB6: "Match 13",
+        GF:  "Match 14",
+    }), []);
 
     // Generate empty matches if none exist
     const generateEmptyMatches = () => {
@@ -29,13 +46,14 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
 
     const renderMatch = (id) => {
         const m = matches[id] || { p1: { name: "TBD", score: 0 }, p2: { name: "TBD", score: 0 }, winner: null };
+        const label = matchLabelMap[id] || id;
         return (
             <div
                 id={id}
                 ref={el => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map(key => (
                     <div 
                         key={key} 

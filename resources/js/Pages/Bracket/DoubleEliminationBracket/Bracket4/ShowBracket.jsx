@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect, useMemo } from "react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
 export default function ShowResult({ eventId, teamCount }) {
@@ -15,6 +15,15 @@ export default function ShowResult({ eventId, teamCount }) {
     const [champion, setChampion] = useState(null);
     const [lines, setLines] = useState([]);
     const boxRefs = useRef({});
+    
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        LB1: "Match 4",
+        LB2: "Match 5",
+        GF:  "Match 6",
+    }), []);
 
     // Load saved bracket
     useEffect(() => {
@@ -31,6 +40,7 @@ export default function ShowResult({ eventId, teamCount }) {
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const label = matchLabelMap[id] || id;
 
         return (
             <div
@@ -38,7 +48,7 @@ export default function ShowResult({ eventId, teamCount }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map((k) => (
                     <div
                         key={k}
@@ -99,13 +109,22 @@ export default function ShowResult({ eventId, teamCount }) {
                             ))}
                         </svg>
 
-                        <div className="flex gap-4 sm:gap-6 w-full">
+                        {/* Column headers */}
+                        <div className="flex text-xs text-gray-300 mb-2 pl-1">
+                            <div className="w-3/4 flex">
+                                <div className="w-1/2 text-center">Semi Finals</div>
+                                <div className="w-1/2 text-center">Finals</div>
+                            </div>
+                            <div className="w-1/4 text-center">Champion</div>
+                        </div>
+
+                        <div className="flex gap-16 sm:gap-20 md:gap-24 w-full">
                             {/* Left Column - Brackets */}
                             <div className="w-3/4">
                                 {/* Upper Bracket */}
                                 <div className="mb-8">
                                     <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
-                                    <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
+                                    <div className="flex gap-12 sm:gap-14 md:gap-16 lg:gap-20">
                                         <div className="space-y-2 sm:space-y-3">
                                             {renderMatch("UB1")}
                                             {renderMatch("UB2")}
@@ -119,7 +138,7 @@ export default function ShowResult({ eventId, teamCount }) {
                                 {/* Lower Bracket */}
                                 <div>
                                     <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
-                                    <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-10">
+                                    <div className="flex gap-12 sm:gap-14 md:gap-16 lg:gap-20">
                                         <div className="space-y-2 sm:space-y-3">
                                             <div className="h-8"></div>
                                             {renderMatch("LB1")}

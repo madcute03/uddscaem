@@ -720,12 +720,61 @@ function Dashboard() {
         return () => clearTimeout(timer);
     }, [successMessage]);
 
+    // Helper function to parse date/time values consistently
+    const parseDateTimeValue = (dateTimeValue) => {
+        if (!dateTimeValue) return null;
+
+        const [datePart, rawTimePart = ''] = String(dateTimeValue).split('T');
+        if (!datePart) return null;
+
+        const [yearStr, monthStr, dayStr] = datePart.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr ?? 1) - 1;
+        const day = Number(dayStr ?? 1);
+
+        let timePart = rawTimePart
+            .replace(/Z$/i, '')
+            .replace(/\.[0-9]+$/, '')
+            .replace(/([+-][0-9:]+)$/, '')
+            .trim();
+
+        if (!timePart) {
+            return new Date(year, month, day, 0, 0, 0);
+        }
+
+        const [hourStr = '0', minuteStr = '0'] = timePart.split(':');
+        const hour = Number(hourStr);
+        const minute = Number(minuteStr);
+
+        return new Date(year, month, day, hour, minute, 0);
+    };
+
     // Categorize events
     const now = new Date();
 
     const categorizedEvents = events.reduce((acc, event) => {
-        const eventStart = new Date(event.event_date);
-        const eventEnd = event.event_end_date ? new Date(event.event_end_date) : new Date(eventStart);
+        // Parse start date using parseDateTimeValue for consistent timezone handling
+        const eventStart = parseDateTimeValue(event.event_date);
+        if (!eventStart) return acc;
+        
+        // Parse end date (default to end of start date if not provided)
+        let eventEnd;
+        if (event.event_end_date) {
+            eventEnd = parseDateTimeValue(event.event_end_date);
+            if (!eventEnd) {
+                eventEnd = new Date(eventStart);
+                eventEnd.setHours(23, 59, 59, 999);
+            } else {
+                // If no time is specified in end date, set to end of day
+                if (event.event_end_date.split('T').length === 1) {
+                    eventEnd.setHours(23, 59, 59, 999);
+                }
+            }
+        } else {
+            // If no end date, set to end of start date
+            eventEnd = new Date(eventStart);
+            eventEnd.setHours(23, 59, 59, 999);
+        }
 
         // If current time is after the event end date, it's completed
         if (now > eventEnd) {
@@ -802,7 +851,7 @@ function Dashboard() {
             // Parse start date
             const startDate = new Date(event.event_date);
             if (isNaN(startDate.getTime())) {
-                console.warn('Invalid start date for event:', event.id, 'Date:', event.event_date);
+                console.warn('Invalid start date for event:', event.id);
                 return {
                     label: 'UPCOMING',
                     className: 'bg-amber-500 text-white'
@@ -810,12 +859,17 @@ function Dashboard() {
             }
 
             // Parse end date (default to end of start date if not provided)
-            let endDate = startDate;
+            let endDate;
             if (event.event_end_date) {
-                endDate = new Date(event.event_end_date);
-                // If no time is specified in end date, set to end of day
-                if (event.event_end_date.split('T').length === 1) {
+                endDate = parseDateTimeValue(event.event_end_date);
+                if (!endDate) {
+                    endDate = new Date(startDate);
                     endDate.setHours(23, 59, 59, 999);
+                } else {
+                    // If no time is specified in end date, set to end of day
+                    if (event.event_end_date.split('T').length === 1) {
+                        endDate.setHours(23, 59, 59, 999);
+                    }
                 }
             } else {
                 // If no end date, set to end of start date
@@ -908,34 +962,6 @@ function Dashboard() {
 
         const paletteIndex = hashString(key) % eventTypePalette.length;
         return eventTypePalette[paletteIndex];
-    };
-
-    const parseDateTimeValue = (dateTimeValue) => {
-        if (!dateTimeValue) return null;
-
-        const [datePart, rawTimePart = ''] = String(dateTimeValue).split('T');
-        if (!datePart) return null;
-
-        const [yearStr, monthStr, dayStr] = datePart.split('-');
-        const year = Number(yearStr);
-        const month = Number(monthStr ?? 1) - 1;
-        const day = Number(dayStr ?? 1);
-
-        let timePart = rawTimePart
-            .replace(/Z$/i, '')
-            .replace(/\.[0-9]+$/, '')
-            .replace(/([+-][0-9:]+)$/, '')
-            .trim();
-
-        if (!timePart) {
-            return new Date(year, month, day, 0, 0, 0);
-        }
-
-        const [hourStr = '0', minuteStr = '0'] = timePart.split(':');
-        const hour = Number(hourStr);
-        const minute = Number(minuteStr);
-
-        return new Date(year, month, day, hour, minute, 0);
     };
 
     // Format date and time for display with AM/PM

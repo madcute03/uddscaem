@@ -1,5 +1,5 @@
 // Bracket.jsx
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect, useMemo } from "react";
 import { router } from "@inertiajs/react";
 
 export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
@@ -24,6 +24,28 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
     const [matches, setMatches] = useState(defaultMatches);
     const [champion, setChampion] = useState(null);
     const [lines, setLines] = useState([]);
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB4: "Match 4",
+        UB5: "Match 5",
+        UB6: "Match 6",
+        UB7: "Match 7",
+        LB1: "Match 8",
+        LB2: "Match 9",
+        LB3: "Match 10",
+        LB4: "Match 11",
+        LB5: "Match 12",
+        LB6: "Match 13",
+        LB7: "Match 14",
+        LB8: "Match 15",
+        LB9: "Match 16",
+        LB10: "Match 17",
+        LB11: "Match 18",
+        LB12: "Match 19",
+        GF:  "Match 20",
+    }), []);
     const [showPopup, setShowPopup] = useState(false);
 
     // modal state
@@ -42,15 +64,17 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
                 if (data.matches) {
                     setMatches({ ...defaultMatches, ...data.matches });
                     setChampion(data.champion || null);
+                    // Load teams in seeding order: 1-8
+                    // UB1: 1v8, UB2: 4v5, UB3: 2v7, UB4: 3v6 (Challonge-style)
                     const initialTeams = [
-                        data.matches.UB1?.p1?.name || "",
-                        data.matches.UB1?.p2?.name || "",
-                        data.matches.UB2?.p1?.name || "",
-                        data.matches.UB2?.p2?.name || "",
-                        data.matches.UB3?.p1?.name || "",
-                        data.matches.UB3?.p2?.name || "",
-                        data.matches.UB4?.p1?.name || "",
-                        data.matches.UB4?.p2?.name || "",
+                        data.matches.UB1?.p1?.name || "", // Seed 1
+                        data.matches.UB3?.p1?.name || "", // Seed 2
+                        data.matches.UB4?.p1?.name || "", // Seed 3
+                        data.matches.UB2?.p1?.name || "", // Seed 4
+                        data.matches.UB2?.p2?.name || "", // Seed 5
+                        data.matches.UB4?.p2?.name || "", // Seed 6
+                        data.matches.UB3?.p2?.name || "", // Seed 7
+                        data.matches.UB1?.p2?.name || "", // Seed 8
                     ];
                     setTeamsInput(initialTeams);
                 }
@@ -66,14 +90,15 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
 
     const applyTeams = () => {
         const updated = { ...defaultMatches };
-        updated.UB1.p1.name = teamsInput[0] || "TBD";
-        updated.UB1.p2.name = teamsInput[1] || "TBD";
-        updated.UB2.p1.name = teamsInput[2] || "TBD";
-        updated.UB2.p2.name = teamsInput[3] || "TBD";
-        updated.UB3.p1.name = teamsInput[4] || "TBD";
-        updated.UB3.p2.name = teamsInput[5] || "TBD";
-        updated.UB4.p1.name = teamsInput[6] || "TBD";
-        updated.UB4.p2.name = teamsInput[7] || "TBD";
+        // Challonge-style seeding for 8 teams: 1v8, 4v5, 2v7, 3v6
+        updated.UB1.p1.name = teamsInput[0] || "TBD"; // Seed 1
+        updated.UB1.p2.name = teamsInput[7] || "TBD"; // Seed 8
+        updated.UB2.p1.name = teamsInput[3] || "TBD"; // Seed 4
+        updated.UB2.p2.name = teamsInput[4] || "TBD"; // Seed 5
+        updated.UB3.p1.name = teamsInput[1] || "TBD"; // Seed 2
+        updated.UB3.p2.name = teamsInput[6] || "TBD"; // Seed 7
+        updated.UB4.p1.name = teamsInput[2] || "TBD"; // Seed 3
+        updated.UB4.p2.name = teamsInput[5] || "TBD"; // Seed 6
         setMatches(updated);
         setChampion(null);
     };
@@ -149,6 +174,7 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
     const renderMatch = (id) => {
         const m = matches[id];
         if (!m) return null;
+        const label = matchLabelMap[id] || id;
 
         return (
             <div
@@ -156,7 +182,7 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
                 ref={(el) => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
 
                 {["p1", "p2"].map((k) => (
                     <div
@@ -262,7 +288,7 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
                                 <div className="h-24"></div>
                                 {renderMatch("UB6")}
                             </div>
-                            <div className="mt-12">{renderMatch("UB7")}</div>
+                            <div className="mt-36">{renderMatch("UB7")}</div>
                         </div>
                     </div>
 
@@ -277,8 +303,8 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
                                 {renderMatch("LB3")}
                                 {renderMatch("LB4")}
                             </div>
-                            <div className="mt-16">{renderMatch("LB5")}</div>
-                            <div className="mt-16">{renderMatch("LB6")}</div>
+                            <div className="mt-24">{renderMatch("LB5")}</div>
+                            <div className="mt-24">{renderMatch("LB6")}</div>
                         </div>
                     </div>
 

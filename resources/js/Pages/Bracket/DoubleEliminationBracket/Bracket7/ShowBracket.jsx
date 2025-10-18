@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useMemo } from "react";
 import { Head, Link } from "@inertiajs/react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
@@ -7,6 +7,21 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
     const [matches, setMatches] = useState(initialMatches || {});
     const [lines, setLines] = useState([]);
     const [champion, setChampion] = useState(initialChampion || null);
+    
+    const matchLabelMap = useMemo(() => ({
+        UB1: "Match 1",
+        UB2: "Match 2",
+        UB3: "Match 3",
+        UB5: "Match 4",
+        UB6: "Match 5",
+        UB7: "Match 6",
+        LB1: "Match 7",
+        LB2: "Match 8",
+        LB3: "Match 9",
+        LB4: "Match 10",
+        LB5: "Match 11",
+        GF:  "Match 12",
+    }), []);
 
     // Generate empty matches if none exist
     const generateEmptyMatches = () => {
@@ -28,13 +43,14 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
 
     const renderMatch = (id) => {
         const m = matches[id] || { p1: { name: "TBD", score: 0 }, p2: { name: "TBD", score: 0 }, winner: null };
+        const label = matchLabelMap[id] || id;
         return (
             <div
                 id={id}
                 ref={el => (boxRefs.current[id] = el)}
                 className="p-1.5 border rounded-lg bg-gray-800 text-white mb-2 w-36 sm:w-40 md:w-44 relative"
             >
-                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{id}</p>
+                <p className="font-bold mb-0.5 text-[10px] sm:text-xs">{label}</p>
                 {["p1", "p2"].map(key => (
                     <div 
                         key={key} 
@@ -65,7 +81,7 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
             const connections = [
                 ["UB1", "UB5"], ["UB2", "UB6"], ["UB3", "UB6"],
                 ["UB5", "UB7"], ["UB6", "UB7"], ["UB7", "GF"],
-                ["LB1", "LB3"], ["LB2", "LB4"], ["LB3", "LB4"], ["LB4", "LB5"], ["LB5", "GF"]
+                ["LB1", "LB2"], ["LB2", "LB3"], ["LB3", "LB4"], ["LB4", "LB5"], ["LB5", "GF"]
             ];
 
             const newLines = [];
@@ -111,12 +127,12 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
                                     {renderMatch("UB2")}
                                     {renderMatch("UB3")}
                                 </div>
-                                <div className="mt-10">
+                                <div className="mt-3">
                                     {renderMatch("UB5")}
-                                    <div className="h-24"></div>
+                                    <div className="h-32"></div>
                                     {renderMatch("UB6")}
                                 </div>
-                                <div className="mt-12">{renderMatch("UB7")}</div>
+                                <div className="mt-20">{renderMatch("UB7")}</div>
                             </div>
                         </div>
 
@@ -126,13 +142,15 @@ export default function ShowResult({ eventId, matches: initialMatches, champion:
                                 <div className="space-y-3 sm:space-y-4">
                                     <div className="h-8"></div>
                                     {renderMatch("LB1")}
-                                    {renderMatch("LB2")}
                                 </div>
                                 <div className="mt-10 space-y-10">
                                     {renderMatch("LB3")}
+                                    {renderMatch("LB2")}
+                                </div>
+                                <div className="mt-10 space-y-10">
+                                    {renderMatch("LB5")}
                                     {renderMatch("LB4")}
                                 </div>
-                                <div className="mt-12">{renderMatch("LB5")}</div>
                             </div>
                         </div>
 

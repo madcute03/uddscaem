@@ -98,12 +98,12 @@ export default function ShowFourTeamBracket({ eventId }) {
                     <div className="flex flex-col gap-6 min-w-max">
                         <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">
                             <div className="space-y-16 sm:space-y-20 md:space-y-24">
-                                {renderMatch("SF1", "Semi-Final 1")}
-                                {renderMatch("SF2", "Semi-Final 2")}
+                                {renderMatch("SF1", "Match 1")}
+                                {renderMatch("SF2", "Match 2")}
                             </div>
                             <div className="flex flex-col justify-center">
                                 <div>
-                                    {renderMatch("GF", "Grand Final")}
+                                    {renderMatch("GF", "Match 3")}
                                     {champion && (
                                         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
                                             🏆 {champion} 🏆
