@@ -17,7 +17,7 @@ export default function PublicNavbar({
                     <div className="flex-shrink-0">
                         <Link href="/">
                             <span className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide">
-                                SCAEMS
+                                UdD Eventure
                             </span>
                         </Link>
                     </div>
@@ -42,7 +42,7 @@ export default function PublicNavbar({
                     {/* Right - Navigation links */}
                     <div className="hidden md:flex items-center space-x-6">
                         <Link
-                            href="/"
+                            href={route('events.list')}
                             className={
                                 "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
                                 (active
@@ -108,7 +108,7 @@ export default function PublicNavbar({
             {mobileOpen && (
                 <div className="md:hidden px-4 pb-4 pt-2 space-y-2 bg-slate-900 border-b border-slate-800">
                     <Link
-                        href="/"
+                        href={route('events.list')}
                         className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
                         onClick={() => setMobileOpen(false)}
                     >

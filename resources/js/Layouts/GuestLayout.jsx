@@ -10,7 +10,7 @@ export default function GuestLayout({ title, children }) {
                 </Head>
             )}
 
-            <main className="flex-1 flex items-center justify-center p-4">
+            <main >
                 {children}
             </main>
         </div>

@@ -278,7 +278,12 @@ export default function BorrowersIndex() {
                                 <button
                                     disabled={processing}
                                     onClick={() => post(route('admin.items.store'), { onSuccess: ()=> reset() })}
-                                    className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-50"
+                                    className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                 >
                                     + Add New Item
                                 </button>

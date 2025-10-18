@@ -1688,7 +1688,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                     }`}
                                 >
-                                    🎯 Events
+                                    Events
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('news')}
@@ -1698,7 +1698,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                     }`}
                                 >
-                                    📰 News
+                                    News
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('borrowing')}
@@ -1708,7 +1708,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                     }`}
                                 >
-                                    📋 Borrowing
+                                    Borrowing
                                 </button>
                             </nav>
                         </div>

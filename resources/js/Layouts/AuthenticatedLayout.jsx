@@ -57,6 +57,16 @@ export default function AuthenticatedLayout({ header, children }) {
         ] : []),
         ...(user.role === 'admin' ? [
             {
+                label: 'MIS Varsity Athletes',
+                href: route('mis.dashboard'),
+                active: route().current('mis.*'),
+                icon: (
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                ),
+            },
+            {
                 label: 'Manage Writer',
                 href: route('admin.writers.index'),
                 active: route().current('admin.writers.*'),
@@ -110,11 +120,11 @@ export default function AuthenticatedLayout({ header, children }) {
                 >
                     <img
                         src="/images/sems.png"
-                        alt="SCAEMS logo"
+                        alt="UdD Eventure logo"
                         className="w-9 h-9 rounded-full object-cover border border-blue-500/40 bg-slate-950 shadow-md shadow-blue-950/30"
                     />
                     <span className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide">
-                        SCAEMS
+                        UdD Eventure
                     </span>
                 </Link>
                 <div className="flex-1" />
@@ -213,11 +223,11 @@ export default function AuthenticatedLayout({ header, children }) {
                             <Link href={user.role === 'admin' ? route('dashboard.summary') : (user.role === 'writer' ? "/admin/news" : "/dashboard")} className="flex items-center gap-3 flex-none text-left">
                                 <img
                                     src="/images/sems.png"
-                                    alt="SCAEMS logo"
+                                    alt="UdD Eventure logo"
                                     className="hidden sm:block w-12 h-12 rounded-full object-cover border border-blue-500/40 bg-slate-950 shadow-md shadow-blue-950/30"
                                 />
                                 <div className="flex flex-col">
-                                    <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide">SCAEMS</span>
+                                    <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300 tracking-wide">UdD Eventure</span>
                                     {!header && (
                                         <span className="text-xs text-slate-400 mt-1">Admin Panel</span>
                                     )}

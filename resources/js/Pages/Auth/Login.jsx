@@ -23,16 +23,28 @@ export default function Login({ status, canResetPassword }) {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100">
             <Head title="Log in" />
-
-            <div className="py-10 w-full">
+            <section 
+                    className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8"
+                    style={{
+                        backgroundImage: "url('/images/logo.png')",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat",
+                        backgroundSize: "cover",
+                        backgroundBlendMode: "overlay",
+                    }}
+                >
+                {/* Overlay for better text readability */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-blue-950/85 to-black/90"></div>
+                
+            <div className="py-10 w-full relative z-10">
                 <div className="mx-auto flex overflow-hidden rounded-xl shadow-2xl max-w-sm lg:max-w-4xl border border-white/15 bg-white/10 backdrop-blur-xl">
                     {/* Left image (lg and up) */}
                     <div
                         className="hidden lg:block lg:w-1/2 bg-cover bg-center bg-no-repeat opacity-90"
                         style={{
-                            backgroundImage: "url('/images/sems.png')",
+                            backgroundImage: "url('/images/logo.png')",
                         }}
                     />
 
@@ -112,6 +124,7 @@ export default function Login({ status, canResetPassword }) {
                     </div>
                 </div>
             </div>
+        </section>  
         </GuestLayout>
     );
 }

@@ -6,5 +6,5 @@
         <p style="margin: 0; white-space: pre-wrap;">{{ $messageContent }}</p>
     </div>
 
-    <p>Regards,<br/>SCAEMS Admin Team</p>
+    <p>Regards,<br/>UdD Eventure Admin Team</p>
 </div>

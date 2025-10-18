@@ -7,6 +7,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\WriterController;
 use App\Http\Controllers\BorrowController;
+use App\Http\Controllers\AthleteController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\BorrowersController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\BracketController;
@@ -17,22 +19,27 @@ use App\Http\Controllers\DoubleEliminationController;
 use App\Http\Controllers\SingleEliminationController;
 use App\Http\Controllers\RoundRobinController;
 use App\Http\Controllers\PlayerController;
-use App\Http\Controllers\ProfileController;
 
 // ============================================
 // Public Routes
 // ============================================
 
-// Homepage
+// Homepage - New Landing Page
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin'       => Route::has('login'),
         'canRegister'    => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion'     => PHP_VERSION,
-        'events'         => \App\Models\Event::with('images')->orderBy('event_date')->get(),
     ]);
 })->name('home');
+
+// Events Page - List all events
+Route::get('/events', function () {
+    return Inertia::render('Events', [
+        'canLogin'       => Route::has('login'),
+        'canRegister'    => Route::has('register'),
+        'events'         => \App\Models\Event::with('images')->orderBy('event_date')->get(),
+    ]);
+})->name('events.list');
 
 // ============================================
 // Event Viewing & Brackets
@@ -134,6 +141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/create-other-event', fn() => Inertia::render('createEvents/CreateOtherEvent', ['auth' => ['user' => auth()->user()]]) )->name('dashboard.create-other-event');
 
     // Event Management
+    Route::get('/events/{id}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
@@ -178,6 +186,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Event Registration Count (for dashboard)
     Route::get('/events/{event}/registrations/count', [EventRegistrationController::class, 'getRegistrationCount'])->name('events.registrations.count');
+
+    // MIS - Athlete Management Routes
+    Route::prefix('mis')->name('mis.')->group(function () {
+        Route::get('/dashboard', [AthleteController::class, 'index'])->name('dashboard');
+        Route::get('/athletes/create', [AthleteController::class, 'create'])->name('athletes.create');
+        Route::post('/athletes', [AthleteController::class, 'store'])->name('athletes.store');
+        Route::get('/athletes/{id}', [AthleteController::class, 'show'])->name('athletes.show');
+        Route::get('/athletes/{id}/edit', [AthleteController::class, 'edit'])->name('athletes.edit');
+        Route::put('/athletes/{id}', [AthleteController::class, 'update'])->name('athletes.update');
+        Route::delete('/athletes/{id}', [AthleteController::class, 'destroy'])->name('athletes.destroy');
+        Route::get('/export/csv', [AthleteController::class, 'exportCsv'])->name('export.csv');
+    });
 
     // User Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -538,6 +538,16 @@ class EventController extends Controller
         }
     }
 
+    // ADMIN: Show edit form for an event
+    public function edit($id)
+    {
+        $event = Event::with('images')->findOrFail($id);
+        
+        return Inertia::render('Events/EditEvent', [
+            'event' => $event,
+        ]);
+    }
+
     // ADMIN: Delete an event
     public function destroy($id)
     {

@@ -1,5 +1,5 @@
 <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';">
-    <h2 style="margin-bottom: 8px;">SCAEMS Borrow Request Update</h2>
+    <h2 style="margin-bottom: 8px;">UdD Eventure Borrow Request Update</h2>
     <p style="margin-top: 0;">Hello {{ $borrowRequest->student_name }},</p>
 
     @if ($action === 'approved')
@@ -15,7 +15,7 @@
         <p><strong>Note:</strong> {{ $note }}</p>
     @endif
 
-    <p>Regards,<br/>SCAEMS Team</p>
+    <p>Regards,<br/>UdD Eventura Team</p>
 </div>
 
 
