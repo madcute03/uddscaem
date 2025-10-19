@@ -418,11 +418,9 @@ class EventController extends Controller
 
             if ($validator->fails()) {
                 Log::error('Validation failed', $validator->errors()->toArray());
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
             }
 
             $data = $validator->validated();
@@ -511,30 +509,16 @@ class EventController extends Controller
             $event = $event->fresh('images');
             $successMessage = 'Event updated successfully.';
 
-            if ($request->header('X-Inertia')) {
-                return redirect()->back()->with('success', $successMessage);
-            }
-
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $successMessage,
-                    'event' => $event
-                ]);
-            }
-
-            return redirect()->back()->with('success', $successMessage);
+            return redirect()->route('dashboard.events')->with('success', $successMessage);
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while updating the event.',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'An error occurred while updating the event: ' . $e->getMessage())
+                ->withInput();
         }
     }
 

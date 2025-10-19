@@ -19,6 +19,7 @@ export default function EditAthlete({ auth, athlete }) {
         sport_team: athlete.sport_team || '',
         team_name: athlete.team_name || '',
         gdrive_link: athlete.gdrive_link || '',
+        status: athlete.status || 'active',
     });
 
     const handleSubmit = (e) => {
@@ -81,6 +82,20 @@ export default function EditAthlete({ auth, athlete }) {
                             </div>
                             <div><label className="block text-slate-300 mb-2">Sport/Team</label>
                                 <input type="text" value={data.sport_team} onChange={(e) => setData('sport_team', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg" />
+                            </div>
+                            <div>
+                                <label className="block text-slate-300 mb-2">Status *</label>
+                                <select 
+                                    value={data.status} 
+                                    onChange={(e) => setData('status', e.target.value)} 
+                                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="graduated">Graduated</option>
+                                </select>
+                                {errors.status && <p className="text-red-400 text-sm mt-1">{errors.status}</p>}
                             </div>
                         </div>
                         <div className="flex justify-end gap-4 pt-6 border-t border-slate-700">

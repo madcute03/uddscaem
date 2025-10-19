@@ -88,17 +88,7 @@ export default function EventTabs({ events }) {
         const [isInView, setIsInView] = useState(false);
         const cardRef = useRef(null);
 
-        const nextImage = () => {
-            if (!event.images) return;
-            setIndex((prev) => (prev + 1) % event.images.length);
-        };
-
-        const prevImage = () => {
-            if (!event.images) return;
-            setIndex(
-                (prev) => (prev - 1 + event.images.length) % event.images.length
-            );
-        };
+        
 
         // Intersection Observer for scroll-based zoom effect
         useEffect(() => {
@@ -127,7 +117,7 @@ export default function EventTabs({ events }) {
             <Link
                 ref={cardRef}
                 href={route("events.show", event.id)}
-                className={`group w-full h-full min-h-[350px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-500 hover:border-blue-500/50`}
+                className={`group w-full h-full min-h-[500px] min-w-[400px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-500 hover:border-blue-500/50`}
                 style={{
                     transform: `scale(${isInView ? 1.0 : 0.3}) ${isInView ? 'translateY(-4px)' : 'translateY(0px)'}`,
                     transition: 'transform 0.75s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',
@@ -144,7 +134,7 @@ export default function EventTabs({ events }) {
                 }}
             >
                 {/* Cover Image reserved height */}
-                <div className="relative w-full h-32 md:h-48 overflow-hidden bg-gray-200">
+                <div className="relative w-full h-64 overflow-hidden bg-gray-200">
                     {event.images && event.images.length > 0 ? (
                         <div
                             className="flex w-full h-full transition-transform duration-500 ease-in-out"
@@ -184,7 +174,7 @@ export default function EventTabs({ events }) {
                 <p className="text-slate-400 text-center">No events available.</p>
             );
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-stretch content-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-20 items-stretch content-stretch">
                 {list.map((event) => (
                     <EventCard key={event.id} event={event} />
                 ))}

@@ -1532,7 +1532,7 @@ function Dashboard() {
                                                     <div className="md:col-span-2">
                                                         <label className="block text-sm text-slate-300 mb-1">Description</label>
                                                         <textarea
-                                                            rows={3}
+                                                            rows={10}
                                                             value={editData.description}
                                                             onChange={e => setEditData({ ...editData, description: e.target.value })}
                                                             className="w-full border border-slate-600 bg-slate-700 text-white px-3 py-2 rounded-md focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"

@@ -16,8 +16,8 @@ export default function Welcome() {
                 <section 
                     className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8"
                     style={{
-                        backgroundImage: "url('/images/logo.png')",
-                        backgroundPosition: "center",
+                        backgroundImage: "url('/images/logo2.png')",
+                        backgroundPosition: "50% 20%",
                         backgroundRepeat: "no-repeat",
                         backgroundSize: "cover",
                         backgroundBlendMode: "overlay",
@@ -30,7 +30,7 @@ export default function Welcome() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                             {/* Title */}
                             <div className="text-center lg:text-left">
-                                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6">
+                                <h1 className="text-7xl sm:text-9xl lg:text-9xl font-extrabold font-sans lg:font-mono mb-6">
                                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-sky-400 to-cyan-300">
                                         UdD Eventure
                                     </span>
@@ -62,7 +62,7 @@ export default function Welcome() {
                                 About the System
                             </span>
                         </h2>
-                        <p className="text-lg sm:text-xl text-slate-300 leading-relaxed">
+                        <p className="text-xl sm:text-2xl text-slate-300 mb-8">
                             UdD Eventure is a comprehensive event management system designed specifically for the Sports and Cultural Affairs office. 
                             Our platform streamlines the entire event lifecycle - from planning and registration to execution and reporting. 
                             With features like automated bracketing, real-time registration tracking, and athlete management, we make organizing 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Athlete;
 use App\Models\RegisteredPlayer;
 use App\Models\Event;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class AthleteController extends Controller
      */
     public function index(Request $request)
     {
-        $query = RegisteredPlayer::with('event:id,title,event_type');
+        $query = Athlete::query();
 
         // Apply filters
         if ($request->filled('search')) {
@@ -46,26 +47,26 @@ class AthleteController extends Controller
         $athletes = $query->orderBy('created_at', 'desc')->paginate(20);
 
         // Get filter options
-        $departments = RegisteredPlayer::select('department')->distinct()->pluck('department');
-        $yearLevels = RegisteredPlayer::select('year_level')->whereNotNull('year_level')->distinct()->pluck('year_level');
-        $sportTeams = RegisteredPlayer::select('sport_team')->whereNotNull('sport_team')->distinct()->pluck('sport_team');
+        $departments = Athlete::select('department')->distinct()->pluck('department');
+        $yearLevels = Athlete::select('year_level')->whereNotNull('year_level')->distinct()->pluck('year_level');
+        $sportTeams = Athlete::select('sport_team')->whereNotNull('sport_team')->distinct()->pluck('sport_team');
 
         // Get statistics
         $stats = [
-            'total_athletes' => RegisteredPlayer::count(),
-            'by_department' => RegisteredPlayer::select('department', DB::raw('count(*) as count'))
+            'total_athletes' => Athlete::count(),
+            'by_department' => Athlete::select('department', DB::raw('count(*) as count'))
                 ->groupBy('department')
                 ->get(),
-            'by_year_level' => RegisteredPlayer::select('year_level', DB::raw('count(*) as count'))
+            'by_year_level' => Athlete::select('year_level', DB::raw('count(*) as count'))
                 ->whereNotNull('year_level')
                 ->groupBy('year_level')
                 ->get(),
-            'by_scholarship' => RegisteredPlayer::select('scholarship_status', DB::raw('count(*) as count'))
+            'by_scholarship' => Athlete::select('scholarship_status', DB::raw('count(*) as count'))
                 ->whereNotNull('scholarship_status')
                 ->groupBy('scholarship_status')
                 ->get(),
-            'average_gpa' => round(RegisteredPlayer::whereNotNull('gpa')->avg('gpa'), 2),
-            'total_enrolled_units' => RegisteredPlayer::sum('enrolled_units'),
+            'average_gpa' => round(Athlete::whereNotNull('gpa')->avg('gpa'), 2),
+            'total_enrolled_units' => Athlete::sum('enrolled_units'),
         ];
 
         return Inertia::render('MIS/Dashboard', [
@@ -94,9 +95,9 @@ class AthleteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => 'required|string|max:255',
+            'student_id' => 'required|string|max:255|unique:athletes,student_id',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
+            'email' => 'required|email|max:255|unique:athletes,email',
             'department' => 'required|string|max:255',
             'course' => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:50',
@@ -110,10 +111,10 @@ class AthleteController extends Controller
             'gdrive_link' => 'nullable|url',
         ]);
 
-        $validated['status'] = 'approved';
+        $validated['status'] = 'active';
         $validated['registered_at'] = now();
 
-        RegisteredPlayer::create($validated);
+        Athlete::create($validated);
 
         return redirect()->route('mis.dashboard')->with('success', 'Athlete profile created successfully!');
     }
@@ -123,7 +124,7 @@ class AthleteController extends Controller
      */
     public function show($id)
     {
-        $athlete = RegisteredPlayer::with('event')->findOrFail($id);
+        $athlete = Athlete::with('eventRegistrations.event')->findOrFail($id);
         
         return Inertia::render('MIS/ShowAthlete', [
             'athlete' => $athlete,
@@ -135,7 +136,7 @@ class AthleteController extends Controller
      */
     public function edit($id)
     {
-        $athlete = RegisteredPlayer::findOrFail($id);
+        $athlete = Athlete::findOrFail($id);
         
         return Inertia::render('MIS/EditAthlete', [
             'athlete' => $athlete,
@@ -147,12 +148,12 @@ class AthleteController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $athlete = RegisteredPlayer::findOrFail($id);
+        $athlete = Athlete::findOrFail($id);
 
         $validated = $request->validate([
-            'student_id' => 'required|string|max:255',
+            'student_id' => 'required|string|max:255|unique:athletes,student_id,' . $id,
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
+            'email' => 'required|email|max:255|unique:athletes,email,' . $id,
             'department' => 'required|string|max:255',
             'course' => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:50',
@@ -164,6 +165,7 @@ class AthleteController extends Controller
             'sport_team' => 'nullable|string|max:255',
             'team_name' => 'nullable|string|max:255',
             'gdrive_link' => 'nullable|url',
+            'status' => 'required|in:active,inactive,graduated',
         ]);
 
         $athlete->update($validated);
@@ -176,7 +178,7 @@ class AthleteController extends Controller
      */
     public function destroy($id)
     {
-        $athlete = RegisteredPlayer::findOrFail($id);
+        $athlete = Athlete::findOrFail($id);
         $athlete->delete();
 
         return redirect()->route('mis.dashboard')->with('success', 'Athlete profile deleted successfully!');
@@ -187,7 +189,7 @@ class AthleteController extends Controller
      */
     public function exportCsv(Request $request)
     {
-        $query = RegisteredPlayer::with('event:id,title');
+        $query = Athlete::query();
 
         // Apply same filters as index
         if ($request->filled('search')) {
@@ -215,7 +217,7 @@ class AthleteController extends Controller
             fputcsv($file, [
                 'Student ID', 'Name', 'Email', 'Contact Number', 'Department', 
                 'Course', 'Year Level', 'Age', 'GPA', 'Enrolled Units', 
-                'Scholarship Status', 'Sport/Team', 'Team Name', 'Event', 'Status'
+                'Scholarship Status', 'Sport/Team', 'Team Name', 'Status'
             ]);
 
             $query->chunk(100, function($athletes) use ($file) {
@@ -234,7 +236,6 @@ class AthleteController extends Controller
                         $athlete->scholarship_status ?? 'N/A',
                         $athlete->sport_team ?? 'N/A',
                         $athlete->team_name ?? 'N/A',
-                        $athlete->event->title ?? 'N/A',
                         $athlete->status,
                     ]);
                 }

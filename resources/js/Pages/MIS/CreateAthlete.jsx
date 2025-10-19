@@ -140,15 +140,54 @@ export default function CreateAthlete({ auth }) {
                                         <label className="block text-slate-300 mb-2">
                                             Department <span className="text-red-400">*</span>
                                         </label>
-                                        <input
-                                            type="text"
-                                            value={data.department}
-                                            onChange={(e) => setData('department', e.target.value)}
-                                            placeholder="e.g., College of Engineering"
+                                        <select
+                                            value={data.department?.startsWith('Other: ') ? 'Other' : (data.department || '')}
+                                            onChange={(e) => {
+                                                const value = e.target.value === 'Other' ? 'Other: ' : e.target.value;
+                                                setData('department', value);
+                                            }}
                                             className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             required
-                                        />
+                                        >
+                                            <option value="">Select Department</option>
+                                            <option value="School of Information Technology">
+                                                School of Information Technology
+                                            </option>
+                                            <option value="School of Engineering">
+                                                School of Engineering
+                                            </option>
+                                            <option value="School of Teacher Education">
+                                                School of Teacher Education
+                                            </option>
+                                            <option value="School of Business and Accountancy">
+                                                School of Business and Accountancy
+                                            </option>
+                                            <option value="School of International Hospitality Management">
+                                                School of International Hospitality Management
+                                            </option>
+                                            <option value="School of Humanities">
+                                                School of Humanities
+                                            </option>
+                                            <option value="School of Health and Sciences">
+                                                School of Health and Sciences
+                                            </option>
+                                            <option value="School of Criminology">
+                                                School of Criminology
+                                            </option>
+                                            <option value="Other">Other (Please specify)</option>
+                                        </select>
                                         {errors.department && <p className="mt-1 text-sm text-red-400">{errors.department}</p>}
+                                        
+                                        {(data.department?.startsWith('Other: ') || data.department === 'Other') && (
+                                            <input
+                                                type="text"
+                                                placeholder="Please specify department"
+                                                value={data.department?.startsWith('Other: ') ? data.department.substring(7) : ''}
+                                                onChange={(e) => setData('department', 'Other: ' + e.target.value)}
+                                                className="w-full mt-2 px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                required
+                                            />
+                                        )}
                                     </div>
 
                                     <div>

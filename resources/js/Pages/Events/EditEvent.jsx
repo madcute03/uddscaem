@@ -4,7 +4,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function EditEvent({ auth, event }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         title: event.title || '',
         description: event.description || '',
         venue: event.venue || '',
@@ -34,7 +34,7 @@ export default function EditEvent({ auth, event }) {
         formData.append('description', data.description);
         formData.append('venue', data.venue || '');
         formData.append('coordinator_name', data.coordinator_name);
-        formData.append('event_type', data.event_type);
+        formData.append('event_type', event.event_type); // Keep original event type
         formData.append('category', data.category);
         formData.append('other_category', data.other_category || '');
         formData.append('allow_bracketing', data.allow_bracketing ? '1' : '0');
@@ -81,9 +81,11 @@ export default function EditEvent({ auth, event }) {
             formData.append('rulebook', data.rulebook);
         }
 
-        put(route('events.update', event.id), {
+        // Use POST route for file uploads (with _method: PUT in FormData)
+        post(route('events.update.post', event.id), {
             data: formData,
             forceFormData: true,
+            preserveScroll: true,
         });
     };
 
@@ -128,7 +130,7 @@ export default function EditEvent({ auth, event }) {
                             <h2 className="text-xl font-semibold text-white mb-4">Basic Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
-                                    <label className="block text-slate-300 mb-2">Event Title *</label>
+                                    <label className="block text-slate-300 mb-2">Event Title</label>
                                     <input
                                         type="text"
                                         value={data.title}
@@ -140,9 +142,9 @@ export default function EditEvent({ auth, event }) {
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-slate-300 mb-2">Description *</label>
+                                    <label className="block text-slate-300 mb-2">Description</label>
                                     <textarea
-                                        rows={4}
+                                        rows={10}
                                         value={data.description}
                                         onChange={(e) => setData('description', e.target.value)}
                                         className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -152,7 +154,7 @@ export default function EditEvent({ auth, event }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-slate-300 mb-2">Coordinator Name *</label>
+                                    <label className="block text-slate-300 mb-2">Coordinator Name</label>
                                     <input
                                         type="text"
                                         value={data.coordinator_name}
@@ -175,24 +177,7 @@ export default function EditEvent({ auth, event }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-slate-300 mb-2">Event Type *</label>
-                                    <select
-                                        value={data.event_type}
-                                        onChange={(e) => setData('event_type', e.target.value)}
-                                        className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required
-                                    >
-                                        <option value="">Select Type</option>
-                                        <option value="competition">Competition</option>
-                                        <option value="tryouts">Tryouts</option>
-                                        <option value="intramurals">Intramurals</option>
-                                        <option value="general">General</option>
-                                    </select>
-                                    {errors.event_type && <p className="mt-1 text-sm text-red-400">{errors.event_type}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-slate-300 mb-2">Category *</label>
+                                    <label className="block text-slate-300 mb-2">Category</label>
                                     <select
                                         value={data.category}
                                         onChange={(e) => setData('category', e.target.value)}
@@ -228,7 +213,7 @@ export default function EditEvent({ auth, event }) {
                             <h2 className="text-xl font-semibold text-white mb-4">Event Dates</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-slate-300 mb-2">Event Start Date & Time *</label>
+                                    <label className="block text-slate-300 mb-2">Event Start Date & Time</label>
                                     <input
                                         type="datetime-local"
                                         value={data.event_date}
@@ -382,10 +367,10 @@ export default function EditEvent({ auth, event }) {
 
                         {/* Event Images */}
                         <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
-                            <h2 className="text-xl font-semibold text-white mb-4">Event Images</h2>
+                            <h2 className="text-xl font-semibold text-white mb-4">Featured Image</h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-slate-300 mb-2">Upload New Images</label>
+                                    <label className="block text-slate-300 mb-2">Upload New Image</label>
                                     <input
                                         type="file"
                                         multiple

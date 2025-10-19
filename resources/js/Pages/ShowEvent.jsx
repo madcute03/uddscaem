@@ -182,7 +182,7 @@ export default function ShowEvent({ event }) {
                             key={idx}
                             src={src}
                             alt={`${event.title} - ${idx + 1}`}
-                            className="min-w-full max-h-[300px] sm:max-h-[500px] md:max-h-[600px] object-cover object-center"
+                            className="min-w-full max-h-[600px] sm:max-h-[700px] md:max-h-[800px] object-cover object-center"
                         />
                     ))}
                 </div>
@@ -241,49 +241,39 @@ export default function ShowEvent({ event }) {
                             </div>
                         </div>
                     )}
-                    {event.rulebook_path && (
-                        <div className="mt-6">
-                            <p className="text-lg font-semibold text-blue-300 mb-2">Event Rulebook</p>
-                            <div className="bg-slate-700/60 text-slate-100 p-4 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        <span className="text-sm">Official event rulebook available</span>
-                                    </div>
-                                    <button
-                                        onClick={() => window.open(route("events.rulebook.download", event.id), '_blank', 'noopener,noreferrer')}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors duration-200"
-                                    >
-                                        View Rulebook
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Action Buttons */}
-                    <div className="mt-8 flex gap-8">
-                        {/* Register Button for Tryouts and Competitions - Only show if registration is enabled */}
-                        {event.has_registration_end_date && (event.event_type === 'tryouts' || event.event_type === 'competition') && isUpcoming && (
+                    <div className="mt-8 flex gap-6">
+                        {/* Register Button for Tryouts and Competitions */}
+                        {event.has_registration_end_date && (event.event_type === 'tryouts' || event.event_type === 'competition') && (
                             <div>
-                                {(!event.registration_end_date || new Date(event.registration_end_date) > new Date()) && (
-                                    <Link
-                                        href={route("events.register", event.id)}
-                                        className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
-                                                               transition duration-300 ease-in-out 
-                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                                               bg-[#2e8eff]/20 flex items-center justify-center 
-                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                {(!event.registration_end_date || new Date(event.registration_end_date) > new Date()) && isUpcoming ? (
+                                    <>
+                                        <Link
+                                            href={route("events.register", event.id)}
+                                            className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                                   transition duration-300 ease-in-out 
+                                                                   bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                                   bg-[#2e8eff]/20 flex items-center justify-center 
+                                                                   hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                                   focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                        >
+                                            Register Now
+                                        </Link>
+                                        {event.registration_end_date && (
+                                            <div className="text-left py-4 text-blue-300 text-sm ">
+                                                Registration Until {formatDate(event.registration_end_date, true)}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div
+                                        className="w-[160px] h-[45px] rounded-[15px] 
+                                                   bg-slate-600/50 border border-slate-600 
+                                                   flex items-center justify-center 
+                                                   text-slate-400 cursor-not-allowed"
                                     >
-                                        Register Now
-                                    </Link>
-                                )}
-                                {event.registration_end_date && new Date(event.registration_end_date) > new Date() && (
-                                    <div className="text-left py-4 text-blue-300 text-sm ">
-                                        Registration Until {formatDate(event.registration_end_date, true)}
+                                        Registration Closed
                                     </div>
                                 )}
                             </div>
@@ -305,6 +295,32 @@ export default function ShowEvent({ event }) {
                             </Link>
                         )}
                     </div>
+                    {event.rulebook_path && (
+                        <div className="mt-2">
+                            <p className="text-1xl text-blue-300 mb-2">Event Rulebook</p>
+                            <div className="text-slate-100">
+                                <div className="items-center py-2 gap-2">
+                                    <div className="flex items-center space-x-2">
+                                        <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span className="text-sm py-4">Official event rulebook available</span>
+                                    </div>
+                                    <button
+                                        onClick={() => window.open(route("events.rulebook.download", event.id), '_blank', 'noopener,noreferrer')}
+                                        className="w-[250px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                    >
+                                        View Rulebook
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <p className="text-1xl tracking-wider text-blue-300 mb-2 py-3">
                         Coordinator <span className="text-white">{event.coordinator_name}</span>
                     </p>

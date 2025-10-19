@@ -144,6 +144,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/events/{id}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::put('/events/{id}', [EventController::class, 'update'])->name('events.update');
+    Route::post('/events/{id}', [EventController::class, 'update'])->name('events.update.post'); // For file uploads
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('/events/{id}/mark-done', [EventController::class, 'markDone'])->name('events.markDone');
     Route::post('/events/{id}/mark-undone', [EventController::class, 'markUndone'])->name('events.markUndone');
