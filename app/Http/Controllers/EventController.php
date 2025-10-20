@@ -465,19 +465,48 @@ class EventController extends Controller
 
             // Handle existing images
             $existingImages = $data['existing_images'] ?? [];
+            $currentImageCount = $event->images()->count();
+            
+            Log::info('Image update process', [
+                'event_id' => $event->id,
+                'current_image_count' => $currentImageCount,
+                'existing_images_sent' => count($existingImages),
+                'existing_images_paths' => $existingImages,
+                'has_new_images' => $request->hasFile('images')
+            ]);
 
             if (!empty($existingImages)) {
-                $event->images()->whereNotIn('image_path', $existingImages)->each(function ($image) {
+                // Keep images that are in the existing_images array, delete the rest
+                $imagesToDelete = $event->images()->whereNotIn('image_path', $existingImages)->get();
+                Log::info('Deleting images not in existing_images array', [
+                    'count' => $imagesToDelete->count(),
+                    'paths' => $imagesToDelete->pluck('image_path')->toArray()
+                ]);
+                
+                $imagesToDelete->each(function ($image) {
                     Log::info('Deleting image:', ['id' => $image->id, 'path' => $image->image_path]);
                     Storage::disk('public')->delete($image->image_path);
                     $image->delete();
                 });
             } else {
-                // If no existing images are sent, remove all existing images
-                $event->images->each(function ($image) {
-                    Storage::disk('public')->delete($image->image_path);
-                    $image->delete();
-                });
+                // SAFEGUARD: Only delete all images if new images are being uploaded
+                // This prevents accidental deletion when frontend doesn't send existing_images
+                if ($request->hasFile('images')) {
+                    Log::warning('No existing_images sent, but new images provided - replacing all images', [
+                        'event_id' => $event->id,
+                        'current_count' => $currentImageCount
+                    ]);
+                    $event->images->each(function ($image) {
+                        Storage::disk('public')->delete($image->image_path);
+                        $image->delete();
+                    });
+                } else {
+                    Log::warning('SAFEGUARD TRIGGERED: No existing_images sent and no new images - PRESERVING existing images', [
+                        'event_id' => $event->id,
+                        'current_count' => $currentImageCount
+                    ]);
+                    // Don't delete anything - preserve existing images
+                }
             }
 
         // Handle new image uploads
@@ -509,7 +538,7 @@ class EventController extends Controller
             $event = $event->fresh('images');
             $successMessage = 'Event updated successfully.';
 
-            return redirect()->route('dashboard.events')->with('success', $successMessage);
+            return redirect()->route('dashboard')->with('success', $successMessage);
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage(), [
                 'exception' => $e,

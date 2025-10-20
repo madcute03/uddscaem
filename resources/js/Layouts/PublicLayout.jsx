@@ -43,7 +43,7 @@ export default function PublicLayout({
                     </div>
                 </div>
             )}
-            {/* Borrow moved to navbar */}
+            
         </div>
     );
 }

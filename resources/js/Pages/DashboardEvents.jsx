@@ -877,23 +877,8 @@ function Dashboard() {
                 endDate.setHours(23, 59, 59, 999);
             }
 
-            console.log('Event Status Debug:', {
-                eventId: event.id,
-                eventTitle: event.title,
-                eventDate: event.event_date,
-                eventEndDate: event.event_end_date,
-                parsedStart: startDate.toISOString(),
-                parsedEnd: endDate.toISOString(),
-                currentTime: now.toISOString(),
-                startComparison: now < startDate,
-                endComparison: now > endDate,
-                timeUntilStart: startDate.getTime() - now.getTime(),
-                timeUntilEnd: endDate.getTime() - now.getTime()
-            });
-
             // If current time is before event start time
             if (now < startDate) {
-                console.log('Event is UPCOMING - current time before start');
                 return {
                     label: 'UPCOMING',
                     className: 'bg-amber-500 text-white'
@@ -902,7 +887,6 @@ function Dashboard() {
 
             // If current time is after event end time
             if (now > endDate) {
-                console.log('Event is COMPLETED - current time after end');
                 return {
                     label: 'COMPLETED',
                     className: 'bg-gray-500 text-white'
@@ -910,7 +894,6 @@ function Dashboard() {
             }
 
             // If we're between start and end time
-            console.log('Event is ONGOING - current time between start and end');
             return {
                 label: 'ONGOING',
                 className: 'bg-emerald-500 text-white'
@@ -1290,12 +1273,18 @@ function Dashboard() {
                     });
             }
 
-            if (editData.existingImages && editData.existingImages.length > 0) {
+            // Always send existing images to prevent deletion
+            // This is critical - if we don't send existing_images[], the backend will delete all images
+            if (editData.existingImages && Array.isArray(editData.existingImages) && editData.existingImages.length > 0) {
                 editData.existingImages.forEach(img => {
-                    formData.append('existing_images[]', img.image_path);
+                    const path = typeof img === 'string' ? img : (img.image_path || '');
+                    if (path) {
+                        formData.append('existing_images[]', path);
+                    }
                 });
             }
 
+            // Add new images if any
             if (editData.images && editData.images.length > 0) {
                 editData.images.forEach((file) => {
                     formData.append('images[]', file);
@@ -1305,11 +1294,6 @@ function Dashboard() {
             // Handle rulebook file upload
             if (editData.rulebook instanceof File) {
                 formData.append('rulebook', editData.rulebook);
-            }
-
-            console.log('Submitting form with data:');
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ', pair[1]);
             }
 
             setErrorMessage(null);

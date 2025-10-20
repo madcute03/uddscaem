@@ -15,7 +15,7 @@
         <p><strong>Note:</strong> {{ $note }}</p>
     @endif
 
-    <p>Regards,<br/>UdD Eventura Team</p>
+    <p>Regards,<br/>UdD Eventure Team</p>
 </div>
 
 
