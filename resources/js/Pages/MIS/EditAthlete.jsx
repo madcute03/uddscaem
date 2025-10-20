@@ -9,11 +9,11 @@ export default function EditAthlete({ auth, athlete }) {
         name: athlete.name || '',
         email: athlete.email || '',
         contact_number: athlete.contact_number || '',
+        birthdate: athlete.birthdate || '',
         department: athlete.department || '',
         course: athlete.course || '',
         year_level: athlete.year_level || '',
         age: athlete.age || '',
-        gpa: athlete.gpa || '',
         enrolled_units: athlete.enrolled_units || '',
         scholarship_status: athlete.scholarship_status || '',
         sport_team: athlete.sport_team || '',
@@ -55,6 +55,9 @@ export default function EditAthlete({ auth, athlete }) {
                             <div><label className="block text-slate-300 mb-2">Contact</label>
                                 <input type="text" value={data.contact_number} onChange={(e) => setData('contact_number', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg" />
                             </div>
+                            <div><label className="block text-slate-300 mb-2">Birthdate *</label>
+                                <input type="date" value={data.birthdate} onChange={(e) => setData('birthdate', e.target.value)} className="w-full px-4 py-2 bg-slate-800/60 border border-slate-700 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-colors [color-scheme:dark]" required />
+                            </div>
                             <div><label className="block text-slate-300 mb-2">Department *</label>
                                 <input type="text" value={data.department} onChange={(e) => setData('department', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg" required />
                             </div>
@@ -69,15 +72,12 @@ export default function EditAthlete({ auth, athlete }) {
                             <div><label className="block text-slate-300 mb-2">Age *</label>
                                 <input type="number" value={data.age} onChange={(e) => setData('age', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg" required />
                             </div>
-                            <div><label className="block text-slate-300 mb-2">GPA</label>
-                                <input type="number" step="0.01" value={data.gpa} onChange={(e) => setData('gpa', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg" />
-                            </div>
                             <div><label className="block text-slate-300 mb-2">Enrolled Units</label>
                                 <input type="number" value={data.enrolled_units} onChange={(e) => setData('enrolled_units', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg" />
                             </div>
                             <div><label className="block text-slate-300 mb-2">Scholarship</label>
                                 <select value={data.scholarship_status} onChange={(e) => setData('scholarship_status', e.target.value)} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg">
-                                    <option value="">Select</option><option value="Scholar">Scholar</option><option value="Non-Scholar">Non-Scholar</option>
+                                    <option value="">Select</option><option value="25%">25%</option><option value="50%">50%</option><option value="75%">75%</option><option value="100%">100%</option>
                                 </select>
                             </div>
                             <div><label className="block text-slate-300 mb-2">Sport/Team</label>

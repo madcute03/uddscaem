@@ -11,11 +11,11 @@ class Athlete extends Model
         'name',
         'email',
         'contact_number',
+        'birthdate',
         'department',
         'course',
         'year_level',
         'age',
-        'gpa',
         'enrolled_units',
         'scholarship_status',
         'sport_team',
@@ -27,7 +27,7 @@ class Athlete extends Model
 
     protected $casts = [
         'registered_at' => 'datetime',
-        'gpa' => 'decimal:2',
+        'birthdate' => 'date',
     ];
 
     /**

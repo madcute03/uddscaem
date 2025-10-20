@@ -143,11 +143,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const isSelected = (date) => {
         if (!date || !dateValue) return false;
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const localDateString = `${year}-${month}-${day}`;
-        return localDateString === dateValue;
+        return date.toISOString().split('T')[0] === dateValue;
     };
 
     const isToday = (date) => {
@@ -178,60 +174,63 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 bg-black/60 z-[70]" onClick={() => setIsOpen(false)} />
+                    <div className="fixed inset-0 bg-black/70 z-[70]" onClick={() => setIsOpen(false)} />
                     <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
-                        <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-start justify-between mb-4">
+                        <div
+                            className="w-full max-w-lg bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl shadow-2xl p-6"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-start justify-between mb-6">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-100">Select Event Start</h3>
-                                    <p className="text-sm text-slate-400">{monthYear}</p>
+                                    <h3 className="text-xl font-semibold text-white">Select Event Start</h3>
+                                    <p className="text-sm text-slate-400 mt-1">{monthYear}</p>
                                 </div>
-                                <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-200">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
 
-                            <div className="flex border-b border-slate-700 mb-4">
-                                <button type="button" onClick={() => setActiveTab('date')} className={`px-4 py-2 font-medium text-sm ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}>
+                            <div className="flex border-b border-slate-700/50 mb-6">
+                                <button type="button" onClick={() => setActiveTab('date')} className={`px-6 py-3 font-medium text-sm transition-colors ${activeTab === 'date' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}>
                                     Date
                                 </button>
-                                <button type="button" onClick={() => setActiveTab('time')} className={`px-4 py-2 font-medium text-sm ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}>
+                                <button type="button" onClick={() => setActiveTab('time')} className={`px-6 py-3 font-medium text-sm transition-colors ${activeTab === 'time' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}>
                                     Time
                                 </button>
                             </div>
 
                             {activeTab === 'date' && (
                                 <>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <button type="button" onClick={() => navigateMonth(-1)} className="p-2 hover:bg-slate-800 rounded-full">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <button type="button" onClick={() => navigateMonth(-1)} className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
                                             <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                             </svg>
                                         </button>
-                                        <h4 className="text-base font-medium text-slate-100">{monthYear}</h4>
-                                        <button type="button" onClick={() => navigateMonth(1)} className="p-2 hover:bg-slate-800 rounded-full">
+                                        <h4 className="text-lg font-semibold text-white">{monthYear}</h4>
+                                        <button type="button" onClick={() => navigateMonth(1)} className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
                                             <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                             </svg>
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-7 gap-1 mb-2">
+                                    <div className="grid grid-cols-7 gap-2 mb-3">
                                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                            <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">{day}</div>
+                                            <div key={day} className="text-xs text-slate-400 text-center py-2 font-medium">{day}</div>
                                         ))}
                                     </div>
 
-                                    <div className="grid grid-cols-7 gap-1">
+                                    <div className="grid grid-cols-7 gap-2">
                                         {days.map((date, index) => (
                                             <button
                                                 key={index}
                                                 type="button"
                                                 onClick={() => handleDateSelect(date)}
                                                 disabled={!date}
-                                                className={`h-10 text-sm rounded-md transition-colors ${!date ? 'invisible' : ''} ${isSelected(date) ? 'bg-blue-600 text-white' : isToday(date) ? 'bg-slate-700 text-slate-100 hover:bg-slate-600' : 'text-slate-200 hover:bg-slate-800'}`}
+                                                className={`h-11 text-sm rounded-lg transition-all font-medium ${!date ? 'invisible' : ''} ${isSelected(date) ? 'bg-slate-700 text-white shadow-lg' : isToday(date) ? 'bg-slate-800/50 text-slate-100 hover:bg-slate-700/50' : 'text-slate-300 hover:bg-slate-800/30'}`}
                                             >
                                                 {date?.getDate()}
                                             </button>
@@ -273,11 +272,11 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                                 </div>
                             )}
 
-                            <div className="flex justify-end gap-2 mt-6">
-                                <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 border border-slate-700 rounded-md">
+                            <div className="flex justify-end gap-3 mt-8">
+                                <button type="button" onClick={() => setIsOpen(false)} className="px-6 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-lg transition-colors">
                                     Close
                                 </button>
-                                <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                <button type="button" onClick={() => setIsOpen(false)} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
                                     Done
                                 </button>
                             </div>
@@ -362,7 +361,9 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
 
     const isSelected = (date) => {
         if (!date || !value) return false;
-        return toDateString(date) === toDateString(value);
+        const dateStr = toDateString(date);
+        const valueStr = toDateString(value);
+        return dateStr === valueStr;
     };
 
     const isToday = (date) => {
@@ -390,57 +391,57 @@ const CalendarPicker = ({ value, onChange, label, placeholder = "Select date" })
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 bg-black/60 z-[70]" onClick={() => setIsOpen(false)} />
+                    <div className="fixed inset-0 bg-black/70 z-[70]" onClick={() => setIsOpen(false)} />
                     <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
-                        <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6">
-                            <div className="flex items-start justify-between mb-4">
+                        <div className="w-full max-w-md bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl shadow-2xl p-6">
+                            <div className="flex items-start justify-between mb-6">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-100">Select Date</h3>
-                                    <p className="text-sm text-slate-400">{monthYear}</p>
+                                    <h3 className="text-xl font-semibold text-white">Select Date</h3>
+                                    <p className="text-sm text-slate-400 mt-1">{monthYear}</p>
                                 </div>
-                                <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-200">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
 
-                            <div className="flex items-center justify-between mb-4">
-                                <button type="button" onClick={() => navigateMonth(-1)} className="p-2 hover:bg-slate-800 rounded-full">
+                            <div className="flex items-center justify-between mb-6">
+                                <button type="button" onClick={() => navigateMonth(-1)} className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
                                     <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <h4 className="text-base font-medium text-slate-100">{monthYear}</h4>
-                                <button type="button" onClick={() => navigateMonth(1)} className="p-2 hover:bg-slate-800 rounded-full">
+                                <h4 className="text-lg font-semibold text-white">{monthYear}</h4>
+                                <button type="button" onClick={() => navigateMonth(1)} className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
                                     <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-7 gap-1 mb-2">
+                            <div className="grid grid-cols-7 gap-2 mb-3">
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                    <div key={day} className="text-xs text-slate-400 text-center py-1 font-medium">{day}</div>
+                                    <div key={day} className="text-xs text-slate-400 text-center py-2 font-medium">{day}</div>
                                 ))}
                             </div>
 
-                            <div className="grid grid-cols-7 gap-1">
+                            <div className="grid grid-cols-7 gap-2">
                                 {days.map((date, index) => (
                                     <button
                                         key={index}
                                         type="button"
                                         onClick={() => handleDateSelect(date)}
                                         disabled={!date}
-                                        className={`h-10 text-sm rounded-md transition-colors ${!date ? 'invisible' : ''} ${isSelected(date) ? 'bg-blue-600 text-white' : isToday(date) ? 'bg-slate-700 text-slate-100 hover:bg-slate-600' : 'text-slate-200 hover:bg-slate-800'}`}
+                                        className={`h-11 text-sm rounded-lg transition-all font-medium ${!date ? 'invisible' : ''} ${isSelected(date) ? 'bg-slate-700 text-white shadow-lg' : isToday(date) ? 'bg-slate-800/50 text-slate-100 hover:bg-slate-700/50' : 'text-slate-300 hover:bg-slate-800/30'}`}
                                     >
                                         {date?.getDate()}
                                     </button>
                                 ))}
                             </div>
 
-                            <div className="flex justify-end mt-6">
-                                <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            <div className="flex justify-end mt-8">
+                                <button type="button" onClick={() => setIsOpen(false)} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
                                     Done
                                 </button>
                             </div>

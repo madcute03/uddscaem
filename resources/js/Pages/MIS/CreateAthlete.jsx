@@ -9,11 +9,11 @@ export default function CreateAthlete({ auth }) {
         name: '',
         email: '',
         contact_number: '',
+        birthdate: '',
         department: '',
         course: '',
         year_level: '',
         age: '',
-        gpa: '',
         enrolled_units: '',
         scholarship_status: '',
         sport_team: '',
@@ -112,6 +112,20 @@ export default function CreateAthlete({ auth }) {
                                             className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                         {errors.contact_number && <p className="mt-1 text-sm text-red-400">{errors.contact_number}</p>}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-300 mb-2">
+                                            Birthdate <span className="text-red-400">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={data.birthdate}
+                                            onChange={(e) => setData('birthdate', e.target.value)}
+                                            className="w-full px-4 py-2 bg-slate-800/60 border border-slate-700 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600/50 transition-colors [color-scheme:dark]"
+                                            required
+                                        />
+                                        {errors.birthdate && <p className="mt-1 text-sm text-red-400">{errors.birthdate}</p>}
                                     </div>
 
                                     <div>
@@ -225,23 +239,6 @@ export default function CreateAthlete({ auth }) {
 
                                     <div>
                                         <label className="block text-slate-300 mb-2">
-                                            GPA
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="4"
-                                            value={data.gpa}
-                                            onChange={(e) => setData('gpa', e.target.value)}
-                                            placeholder="e.g., 3.50"
-                                            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        {errors.gpa && <p className="mt-1 text-sm text-red-400">{errors.gpa}</p>}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-slate-300 mb-2">
                                             Enrolled Units
                                         </label>
                                         <input
@@ -264,9 +261,10 @@ export default function CreateAthlete({ auth }) {
                                             className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="">Select Status</option>
-                                            <option value="Scholar">Scholar</option>
-                                            <option value="Non-Scholar">Non-Scholar</option>
-                                            <option value="Partial Scholar">Partial Scholar</option>
+                                            <option value="25%">25%</option>
+                                            <option value="50%">50%</option>
+                                            <option value="75%">75%</option>
+                                            <option value="100%">100%</option>
                                         </select>
                                         {errors.scholarship_status && <p className="mt-1 text-sm text-red-400">{errors.scholarship_status}</p>}
                                     </div>

@@ -17,11 +17,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('contact_number')->nullable();
+            $table->date('birthdate');
             $table->string('department');
             $table->string('course')->nullable();
             $table->string('year_level')->nullable();
             $table->integer('age');
-            $table->decimal('gpa', 3, 2)->nullable();
             $table->integer('enrolled_units')->nullable();
             $table->string('scholarship_status')->nullable();
             $table->string('sport_team')->nullable();

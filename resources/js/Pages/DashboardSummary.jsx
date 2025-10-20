@@ -144,14 +144,24 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
     // Fetch registration counts for all events
     useEffect(() => {
         const fetchRegistrationCounts = async () => {
+            console.log('Fetching registration counts for events:', recentEvents.map(e => ({ id: e.id, name: e.name })));
             const counts = {};
 
             for (const event of recentEvents) {
                 try {
                     // Use axios to fetch registration count for this event
-                    const response = await axios.get(route('events.registrations.count', event.id));
+                    const url = `/events/${event.id}/registrations/count`;
+                    console.log(`Fetching count for event ${event.id} from:`, url);
+                    const response = await axios.get(url, {
+                        withCredentials: true,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    console.log(`Response for event ${event.id}:`, response.data);
                     const newCount = response.data.count || 0;
                     counts[event.id] = newCount;
+                    console.log(`Set count for event ${event.id} to:`, newCount);
 
                     // Check if count increased from acknowledged count (what user has seen)
                     const acknowledgedCount = acknowledgedCounts[event.id] || 0;
@@ -164,10 +174,18 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                     }
                 } catch (error) {
                     console.error(`Failed to fetch registration count for event ${event.id}:`, error);
-                    counts[event.id] = acknowledgedCounts[event.id] || 0;
+                    console.error('Error details:', {
+                        message: error.message,
+                        status: error.response?.status,
+                        statusText: error.response?.statusText,
+                        data: error.response?.data,
+                        url: url
+                    });
+                    counts[event.id] = 0;
                 }
             }
 
+            console.log('Final registration counts:', counts);
             setRegistrationCounts(counts);
         };
 
@@ -1708,7 +1726,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                     }`}
                                 >
-                                    Borrowing
+                                    Borrowings
                                 </button>
                             </nav>
                         </div>

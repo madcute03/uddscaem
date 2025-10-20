@@ -65,7 +65,6 @@ class AthleteController extends Controller
                 ->whereNotNull('scholarship_status')
                 ->groupBy('scholarship_status')
                 ->get(),
-            'average_gpa' => round(Athlete::whereNotNull('gpa')->avg('gpa'), 2),
             'total_enrolled_units' => Athlete::sum('enrolled_units'),
         ];
 
@@ -102,8 +101,8 @@ class AthleteController extends Controller
             'course' => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:50',
             'contact_number' => 'nullable|string|max:50',
+            'birthdate' => 'required|date|before:today',
             'age' => 'required|integer|min:1|max:150',
-            'gpa' => 'nullable|numeric|min:0|max:4',
             'enrolled_units' => 'nullable|integer|min:0',
             'scholarship_status' => 'nullable|string|max:255',
             'sport_team' => 'nullable|string|max:255',
@@ -158,8 +157,8 @@ class AthleteController extends Controller
             'course' => 'nullable|string|max:255',
             'year_level' => 'nullable|string|max:50',
             'contact_number' => 'nullable|string|max:50',
+            'birthdate' => 'required|date|before:today',
             'age' => 'required|integer|min:1|max:150',
-            'gpa' => 'nullable|numeric|min:0|max:4',
             'enrolled_units' => 'nullable|integer|min:0',
             'scholarship_status' => 'nullable|string|max:255',
             'sport_team' => 'nullable|string|max:255',
@@ -215,8 +214,8 @@ class AthleteController extends Controller
             $file = fopen('php://output', 'w');
             
             fputcsv($file, [
-                'Student ID', 'Name', 'Email', 'Contact Number', 'Department', 
-                'Course', 'Year Level', 'Age', 'GPA', 'Enrolled Units', 
+                'Student ID', 'Name', 'Email', 'Contact Number', 'Birthdate', 'Department', 
+                'Course', 'Year Level', 'Age', 'Enrolled Units', 
                 'Scholarship Status', 'Sport/Team', 'Team Name', 'Status'
             ]);
 
@@ -227,11 +226,11 @@ class AthleteController extends Controller
                         $athlete->name,
                         $athlete->email,
                         $athlete->contact_number ?? 'N/A',
+                        $athlete->birthdate ?? 'N/A',
                         $athlete->department,
                         $athlete->course ?? 'N/A',
                         $athlete->year_level ?? 'N/A',
                         $athlete->age,
-                        $athlete->gpa ?? 'N/A',
                         $athlete->enrolled_units ?? 'N/A',
                         $athlete->scholarship_status ?? 'N/A',
                         $athlete->sport_team ?? 'N/A',

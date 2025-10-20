@@ -3,11 +3,9 @@ import { useEffect, useState } from "react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
 export default function ShowEvent({ event }) {
-    const [showSuccess, setShowSuccess] = useState(false);
     const [showSoonModal, setShowSoonModal] = useState(false);
     const [showAuthRequiredModal, setShowAuthRequiredModal] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const { flash } = usePage().props;
     const { auth } = usePage().props;
     
     // Debug log to check event data
@@ -20,14 +18,6 @@ export default function ShowEvent({ event }) {
             isRegistrationClosed: event.has_registration_end_date && (new Date() > new Date(event.registration_end_date))
         });
     }, [event]);
-
-    useEffect(() => {
-        if (flash.success) {
-            setShowSuccess(true);
-            const timer = setTimeout(() => setShowSuccess(false), 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [flash]);
     
     const today = new Date().toISOString().split("T")[0];
     const isUpcoming = today < event.event_date && !event.is_done;
@@ -188,14 +178,6 @@ export default function ShowEvent({ event }) {
                 </div>
             </section>
             
-            {/* Success Message */}
-            {showSuccess && (
-                <div className="fixed inset-0 flex items-center justify-center z-50">
-                    <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300">
-                        {flash.success}
-                    </div>
-                </div>
-            )}
 
             {/* Event Details */}
             <div className="max-w-7xl ml-8 px-4 py-8">
@@ -297,9 +279,9 @@ export default function ShowEvent({ event }) {
                     </div>
                     {event.rulebook_path && (
                         <div className="mt-2">
-                            <p className="text-1xl text-blue-300 mb-2">Event Rulebook</p>
+                            <p className="text-1xl text-blue-300">Event Rulebook</p>
                             <div className="text-slate-100">
-                                <div className="items-center py-2 gap-2">
+                                <div className="items-center  gap-2">
                                     <div className="flex items-center space-x-2">
                                         <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

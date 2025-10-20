@@ -38,6 +38,7 @@ export default function ShowAthlete({ auth, athlete }) {
                                 <InfoItem label="Full Name" value={athlete.name} />
                                 <InfoItem label="Email" value={athlete.email} />
                                 <InfoItem label="Contact Number" value={athlete.contact_number || 'N/A'} />
+                                <InfoItem label="Birthdate" value={athlete.birthdate ? new Date(athlete.birthdate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'} />
                                 <InfoItem label="Age" value={athlete.age} />
                                 <InfoItem label="Department" value={athlete.department} />
                             </div>
@@ -52,7 +53,6 @@ export default function ShowAthlete({ auth, athlete }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <InfoItem label="Course" value={athlete.course || 'N/A'} />
                                 <InfoItem label="Year Level" value={athlete.year_level || 'N/A'} />
-                                <InfoItem label="GPA" value={athlete.gpa || 'N/A'} />
                                 <InfoItem label="Enrolled Units" value={athlete.enrolled_units || 'N/A'} />
                                 <InfoItem 
                                     label="Scholarship Status" 

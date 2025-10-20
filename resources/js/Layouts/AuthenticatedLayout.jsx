@@ -67,7 +67,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 ),
             },
             {
-                label: 'Manage Writer',
+                label: 'Manage Users',
                 href: route('admin.writers.index'),
                 active: route().current('admin.writers.*'),
                 icon: (
