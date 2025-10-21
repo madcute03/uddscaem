@@ -54,6 +54,7 @@ class AthleteController extends Controller
         // Get statistics
         $stats = [
             'total_athletes' => Athlete::count(),
+            'active_athletes' => Athlete::where('status', 'active')->count(),
             'by_department' => Athlete::select('department', DB::raw('count(*) as count'))
                 ->groupBy('department')
                 ->get(),

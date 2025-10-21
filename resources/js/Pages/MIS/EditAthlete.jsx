@@ -4,12 +4,19 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 export default function EditAthlete({ auth, athlete }) {
+    // Format birthdate to yyyy-MM-dd for HTML5 date input
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    };
+
     const { data, setData, put, processing, errors } = useForm({
         student_id: athlete.student_id || '',
         name: athlete.name || '',
         email: athlete.email || '',
         contact_number: athlete.contact_number || '',
-        birthdate: athlete.birthdate || '',
+        birthdate: formatDate(athlete.birthdate),
         department: athlete.department || '',
         course: athlete.course || '',
         year_level: athlete.year_level || '',

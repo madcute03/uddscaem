@@ -608,29 +608,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Registered:</span>
                                             <div className="text-sm text-slate-300 mt-1 relative inline-block">
                                                 {registrationCounts[event.id] !== undefined ? registrationCounts[event.id] : '0'}
-                                                {/* Notification badge positioned on the count number */}
-                                                {Object.values(notifications)
-                                                    .filter(notification => notification.eventId === event.id)
-                                                    .map(notification => (
-                                                        <div
-                                                            key={notification.id}
-                                                            className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center cursor-pointer hover:bg-green-600 transition-colors"
-                                                            style={{
-                                                                animation: 'notificationBounce 0.6s ease-out forwards'
-                                                            }}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                // Navigate to registered players page for this event
-                                                                router.get(route('events.players', event.id));
-                                                                // Dismiss the notification since user clicked it
-                                                                removeNotification(notification.id);
-                                                            }}
-                                                            title={`View ${notification.increase} new registration${notification.increase > 1 ? 's' : ''} for ${event.name}`}
-                                                        >
-                                                            +{notification.increase}
-                                                        </div>
-                                                    ))
-                                                }
+                                                
                                             </div>
                                         </div>
                                     </div>
@@ -726,30 +704,8 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             <div className="flex items-center justify-end gap-2">
                                                 <div className="text-sm text-slate-300 relative">
                                                     {registrationCounts[event.id] !== undefined ? registrationCounts[event.id] : '0'}
-                                                    {/* Notification badge positioned on the count number */}
-                                                    {Object.values(notifications)
-                                                        .filter(notification => notification.eventId === event.id)
-                                                        .map(notification => (
-                                                            <div
-                                                                key={notification.id}
-                                                                className="absolute -top-3 -right-5 bg-green-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center cursor-pointer hover:bg-green-600 transition-colors"
-                                                                style={{
-                                                                    animation: 'notificationBounce 0.5s ease-out forwards',
-                                                                    fontSize: '10px'
-                                                                }}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    // Navigate to registered players page for this event
-                                                                    router.get(route('events.players', event.id));
-                                                                    // Dismiss the notification since user clicked it
-                                                                    removeNotification(notification.id);
-                                                                }}
-                                                                title={`View ${notification.increase} new registration${notification.increase > 1 ? 's' : ''} for ${event.name}`}
-                                                            >
-                                                                +{notification.increase}
-                                                            </div>
-                                                        ))
-                                                    }
+
+                                                    
                                                 </div>
                                             </div>
                                         </td>

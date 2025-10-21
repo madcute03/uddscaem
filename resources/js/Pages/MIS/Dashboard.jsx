@@ -95,9 +95,9 @@ export default function MISDashboard({ auth, athletes, stats }) {
                             color="blue"
                         />
                         <StatCard
-                            title="Average GPA"
-                            value={stats.average_gpa || 'N/A'}
-                            icon={AcademicCapIcon}
+                            title="Active Athletes"
+                            value={stats.active_athletes || 0}
+                            icon={UserGroupIcon}
                             color="green"
                         />
                         <StatCard
@@ -142,7 +142,6 @@ export default function MISDashboard({ auth, athletes, stats }) {
                                         <th className="text-left py-4 px-6 text-slate-300 font-semibold">Course</th>
                                         <th className="text-left py-4 px-6 text-slate-300 font-semibold">Year</th>
                                         <th className="text-left py-4 px-6 text-slate-300 font-semibold">Sport/Team</th>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">GPA</th>
                                         <th className="text-left py-4 px-6 text-slate-300 font-semibold">Scholarship</th>
                                         <th className="text-right py-4 px-6 text-slate-300 font-semibold">Actions</th>
                                     </tr>
@@ -156,7 +155,6 @@ export default function MISDashboard({ auth, athletes, stats }) {
                                                 <td className="py-4 px-6 text-slate-300">{athlete.course || 'N/A'}</td>
                                                 <td className="py-4 px-6 text-slate-300">{athlete.year_level || 'N/A'}</td>
                                                 <td className="py-4 px-6 text-slate-300">{athlete.sport_team || 'N/A'}</td>
-                                                <td className="py-4 px-6 text-slate-300">{athlete.gpa || 'N/A'}</td>
                                                 <td className="py-4 px-6">
                                                     <span className={`px-2 py-1 rounded-full text-xs ${
                                                         athlete.scholarship_status === 'Scholar' 

@@ -1,9 +1,10 @@
-import { Head, useForm, Link, router } from '@inertiajs/react';
+import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function RegisterEvent({ event }) {
-    const { data, setData, post, errors, reset } = useForm({
+    const { errors: pageErrors } = usePage().props;
+    const { data, setData, post, errors: formErrors, reset } = useForm({
         student_id: '',
         name: '',
         email: '',
@@ -21,6 +22,9 @@ export default function RegisterEvent({ event }) {
         })) : [''],
         is_team_registration: event.registration_type === 'team',
     });
+
+    // Merge errors from both sources (router.post uses pageErrors, form.post uses formErrors)
+    const errors = { ...pageErrors, ...formErrors };
 
     const [duplicateErrors, setDuplicateErrors] = useState({});
 
@@ -57,7 +61,26 @@ export default function RegisterEvent({ event }) {
             return; // Prevent submission if duplicates exist
         }
 
-        post(route('eventregistrations.store', event.id), {
+        // Format data for backend - backend expects 'players' array
+        const formData = event.registration_type === 'team' 
+            ? {
+                team_name: data.team_name,
+                players: data.team_members
+            }
+            : {
+                players: [{
+                    student_id: data.student_id,
+                    name: data.name,
+                    email: data.email,
+                    department: data.department,
+                    age: data.age,
+                    gdrive_link: data.gdrive_link
+                }]
+            };
+
+        // Use router.post to send custom formData
+        router.post(route('eventregistrations.store', event.id), formData, {
+            preserveScroll: true,
             onSuccess: () => {
                 router.visit(route('events.show', event.id), {
                     only: ['event'],
@@ -67,6 +90,12 @@ export default function RegisterEvent({ event }) {
             },
             onError: (errors) => {
                 console.error('Registration error:', errors);
+                // Log individual error messages for debugging
+                if (errors && typeof errors === 'object') {
+                    Object.keys(errors).forEach(key => {
+                        console.error(`${key}: ${errors[key]}`);
+                    });
+                }
             }
         });
     };
@@ -175,8 +204,8 @@ export default function RegisterEvent({ event }) {
                                                             title="Only numbers and dashes allowed"
                                                             required
                                                         />
-                                                        {errors[`team_members.${index}.student_id`] && (
-                                                            <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.student_id`]}</p>
+                                                        {(errors[`team_members.${index}.student_id`] || errors[`players.${index}.student_id`]) && (
+                                                            <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.student_id`] || errors[`players.${index}.student_id`]}</p>
                                                         )}
                                                         {duplicateErrors[`${index}_student_id`] && (
                                                             <p className="text-red-400 text-sm mt-1">{duplicateErrors[`${index}_student_id`]}</p>
@@ -195,14 +224,16 @@ export default function RegisterEvent({ event }) {
                                                     <div>
                                                         <input
                                                             type="email"
-                                                            placeholder="Email"
+                                                            placeholder="Email (must end with @cdd.edu.ph)"
                                                             value={member.email || ''}
                                                             onChange={(e) => updateTeamMember(index, 'email', e.target.value)}
                                                             className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                            pattern=".*@cdd\.edu\.ph$"
+                                                            title="Email must end with @cdd.edu.ph"
                                                             required
                                                         />
-                                                        {errors[`team_members.${index}.email`] && (
-                                                            <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.email`]}</p>
+                                                        {(errors[`team_members.${index}.email`] || errors[`players.${index}.email`]) && (
+                                                            <p className="text-red-400 text-sm mt-1">{errors[`team_members.${index}.email`] || errors[`players.${index}.email`]}</p>
                                                         )}
                                                         {duplicateErrors[`${index}_email`] && (
                                                             <p className="text-red-400 text-sm mt-1">{duplicateErrors[`${index}_email`]}</p>
@@ -310,8 +341,8 @@ export default function RegisterEvent({ event }) {
                                     title="Only numbers and dashes allowed, e.g., 2025-001"
                                     required
                                 />
-                                {errors.student_id && (
-                                    <p className="text-red-400 text-sm mt-1">{errors.student_id}</p>
+                                {(errors.student_id || errors['players.0.student_id']) && (
+                                    <p className="text-red-400 text-sm mt-1">{errors.student_id || errors['players.0.student_id']}</p>
                                 )}
 
                                 <input
@@ -325,14 +356,16 @@ export default function RegisterEvent({ event }) {
 
                                 <input
                                     type="email"
-                                    placeholder="Email"
+                                    placeholder="Email (must end with @cdd.edu.ph)"
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                    pattern=".*@cdd\.edu\.ph$"
+                                    title="Email must end with @cdd.edu.ph"
                                     required
                                 />
-                                {errors.email && (
-                                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                                {(errors.email || errors['players.0.email']) && (
+                                    <p className="text-red-400 text-sm mt-1">{errors.email || errors['players.0.email']}</p>
                                 )}
 
                                 <div className="space-y-2">
@@ -415,8 +448,8 @@ export default function RegisterEvent({ event }) {
                                         title="Enter a valid link (include https://)"
                                         required
                                     />
-                                    {errors.gdrive_link && (
-                                        <p className="text-red-400 text-sm mt-1">{errors.gdrive_link}</p>
+                                    {(errors.gdrive_link || errors['players.0.gdrive_link']) && (
+                                        <p className="text-red-400 text-sm mt-1">{errors.gdrive_link || errors['players.0.gdrive_link']}</p>
                                     )}
                                     <p className="text-xs text-slate-300 mt-1">
                                         Make sure sharing is set to "Anyone with the link can view."

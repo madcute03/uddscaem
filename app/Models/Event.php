@@ -5,48 +5,34 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Bracket;
 
 class Event extends Model
 {
     use HasFactory;
-
+    
     /**
-     * Automatically handle cleanup when deleting an event.
+     * The "booting" method of the model.
+     *
+     * @return void
      */
     protected static function booted()
     {
         static::deleting(function ($event) {
-            // Delete all associated images from storage (but not from DB since cascade will handle it)
-            $event->images->each(function ($image) use ($event) {
+            // Delete all associated images from storage and database
+            $event->images->each(function ($image) {
                 try {
                     if (Storage::disk('public')->exists($image->image_path)) {
                         Storage::disk('public')->delete($image->image_path);
                     }
+                    $image->delete();
                 } catch (\Exception $e) {
-                    \Log::error('Error deleting event image from storage: ' . $e->getMessage(), [
+                    // Log the error but don't stop the deletion process
+                    \Log::error('Error deleting event image: ' . $e->getMessage(), [
                         'image_id' => $image->id,
                         'event_id' => $event->id
                     ]);
                 }
-            });
-
-            // Delete rulebook file if it exists
-            if ($event->rulebook_path) {
-                try {
-                    if (Storage::disk('public')->exists($event->rulebook_path)) {
-                        Storage::disk('public')->delete($event->rulebook_path);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error deleting event rulebook from storage: ' . $e->getMessage(), [
-                        'rulebook_path' => $event->rulebook_path,
-                        'event_id' => $event->id
-                    ]);
-                }
-            }
-
-            // Delete all player registrations when an event is deleted
-            $event->registrations()->each(function ($registration) {
-                $registration->delete();
             });
         });
     }
@@ -58,21 +44,16 @@ class Event extends Model
         'venue',
         'participants',
         'category',
-        'other_category',
         'event_type',
         'other_event_type',
         'event_date',
         'event_end_date',
         'registration_end_date',
         'has_registration_end_date',
-        'registration_type',
-        'team_size',
-        'required_players',
         'is_done',
         'allow_bracketing',
         'bracket_type',
-        'teams',
-        'rulebook_path',
+        
     ];
 
     protected $casts = [
@@ -84,16 +65,15 @@ class Event extends Model
         'registration_end_date' => 'datetime',
         'participants' => 'array',
     ];
-
+    
     protected $attributes = [
-        'event_type' => 'competition',
-        'category' => 'sport',
+        'event_type' => 'competition', // Default value
+        'category' => 'sport', // Default value
         'is_done' => false,
         'allow_bracketing' => false,
         'has_registration_end_date' => false,
-        'registration_type' => 'single',
     ];
-
+    
     protected $dates = [
         'event_date',
         'event_end_date',
@@ -103,7 +83,7 @@ class Event extends Model
     ];
 
     /**
-     * Each event can have multiple images.
+     * Get the event's images.
      */
     public function images()
     {
@@ -111,15 +91,15 @@ class Event extends Model
     }
 
     /**
-     * Each event can have multiple single-player registrations.
+     * Get the event's registrations.
      */
     public function registrations()
     {
-        return $this->hasMany(RegisteredPlayer::class, 'event_id');
+        return $this->hasMany(EventRegistration::class);
     }
 
     /**
-     * Each event can have one bracket (for competitions).
+     * Get the bracket associated with the event.
      */
     public function bracket()
     {

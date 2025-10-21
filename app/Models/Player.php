@@ -17,6 +17,7 @@ class Player extends Model
         'department',
         'age',
         'gdrive_link',
+        'team_name',
         'status', // Optional: if you’re approving/disapproving players
     ];
 

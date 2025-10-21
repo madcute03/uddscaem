@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\RegisteredPlayer;
+use App\Models\Player;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PlayerStatusMail;
 use App\Mail\PlayerMessageMail;
@@ -13,7 +13,7 @@ class PlayerController extends Controller
 {
     public function updateStatus(Request $request)
     {
-        $player = RegisteredPlayer::findOrFail($request->player_id);
+        $player = Player::findOrFail($request->player_id);
 
         $player->status = $request->status;
         $player->save();
@@ -30,7 +30,7 @@ class PlayerController extends Controller
     public function sendMessage(Request $request)
     {
         $request->validate([
-            'player_id' => 'required|exists:registered_players,id',
+            'player_id' => 'required|exists:players,id',
             'message' => 'nullable|string|max:1000',
             'email' => 'required|email',
             'team_name' => 'nullable|string',
@@ -38,7 +38,7 @@ class PlayerController extends Controller
             'action' => 'nullable|string', // Add action parameter
         ]);
 
-        $player = RegisteredPlayer::findOrFail($request->player_id);
+        $player = Player::findOrFail($request->player_id);
         $customMessage = (string) $request->message;
         $isDefault = $request->boolean('is_default', false);
         $action = $request->input('action', $player->status); // Use provided action or fallback to current status
@@ -48,9 +48,11 @@ class PlayerController extends Controller
         if ($isDefault) {
             switch ($action) {
                 case 'approved':
+                case 'approve':
                     $defaultMessage = "Your registration has been approved for the event.";
                     break;
                 case 'disapproved':
+                case 'disapprove':
                     $defaultMessage = "Your registration has been disapproved for the event.";
                     break;
                 default:
@@ -71,9 +73,9 @@ class PlayerController extends Controller
 
         // If this is a team message, send to all team members
         if ($request->team_name) {
-            $teamMembers = RegisteredPlayer::where('team_name', $request->team_name)
-                                          ->where('event_id', $player->event_id)
-                                          ->get();
+            $teamMembers = Player::where('team_name', $request->team_name)
+                                 ->where('event_id', $player->event_id)
+                                 ->get();
 
             foreach ($teamMembers as $member) {
                 Mail::to($member->email)->send(new PlayerMessageMail($member, $finalMessage));

@@ -11,12 +11,15 @@ class EventRegistration extends Model
 
     protected $fillable = [
         'event_id',
+        'event_name',
+        'event_date',
+        'bracket_type',
     ];
 
-    // One registration has one player
-    public function player()
+    // One registration can have multiple players (for team registrations)
+    public function players()
     {
-        return $this->hasOne(Player::class, 'event_registration_id');
+        return $this->hasMany(Player::class, 'event_registration_id');
     }
 
     public function event()
