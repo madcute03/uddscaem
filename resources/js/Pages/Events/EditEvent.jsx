@@ -715,7 +715,7 @@ export default function EditEvent({ auth, event }) {
                                             className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
                                         />
                                         <label htmlFor="has_registration" className="text-slate-300">
-                                            Enable Registration End Date
+                                            Enable Registration
                                         </label>
                                     </div>
 
