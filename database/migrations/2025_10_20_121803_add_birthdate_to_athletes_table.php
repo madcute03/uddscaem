@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('athletes', function (Blueprint $table) {
-            $table->date('birthdate')->after('contact_number');
+            if (!Schema::hasColumn('athletes', 'birthdate')) {
+                $table->date('birthdate')->after('contact_number');
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('athletes', function (Blueprint $table) {
-            $table->dropColumn('birthdate');
+            if (Schema::hasColumn('athletes', 'birthdate')) {
+                $table->dropColumn('birthdate');
+            }
         });
     }
 };
