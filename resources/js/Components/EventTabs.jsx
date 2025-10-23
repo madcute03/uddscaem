@@ -119,16 +119,16 @@ export default function EventTabs({ events }) {
                 href={route("events.show", event.id)}
                 className={`group w-full h-full min-h-[500px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-500 hover:border-blue-500/50`}
                 style={{
-                    transform: `scale(${isInView ? 1.0 : 0.3}) ${isInView ? 'translateY(-4px)' : 'translateY(0px)'}`,
+                    transform: isInView ? 'translateY(-4px)' : 'translateY(0px)',
                     transition: 'transform 0.75s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',
                 }}
                 onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = `scale(${isInView ? 1.05 : 0.01}) translateY(-8px)`;
+                    e.currentTarget.style.transform = 'scale(1.05) translateY(-8px)';
                     e.currentTarget.style.boxShadow = '0 20px 40px rgba(59, 130, 246, 0.3)';
                     e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
                 }}
                 onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = `scale(${isInView ? 1.0 : 0.3}) translateY(${isInView ? '-4px' : '0px'})`;
+                    e.currentTarget.style.transform = isInView ? 'translateY(-4px)' : 'translateY(0px)';
                     e.currentTarget.style.boxShadow = isInView ? '0 10px 20px rgba(59, 130, 246, 0.2)' : '0 10px 20px rgba(30, 58, 138, 0.2)';
                     e.currentTarget.style.borderColor = isInView ? 'rgba(59, 130, 246, 0.5)' : 'rgba(71, 85, 105, 0.5)';
                 }}
@@ -159,8 +159,8 @@ export default function EventTabs({ events }) {
 
                 {/* Card Body */}
                 <div className="p-4 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold text-slate-100 mb-2 line-clamp-3">{event.title}</h3>                   
-                    <p className="text-sm text-slate-400 mt-auto">
+                    <h3 className="text-2xl font-bold text-slate-100 mb-2 line-clamp-3">{event.title}</h3>                   
+                    <p className="text-xl text-slate-400 mt-auto">
                         By <span className="font-semibold text-slate-200">{event.coordinator_name}</span> | {dayjs(event.event_date).format("MMM D, YYYY")}
                     </p>
                 </div>
