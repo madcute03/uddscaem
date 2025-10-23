@@ -12,7 +12,7 @@ export default function RegisterEvent({ event }) {
         age: '',
         gdrive_link: '',
         team_name: '',
-        team_members: event.registration_type === 'team' ? Array.from({ length: (event.team_size || 2) }, () => ({
+        team_members: event.registration_type === 'team' ? Array((event.team_size || 2)).fill('').map(() => ({
             student_id: '',
             name: '',
             email: '',
@@ -62,6 +62,9 @@ export default function RegisterEvent({ event }) {
         }
 
         // Format data for backend - backend expects 'players' array
+        console.log('Registration type:', event.registration_type);
+        console.log('Form data before formatting:', data);
+        
         const formData = event.registration_type === 'team' 
             ? {
                 team_name: data.team_name,
@@ -77,6 +80,9 @@ export default function RegisterEvent({ event }) {
                     gdrive_link: data.gdrive_link
                 }]
             };
+
+        console.log('Formatted data for submission:', formData);
+        console.log('Players array:', formData.players);
 
         // Use router.post to send custom formData
         router.post(route('eventregistrations.store', event.id), formData, {
@@ -159,6 +165,8 @@ export default function RegisterEvent({ event }) {
                         Fill in your registration details below
                     </p>
 
+                    
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {event.registration_type === 'team' ? (
                             // Team Registration Form
@@ -192,7 +200,7 @@ export default function RegisterEvent({ event }) {
                                                     <h5 className="font-medium text-slate-200">Player {index + 1}</h5>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
                                                         <input
                                                             type="text"
@@ -227,7 +235,7 @@ export default function RegisterEvent({ event }) {
                                                             placeholder="Email (must end with @cdd.edu.ph)"
                                                             value={member.email || ''}
                                                             onChange={(e) => updateTeamMember(index, 'email', e.target.value)}
-                                                            className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                            className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                                                             pattern=".*@cdd\.edu\.ph$"
                                                             title="Email must end with @cdd.edu.ph"
                                                             required
@@ -282,17 +290,15 @@ export default function RegisterEvent({ event }) {
                                                         placeholder="Age"
                                                         value={member.age || ''}
                                                         onChange={(e) => updateTeamMember(index, 'age', e.target.value)}
-                                                        className="bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                        className="h-[45px] bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                                                         required
                                                     />
 
                                                     <div>
-                                                        <label className="block mb-1 text-slate-200">
-                                                            {event.event_type === 'competition' ? 'Upload your whiteform image' : 'Google Drive link (Whiteform/PDS/Medical in one folder)'}
-                                                        </label>
+                                                        
                                                         <input
                                                             type="url"
-                                                            placeholder="https://drive.google.com/..."
+                                                            placeholder="Upload Whiteform via GoogleDrive Link"
                                                             value={member.gdrive_link || ''}
                                                             onChange={(e) => updateTeamMember(index, 'gdrive_link', e.target.value)}
                                                             className="w-full bg-white/10 border border-white/20 text-slate-100 placeholder-slate-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
@@ -460,17 +466,22 @@ export default function RegisterEvent({ event }) {
 
                         <button
                             type="submit"
-                            className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition"
+                            className="w-full h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                         >
                             Submit Registration
                         </button>
                     </form>
 
                     <Link
-                        href={route('home')}
+                        href={route('events.show', event.id)}
                         className="mt-6 inline-block text-blue-300 hover:text-blue-200 hover:underline"
                     >
-                        ← Back to Events
+                        ← Back to Event
                     </Link>
                 </div>
             </div>

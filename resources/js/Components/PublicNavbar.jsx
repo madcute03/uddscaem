@@ -115,18 +115,18 @@ export default function PublicNavbar({
                         Events
                     </Link>
                     <Link
-                        href={route('borrow.index')}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        Borrow
-                    </Link>
-                    <Link
                         href={route('news.index')}
                         className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
                         onClick={() => setMobileOpen(false)}
                     >
                         News
+                    </Link>
+                    <Link
+                        href={route('borrow.index')}
+                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
+                        onClick={() => setMobileOpen(false)}
+                    >
+                        Borrow
                     </Link>
                     <Link
                         href={route('complaints.index')}

@@ -677,14 +677,11 @@ class EventController extends Controller
         // Get file mime type
         $mimeType = mime_content_type($filePath);
 
+        // Force inline display (view in browser) instead of download
         return response()->file($filePath, [
             'Content-Type' => $mimeType ?: 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . basename($event->rulebook_path) . '"',
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-            'Accept-Ranges' => 'bytes',
-            'Content-Length' => filesize($filePath)
+            'Content-Disposition' => 'inline',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 }

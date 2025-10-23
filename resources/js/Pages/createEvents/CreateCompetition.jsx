@@ -159,7 +159,12 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const isSelected = (date) => {
         if (!date || !dateValue) return false;
-        return date.toISOString().split('T')[0] === dateValue;
+        // Use local date formatting to avoid timezone conversion issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const localDateString = `${year}-${month}-${day}`;
+        return localDateString === dateValue;
     };
 
     const isToday = (date) => {
@@ -900,10 +905,11 @@ export default function CreateCompetition({ auth, events = [] }) {
                                                         value="single"
                                                         checked={data.registration_type === 'single'}
                                                         onChange={(e) => {
-                                                            setData('registration_type', e.target.value);
-                                                            if (e.target.value === 'single') {
-                                                                setData('team_size', '');
-                                                            }
+                                                            setData({
+                                                                ...data,
+                                                                registration_type: e.target.value,
+                                                                team_size: ''
+                                                            });
                                                         }}
                                                         className="mr-2 text-blue-600 focus:ring-blue-500"
                                                     />
