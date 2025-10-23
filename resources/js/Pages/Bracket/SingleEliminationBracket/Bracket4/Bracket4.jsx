@@ -206,26 +206,23 @@ export default function FourTeamBracket({ eventId }) {
                 </button>
             </div>
 
-            <div id="bracket-container" className="relative">
+            <div id="bracket-container" className="relative w-full">
                 <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                     {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                 </svg>
 
-                {/* Column headers */}
-                <div className="flex text-xs text-gray-300 mb-2 pl-1 max-w-full">
-                    <div className="flex w-full">
-                        <div className="w-1/2 text-center">Semi Finals</div>
-                        <div className="w-1/2 text-center">Finals</div>
-                    </div>
-                </div>
-
-                <div className="flex flex-col gap-6 min-w-max">
-                    <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">
-                        <div className="space-y-16 sm:space-y-20 md:space-y-24">
-                            {renderMatch("SF1", "Semi-Final 1")}
-                            {renderMatch("SF2", "Semi-Final 2")}
+                <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full overflow-visible">
+                    <div className="mb-8">
+                        <h2 className="font-bold text-sm mb-3">Semifinals</h2>
+                        <div className="space-y-16 sm:space-y-20">
+                            {renderMatch("SF1")}
+                            {renderMatch("SF2")}
                         </div>
-                        <div className="flex flex-col justify-center">
+                    </div>
+
+                    <div className="mb-8">
+                        <h2 className="font-bold text-sm mb-3">Finals</h2>
+                        <div className="mt-24">
                             <div>
                                 {renderMatch("GF", "Grand Final")}
                                 {champion && (

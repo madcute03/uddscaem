@@ -176,7 +176,7 @@ export default function BorrowersIndex() {
     return (
         <AuthenticatedLayout header={<h2>Borrowers Management</h2>}>
             <Head title="Borrowers Management" />
-            <div className="max-w-full space-y-8">
+            <div className="max-w-full space-y-8 align-content-start">
                 <section>
                     <h3 className="text-xl font-semibold mb-3">Inventory Dashboard</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
@@ -396,7 +396,7 @@ export default function BorrowersIndex() {
 
                 <section>
                     <h3 className="text-xl font-semibold mb-3">Borrowing Logs</h3>
-                    <div className="rounded-lg border border-slate-700 bg-slate-900/30 overflow-hidden">
+                    <div className="w-[1200px] rounded-lg border border-slate-700 bg-slate-900/30 overflow-hidden">
                         <table className="w-full text-sm">
                             <thead className="bg-slate-900/60">
                                 <tr className="text-left">

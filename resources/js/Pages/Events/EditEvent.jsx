@@ -506,12 +506,16 @@ export default function EditEvent({ auth, event }) {
         }
 
         formData.append('has_registration_end_date', data.has_registration_end_date ? '1' : '0');
+        
+        // Always send registration_type and team_size to preserve them
+        formData.append('registration_type', data.registration_type || 'single');
+        if (data.team_size) {
+            formData.append('team_size', data.team_size);
+        }
+        
+        // Send registration_end_date if registration is enabled
         if (data.has_registration_end_date && data.registration_end_date) {
             formData.append('registration_end_date', data.registration_end_date);
-            formData.append('registration_type', data.registration_type || 'team');
-            if (data.registration_type === 'team' && data.team_size) {
-                formData.append('team_size', data.team_size);
-            }
         }
 
         if (data.event_type !== 'tryouts' && Array.isArray(data.participants)) {
@@ -868,6 +872,40 @@ export default function EditEvent({ auth, event }) {
                                                 );
                                             })}
                                         </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Rulebook Upload */}
+                        <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
+                            <h2 className="text-xl font-semibold text-white mb-4">Event Rulebook</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-slate-300 mb-2">Upload Rulebook (PDF, DOC, DOCX, TXT)</label>
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.txt"
+                                        onChange={(e) => setData('rulebook', e.target.files[0])}
+                                        className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">Maximum file size: 5MB</p>
+                                </div>
+
+                                {event.rulebook_path && (
+                                    <div className="flex items-center gap-2 p-3 bg-slate-700/50 rounded-lg">
+                                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span className="text-slate-300 text-sm flex-1">Current rulebook uploaded</span>
+                                        <a
+                                            href={route('events.rulebook.download', event.id)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-400 hover:text-blue-300 text-sm"
+                                        >
+                                            View
+                                        </a>
                                     </div>
                                 )}
                             </div>

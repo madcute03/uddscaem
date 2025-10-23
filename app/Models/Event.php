@@ -44,16 +44,21 @@ class Event extends Model
         'venue',
         'participants',
         'category',
+        'other_category',
         'event_type',
         'other_event_type',
         'event_date',
         'event_end_date',
         'registration_end_date',
         'has_registration_end_date',
+        'registration_type',
+        'team_size',
+        'required_players',
         'is_done',
         'allow_bracketing',
         'bracket_type',
-        
+        'teams',
+        'rulebook_path',
     ];
 
     protected $casts = [

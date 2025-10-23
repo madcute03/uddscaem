@@ -38,13 +38,7 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
         LB4: "Match 11",
         LB5: "Match 12",
         LB6: "Match 13",
-        LB7: "Match 14",
-        LB8: "Match 15",
-        LB9: "Match 16",
-        LB10: "Match 17",
-        LB11: "Match 18",
-        LB12: "Match 19",
-        GF:  "Match 20",
+        GF:  "Match 14",
     }), []);
     const [showPopup, setShowPopup] = useState(false);
 
@@ -273,43 +267,80 @@ export default function EightTeamDoubleElimination({ eventId, teamCount = 8 }) {
                     {lines.map((d, i) => <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />)}
                 </svg>
 
-                <div className="flex flex-col gap-20 sm:gap-16 min-w-max pr-[1200px] overflow-visible">
-                    <div className="mb-6">
-                        <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
-                        <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
-                            <div className="space-y-3 sm:space-y-4">
-                                {renderMatch("UB1")}
-                                {renderMatch("UB2")}
-                                {renderMatch("UB3")}
-                                {renderMatch("UB4")}
-                            </div>
-                            <div className="mt-10">
-                                {renderMatch("UB5")}
-                                <div className="h-24"></div>
-                                {renderMatch("UB6")}
-                            </div>
-                            <div className="mt-36">{renderMatch("UB7")}</div>
+                {/* Upper Bracket */}
+                <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full overflow-visible">
+                    <div className="mb-8">
+                        <h2 className="font-bold text-sm mb-3">Round 1</h2>
+                        <div className="space-y-6 sm:space-y-8">
+                            {renderMatch("UB1")}
+                            {renderMatch("UB2")}
+                            {renderMatch("UB3")}
+                            {renderMatch("UB4")}
+                        </div>
+                    </div>
+
+                    <div className="mb-8">
+                        <h2 className="font-bold text-sm mb-3">Round 2</h2>
+                        <div className="space-y-6 sm:space-y-8">
+                            <div className="h-8"></div>
+                            {renderMatch("UB5")}
+                            <div className="h-16"></div>
+                            {renderMatch("UB6")}
+                        </div>
+                    </div>
+
+                    <div className="mb-8">
+                        <h2 className="font-bold text-sm mb-3">Semifinals</h2>
+                        <div className="mt-40">
+                            {renderMatch("UB7")}
+                        </div>
+                    </div>
+
+                    <div className="mb-8">
+                        <h2 className="font-bold text-sm mb-3">Finals</h2>
+                        <div className="mt-40">
+                            {renderMatch("GF")}
+                            {champion && (
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                    🏆 {champion} 🏆
+                                </h2>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Lower Bracket - Below Upper Bracket */}
+                <div className="mt-12 flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full overflow-visible">
+                    <div>
+                        <h2 className="font-bold text-sm mb-3">Losers Round 1</h2>
+                        <div className="space-y-6 sm:space-y-8">
+                            {renderMatch("LB1")}
+                            {renderMatch("LB2")}
                         </div>
                     </div>
 
                     <div>
-                        <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
-                        <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28">
-                            <div className="space-y-3 sm:space-y-4">
-                                {renderMatch("LB1")}
-                                {renderMatch("LB2")}
-                            </div>
-                            <div className="mt-10 space-y-10">
-                                {renderMatch("LB3")}
-                                {renderMatch("LB4")}
-                            </div>
-                            <div className="mt-24">{renderMatch("LB5")}</div>
-                            <div className="mt-24">{renderMatch("LB6")}</div>
+                        <h2 className="font-bold text-sm mb-3">Losers Round 2</h2>
+                        <div className="space-y-6 sm:space-y-8">
+                            <div className="h-4"></div>
+                            {renderMatch("LB3")}
+                            <div className="h-8"></div>
+                            {renderMatch("LB4")}
                         </div>
                     </div>
 
-                    <div className="absolute left-[850px] sm:left-[1100px] md:left-[1100px] lg:left-[1100px] top-1/2 transform -translate-y-1/2">
-                        {renderMatch("GF")}
+                    <div>
+                        <h2 className="font-bold text-sm mb-3">Losers Round 3</h2>
+                        <div className="mt-16">
+                            {renderMatch("LB5")}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className="font-bold text-sm mb-3">Losers Round 4</h2>
+                        <div className="mt-16">
+                            {renderMatch("LB6")}
+                        </div>
                     </div>
                 </div>
             </div>

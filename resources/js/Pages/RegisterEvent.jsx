@@ -12,7 +12,7 @@ export default function RegisterEvent({ event }) {
         age: '',
         gdrive_link: '',
         team_name: '',
-        team_members: event.registration_type === 'team' ? Array((event.team_size || 2)).fill('').map(() => ({
+        team_members: event.registration_type === 'team' ? Array.from({ length: (event.team_size || 2) }, () => ({
             student_id: '',
             name: '',
             email: '',

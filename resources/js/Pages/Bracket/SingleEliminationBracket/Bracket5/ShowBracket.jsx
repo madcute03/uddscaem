@@ -90,35 +90,38 @@ export default function ShowFiveTeamBracket({ eventId }) {
             <div className="bg-gray-900 min-h-screen p-2 md:p-6 text-white w-full overflow-x-auto">
                 <h1 className="text-xl font-bold text-center mb-4">5-Team Single Elimination Bracket</h1>
 
-                <div id="bracket-container" className="relative">
+                <div id="bracket-container" className="relative w-full overflow-visible">
                     <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
                         {lines.map((d, i) => (
                             <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
                         ))}
                     </svg>
 
-                    <div className="flex flex-col gap-6 min-w-max">
-                        <div className="flex gap-12 sm:gap-20 md:gap-28 lg:gap-36 xl:gap-44">
-                            <div className="space-y-6 sm:space-y-8 md:space-y-10">
-                                {renderMatch("R1", "Round 1")}
+                    <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full overflow-visible">
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Round 1</h2>
+                            <div className="space-y-6 sm:space-y-8">
+                                {renderMatch("R1")}
                             </div>
-                            <div className="mt-12 space-y-24 sm:space-y-28 md:space-y-32">
-                                <div className="pt-8">
-                                    {renderMatch("SF1", "Semi-Final 1")}
-                                </div>
-                                <div className="pt-8">
-                                    {renderMatch("SF2", "Semi-Final 2")}
-                                </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Semifinals</h2>
+                            <div className="space-y-16 sm:space-y-20">
+                                {renderMatch("SF1")}
+                                {renderMatch("SF2")}
                             </div>
-                            <div className="flex flex-col justify-center">
-                                <div>
-                                    {renderMatch("GF", "Grand Final")}
-                                    {champion && (
-                                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
-                                            🏆 {champion} 🏆
-                                        </h2>
-                                    )}
-                                </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Finals</h2>
+                            <div className="mt-24">
+                                {renderMatch("GF")}
+                                {champion && (
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                        🏆 {champion} 🏆
+                                    </h2>
+                                )}
                             </div>
                         </div>
                     </div>

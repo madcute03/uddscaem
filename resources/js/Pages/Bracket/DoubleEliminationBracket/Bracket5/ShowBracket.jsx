@@ -119,63 +119,70 @@ export default function FiveTeamShowResult({ eventId, refreshTrigger }) {
                 <Head title="5-Team Double Elimination Bracket" />
                 <h1 className="text-xl font-bold text-center mb-4">5-Team Double Elimination Bracket</h1>
 
-                <div className="relative overflow-x-auto">
-                    <div id="bracket-container" className="relative min-w-[1200px]">
-                        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                            {lines.map((d, i) => (
-                                <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
-                            ))}
-                        </svg>
+                <div id="bracket-container" className="relative w-full overflow-visible">
+                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                        {lines.map((d, i) => (
+                            <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
+                        ))}
+                    </svg>
 
-                        <div className="flex gap-4 sm:gap-6 w-full">
-                            {/* Left Column - Brackets */}
-                            <div className="w-3/4">
-                                {/* Upper Bracket */}
-                                <div className="mb-8">
-                                    <h2 className="font-bold text-sm mb-3">Upper Bracket</h2>
-                                    <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-32">
-                                        <div className="space-y-2 sm:space-y-3">
-                                            {renderMatch("UB1")}
-                                        </div>
-                                        <div className="mt-8">
-                                            {renderMatch("UB2")}
-                                            {renderMatch("UB3")}
-                                        </div>
-                                        <div className="mt-16">
-                                            {renderMatch("UB4")}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Lower Bracket */}
-                                <div>
-                                    <h2 className="font-bold text-sm mb-3">Lower Bracket</h2>
-                                    <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-32">
-                                        <div className="space-y-2 sm:space-y-3">
-                                            <div className="h-8"></div>
-                                            {renderMatch("LB1")}
-                                        </div>
-                                        <div className="mt-8">
-                                            {renderMatch("LB2")}
-                                        </div>
-                                        <div className="mt-16">
-                                            {renderMatch("LB3")}
-                                        </div>
-                                    </div>
-                                </div>
+                    {/* Upper Bracket */}
+                    <div className="flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full overflow-visible">
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Round 1</h2>
+                            <div className="mt-8">
+                                {renderMatch("UB1")}
                             </div>
+                        </div>
 
-                            {/* Right Column - Grand Final */}
-                            <div className="w-1/4 flex items-center">
-                                <div className="w-full">
-                                    <h2 className="font-bold text-sm mb-3 text-center">Grand Final</h2>
-                                    {renderMatch("GF")}
-                                    {champion && (
-                                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
-                                            🏆 {champion} 🏆
-                                        </h2>
-                                    )}
-                                </div>
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Round 2</h2>
+                            <div className="space-y-6 sm:space-y-8">
+                                {renderMatch("UB2")}
+                                {renderMatch("UB3")}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Semifinals</h2>
+                            <div className="mt-16">
+                                {renderMatch("UB4")}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h2 className="font-bold text-sm mb-3">Finals</h2>
+                            <div className="mt-16">
+                                {renderMatch("GF")}
+                                {champion && (
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mt-2 sm:mt-3 text-center">
+                                        🏆 {champion} 🏆
+                                    </h2>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Lower Bracket - Below Upper Bracket */}
+                    <div className="mt-12 flex gap-16 sm:gap-20 md:gap-24 lg:gap-28 min-w-max w-full overflow-visible">
+                        <div>
+                            <h2 className="font-bold text-sm mb-3">Losers Round 1</h2>
+                            <div className="mt-8">
+                                {renderMatch("LB1")}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h2 className="font-bold text-sm mb-3">Losers Round 2</h2>
+                            <div className="mt-8">
+                                {renderMatch("LB2")}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h2 className="font-bold text-sm mb-3">Losers Round 3</h2>
+                            <div className="mt-8">
+                                {renderMatch("LB3")}
                             </div>
                         </div>
                     </div>

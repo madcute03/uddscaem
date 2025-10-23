@@ -636,6 +636,13 @@ export default function CreateCompetition({ auth, events = [] }) {
     };
 
     const handleSubmit = () => {
+        // Debug: Log the data being submitted
+        console.log('Submitting event with:', {
+            registration_type: data.registration_type,
+            team_size: data.team_size,
+            has_registration_end_date: data.has_registration_end_date,
+        });
+
         const formData = new FormData();
         
         // Add all form data to formData object
@@ -662,10 +669,13 @@ export default function CreateCompetition({ auth, events = [] }) {
             } else if (key === 'registration_end_date' && !data.has_registration_end_date) {
                 // Skip registration end date if not enabled
                 return;
-            } else if (key === 'team_size' && data.registration_type !== 'team') {
-                // Skip team size if not team registration
+            } else if (key === 'team_size') {
+                // Always send team_size if it has a value, regardless of registration type
+                if (value) {
+                    formData.append(key, value);
+                }
                 return;
-            } else if (value !== null && value !== undefined) {
+            } else if (value !== null && value !== undefined && value !== '') {
                 // Handle all other fields
                 formData.append(key, value);
             }

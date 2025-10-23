@@ -53,6 +53,9 @@ class EventRegistrationController extends Controller
                 return back()->withErrors(['players' => 'At least one player is required.'])->withInput();
             }
 
+            // Get team name if it's a team registration
+            $teamName = $validated['team_name'] ?? null;
+
             // ✅ Loop through and save each player directly to the event
             foreach ($validated['players'] as $player) {
                 Player::create([
@@ -63,6 +66,7 @@ class EventRegistrationController extends Controller
                     'department' => $player['department'],
                     'age' => $player['age'],
                     'gdrive_link' => $player['gdrive_link'],
+                    'team_name' => $teamName,
                 ]);
             }
 

@@ -267,14 +267,25 @@ class EventController extends Controller
             return $base . '/storage/' . ltrim($img->image_path, '/');
         });
 
+        // Make sure rulebook_path is included in the event data
+        $eventData = $event->toArray();
+        $eventData['images_path'] = $event->images_path;
+
         return Inertia::render('ShowEvent', [
-            'event' => $event,
+            'event' => $eventData,
         ]);
     }
 
     // ADMIN: Create a new event
     public function store(Request $request)
     {
+        // Debug: Log the incoming request data
+        Log::info('Event Store Request Data:', [
+            'registration_type' => $request->input('registration_type'),
+            'team_size' => $request->input('team_size'),
+            'has_registration_end_date' => $request->input('has_registration_end_date'),
+        ]);
+
         // Validate the request data
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -351,6 +362,14 @@ class EventController extends Controller
             'is_done' => false,
         ]);
 
+        // Debug: Log what was actually saved
+        Log::info('Event Created:', [
+            'id' => $event->id,
+            'registration_type' => $event->registration_type,
+            'team_size' => $event->team_size,
+            'team_size_type' => gettype($event->team_size),
+        ]);
+
         // Handle file uploads
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
@@ -402,9 +421,9 @@ class EventController extends Controller
                 'event_date' => 'required|date',
                 'event_end_date' => 'nullable|date|after_or_equal:event_date',
                 'has_registration_end_date' => 'sometimes|boolean',
-                'registration_type' => 'required_if:has_registration_end_date,true|in:single,team',
-                'team_size' => 'required_if:registration_type,team|nullable|integer|min:2|max:50',
-                'registration_end_date' => 'nullable|date|required_if:has_registration_end_date,1',
+                'registration_type' => 'nullable|in:single,team',
+                'team_size' => 'nullable|integer|min:2|max:50',
+                'registration_end_date' => 'nullable|date',
                 'required_players' => 'nullable|integer|min:1|max:20',
                 'images' => 'nullable|array',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -457,9 +476,9 @@ class EventController extends Controller
                 'event_end_date' => $data['event_end_date'] ?? null,
                 'registration_end_date' => $data['has_registration_end_date'] ? ($data['registration_end_date'] ?? null) : null,
                 'has_registration_end_date' => $data['has_registration_end_date'] ?? false,
-                'registration_type' => $data['registration_type'] ?? 'single',
-                'team_size' => $data['team_size'] ?? null,
-                'required_players' => $data['required_players'] ?? null,
+                'registration_type' => $data['registration_type'] ?? $event->registration_type ?? 'single',
+                'team_size' => $data['team_size'] ?? $event->team_size ?? null,
+                'required_players' => $data['required_players'] ?? $event->required_players ?? null,
                 'allow_bracketing' => $data['allow_bracketing'] ?? false,
             ]);
 
