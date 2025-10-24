@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 
 export default function CompetitionRegistrations({ players: initialPlayers, event }) {
     const [query, setQuery] = useState("");
+    const [isProcessing, setIsProcessing] = useState(false);
+    const { auth, flash } = usePage().props;
     
     // Use initialPlayers directly
     const players = initialPlayers;
@@ -19,6 +21,26 @@ export default function CompetitionRegistrations({ players: initialPlayers, even
                 (p.department || "").toLowerCase().includes(q)
         );
     }, [players, query]);
+
+    // Check if a participant is already added
+    const isParticipantAdded = (participantName) => {
+        return event?.participants?.includes(participantName) || false;
+    };
+
+    // Handler to add a specific team or player as participant
+    const handleAddAsParticipant = (participantName) => {
+        if (confirm(`Are you sure you want to add "${participantName}" as a participant to this event?`)) {
+            setIsProcessing(participantName);
+            router.post(
+                route('events.addParticipants', event.id),
+                { participant_name: participantName },
+                {
+                    preserveScroll: true,
+                    onFinish: () => setIsProcessing(false),
+                }
+            );
+        }
+    };
 
     // Group players by team for team events
     const groupedPlayers = useMemo(() => {
@@ -61,8 +83,20 @@ export default function CompetitionRegistrations({ players: initialPlayers, even
                 </Link>
 
                 <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
+                    {/* Success/Error Messages */}
+                    {flash?.success && (
+                        <div className="mb-4 p-4 rounded-lg bg-green-500/20 border border-green-400/30 text-green-300">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="mb-4 p-4 rounded-lg bg-red-500/20 border border-red-400/30 text-red-300">
+                            {flash.error}
+                        </div>
+                    )}
+
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                        <div>
+                        <div className="flex-1">
                             <h1 className="text-2xl font-semibold">
                                 {event?.registration_type === 'team' ? 'Registered Teams' : 'Registered Players'}
                                 {event?.title ? ` — ${event.title}` : ""}
@@ -107,7 +141,47 @@ export default function CompetitionRegistrations({ players: initialPlayers, even
                                                             Registered
                                                         </span>
                                                     </div>
-                                                    <p className="text-sm text-slate-300">{teamMembers.length} members</p>
+                                                    <div className="flex items-center gap-3">
+                                                        <p className="text-sm text-slate-300">{teamMembers.length} members</p>
+                                                        {auth?.user && (
+                                                            <button
+                                                                onClick={() => handleAddAsParticipant(teamName)}
+                                                                disabled={isProcessing === teamName || isParticipantAdded(teamName)}
+                                                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300
+                                                                         ${isParticipantAdded(teamName)
+                                                                             ? 'bg-green-600/50 border border-green-500/50 cursor-not-allowed'
+                                                                             : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transform hover:scale-105'
+                                                                         }
+                                                                         disabled:from-slate-600 disabled:to-slate-500
+                                                                         disabled:cursor-not-allowed disabled:transform-none
+                                                                         text-white flex items-center gap-2`}
+                                                            >
+                                                                {isProcessing === teamName ? (
+                                                                    <>
+                                                                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                        </svg>
+                                                                        Adding...
+                                                                    </>
+                                                                ) : isParticipantAdded(teamName) ? (
+                                                                    <>
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                        Added as Participant
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                                        </svg>
+                                                                        Add as Participant
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="overflow-x-auto">
@@ -171,6 +245,9 @@ export default function CompetitionRegistrations({ players: initialPlayers, even
                                                     <th className="px-3 py-2 text-left text-sm font-semibold">Age</th>
                                                     <th className="px-3 py-2 text-left text-sm font-semibold">Documents</th>
                                                     <th className="px-3 py-2 text-center text-sm font-semibold">Status</th>
+                                                    {auth?.user && (
+                                                        <th className="px-3 py-2 text-center text-sm font-semibold">Actions</th>
+                                                    )}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -201,6 +278,46 @@ export default function CompetitionRegistrations({ players: initialPlayers, even
                                                                 Registered
                                                             </span>
                                                         </td>
+                                                        {auth?.user && (
+                                                            <td className="px-3 py-2 text-center">
+                                                                <button
+                                                                    onClick={() => handleAddAsParticipant(player.name)}
+                                                                    disabled={isProcessing === player.name || isParticipantAdded(player.name)}
+                                                                    className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300
+                                                                             ${isParticipantAdded(player.name)
+                                                                                 ? 'bg-green-600/50 border border-green-500/50 cursor-not-allowed'
+                                                                                 : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transform hover:scale-105'
+                                                                             }
+                                                                             disabled:from-slate-600 disabled:to-slate-500
+                                                                             disabled:cursor-not-allowed disabled:transform-none
+                                                                             text-white flex items-center gap-1.5 mx-auto`}
+                                                                >
+                                                                    {isProcessing === player.name ? (
+                                                                        <>
+                                                                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                            </svg>
+                                                                            Adding...
+                                                                        </>
+                                                                    ) : isParticipantAdded(player.name) ? (
+                                                                        <>
+                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                            </svg>
+                                                                            Added
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                                            </svg>
+                                                                            Add
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 ))}
                                             </tbody>

@@ -117,7 +117,7 @@ export default function EventTabs({ events }) {
             <Link
                 ref={cardRef}
                 href={route("events.show", event.id)}
-                className={`group w-full h-full min-h-[400px] min-w-[300px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-500 hover:border-blue-500/50`}
+                className={`group w-full h-full min-h-[450px] min-w-[300px] bg-slate-900/60 backdrop-blur border border-slate-800/50 rounded-xl overflow-hidden flex flex-col shadow-lg shadow-blue-950/20 hover:shadow-xl hover:shadow-blue-950/30 transition-all duration-500 hover:border-blue-500/50`}
                 style={{
                     transform: `scale(${isInView ? 1.0 : 0.3}) ${isInView ? 'translateY(-4px)' : 'translateY(0px)'}`,
                     transition: 'transform 0.75s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out',

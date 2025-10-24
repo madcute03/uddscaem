@@ -187,6 +187,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Event Registration Count (for dashboard)
     Route::get('/events/{event}/registrations/count', [EventRegistrationController::class, 'getRegistrationCount'])->name('events.registrations.count');
+    
+    // Add registered players/teams as participants
+    Route::post('/events/{event}/add-participants', [EventRegistrationController::class, 'addAsParticipants'])->name('events.addParticipants');
 
     // MIS - Athlete Management Routes
     Route::prefix('mis')->name('mis.')->group(function () {

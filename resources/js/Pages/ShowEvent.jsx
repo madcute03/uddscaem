@@ -118,7 +118,7 @@ export default function ShowEvent({ event }) {
         }
     };
 
-    const handleDownloadRulebook = () => {
+    const handleViewRulebook = () => {
         window.open(route("events.rulebook.download", event.id), '_blank', 'noopener,noreferrer');
     };
 
@@ -162,11 +162,6 @@ export default function ShowEvent({ event }) {
                 {/* Event Description */}
                 <EventDescription description={event.description} />
 
-                {/* Participants List (Competition only) */}
-                {event.event_type === 'competition' && event.participants?.length > 0 && (
-                    <ParticipantsList participants={event.participants} />
-                )}
-
                 {/* Action Buttons */}
                 <ActionButtons
                     event={event}
@@ -179,7 +174,12 @@ export default function ShowEvent({ event }) {
 
                 {/* Rulebook Section */}
                 {event.rulebook_path && (
-                    <RulebookSection onDownload={handleDownloadRulebook} />
+                    <RulebookSection onView={handleViewRulebook} />
+                )}
+
+                {/* Participants List (Competition only) */}
+                {event.event_type === 'competition' && event.participants?.length > 0 && (
+                    <ParticipantsList participants={event.participants} />
                 )}
 
                 {/* Coordinator Info */}
@@ -257,7 +257,7 @@ function EventSchedule({ eventDate, eventEndDate, venue, formatDate }) {
 function EventDescription({ description }) {
     return (
         <div className="mb-6">
-            <p className="text-xl sm:text-2xl text-slate-100 leading-relaxed font-light">
+            <p className="text-xl sm:text-2xl text-slate-100 leading-relaxed font-light text-center">
                 {description}
             </p>
         </div>
@@ -266,8 +266,13 @@ function EventDescription({ description }) {
 
 function ParticipantsList({ participants }) {
     return (
-        <div className="mt-6 mb-6">
-            <p className="text-lg font-semibold text-blue-300 mb-2">Participants</p>
+        <div className="mt-6 mb-6 p-6 bg-slate-600/20 border border-slate-600 rounded-xl w-[720px] justify-center mx-auto">
+            <div className="flex items-center gap-2 mb-4 justify-center">
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <p className="text-xl font-semibold text-blue-300">Participants</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {participants.map((participant, index) => (
                     <div key={index} className="bg-slate-700/60 text-slate-100 p-3 rounded-lg">
@@ -286,12 +291,18 @@ function ActionButtons({ event, isRegistrationOpen, isUpcoming, hasBracket, form
     if (!showRegistration && !hasBracket) return null;
 
     return (
-        <div className="flex flex-wrap items-center gap-4 mt-6 mb-6">
+        <div className="flex flex-wrap items-center gap-4 mt-8 mb-3 justify-center ">
             {/* Register Button */}
             {showRegistration && (
-                <div>
+                <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl ">
                     {isRegistrationOpen ? (
-                        <>
+                        <div className="flex flex-col items-start gap-3 items-center">
+                            <div className="flex items-center gap-2 mb-2">
+                                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                                <span className="text-lg font-semibold text-blue-300">Registration</span>
+                            </div>
                             <Link
                                 href={route("events.register", event.id)}
                                 className="inline-block px-8 py-3 rounded-2xl cursor-pointer 
@@ -305,16 +316,24 @@ function ActionButtons({ event, isRegistrationOpen, isUpcoming, hasBracket, form
                                 Register Now
                             </Link>
                             {event.registration_end_date && (
-                                <p className="text-blue-300 text-sm mt-2">
+                                <p className="text-blue-300 text-sm">
                                     Registration Until {formatDate(event.registration_end_date, true)}
                                 </p>
                             )}
-                        </>
+                        </div>
                     ) : (
-                        <div className="inline-block px-8 py-3 rounded-2xl 
-                                      bg-slate-600/50 border border-slate-600 
-                                      text-slate-400 cursor-not-allowed">
-                            Registration Closed
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                                <span className="text-lg font-semibold text-blue-300">Registration</span>
+                            </div>
+                            <div className="inline-block px-8 py-3 rounded-2xl 
+                                          bg-slate-600/50 border border-slate-600 
+                                          text-slate-400 cursor-not-allowed">
+                                Registration Closed
+                            </div>
                         </div>
                     )}
                 </div>
@@ -322,27 +341,37 @@ function ActionButtons({ event, isRegistrationOpen, isUpcoming, hasBracket, form
 
             {/* View Bracket Button */}
             {hasBracket && (
-                <Link
-                    href={route("bracket.show", { event: event.id })}
-                    onClick={(e) => handleViewBracket(e, 'bracket')}
-                    className="inline-block px-8 py-3 rounded-2xl cursor-pointer 
-                             transition duration-300 ease-in-out 
-                             bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                             bg-[#2e8eff]/20 
-                             hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                             focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]
-                             text-white font-medium"
-                >
-                    View Bracket
-                </Link>
+                <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl">
+                    <div className="flex flex-col items-start gap-3 items-center h-[130px] w-[300px]">
+                        <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            <span className="text-lg font-semibold text-blue-300">Tournament Bracket</span>
+                        </div>
+                        <Link
+                            href={route("bracket.show", { event: event.id })}
+                            onClick={(e) => handleViewBracket(e, 'bracket')}
+                            className="inline-block px-8 py-3 rounded-2xl cursor-pointer 
+                                     transition duration-300 ease-in-out 
+                                     bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                     bg-[#2e8eff]/20 
+                                     hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                     focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]
+                                     text-white font-medium"
+                        >
+                            View Bracket
+                        </Link>
+                    </div>
+                </div>
             )}
         </div>
     );
 }
 
-function RulebookSection({ onDownload }) {
+function RulebookSection({ onView }) {
     return (
-        <div className="max-w-3xl mt-6 mb-6 p-6 bg-slate-600/20 border border-slate-600 rounded-xl">
+        <div className="w-[720px] mt-3 mb-8 p-6 bg-slate-600/20 border border-slate-600 rounded-xl justify-center mx-auto">
             <p className="text-xl text-blue-300 mb-4">Event Rulebook</p>
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -352,7 +381,7 @@ function RulebookSection({ onDownload }) {
                     <span className="text-sm text-slate-100">Official event rulebook available</span>
                 </div>
                 <button
-                    onClick={onDownload}
+                    onClick={onView}
                     className="px-6 py-2 rounded-xl cursor-pointer 
                              transition duration-300 ease-in-out 
                              bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
@@ -372,7 +401,7 @@ function CoordinatorInfo({ name }) {
     if (!name) return null;
 
     return (
-        <p className="text-lg tracking-wider text-blue-300 mb-2 py-3">
+        <p className="mt-8 text-lg tracking-wider text-blue-300 mb-2 py-3">
             Coordinator <span className="text-white font-medium">{name}</span>
         </p>
     );

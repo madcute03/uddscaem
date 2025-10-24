@@ -796,10 +796,15 @@ export default function EditEvent({ auth, event }) {
                         {/* Participants */}
                         {data.event_type !== 'tryouts' && (
                             <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
-                                <h2 className="text-xl font-semibold text-white mb-4">Participants</h2>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold text-white">Participants</h2>
+                                    <span className="text-sm text-slate-400">
+                                        {data.participants.filter(p => p.trim()).length} participant(s)
+                                    </span>
+                                </div>
                                 <div className="space-y-2">
                                     {data.participants.map((participant, index) => (
-                                        <div key={index} className="flex gap-2">
+                                        <div key={index} className="flex gap-2 items-center">
                                             <input
                                                 type="text"
                                                 value={participant}
@@ -807,25 +812,33 @@ export default function EditEvent({ auth, event }) {
                                                 placeholder={`Participant ${index + 1}`}
                                                 className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
-                                            {data.participants.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeParticipant(index)}
-                                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                                                >
-                                                    Remove
-                                                </button>
-                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => removeParticipant(index)}
+                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                                                title="Remove participant"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Remove
+                                            </button>
                                         </div>
                                     ))}
                                     <button
                                         type="button"
                                         onClick={addParticipant}
-                                        className="text-blue-400 hover:text-blue-300 text-sm"
+                                        className="mt-2 text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
                                     >
-                                        + Add Participant
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Add Participant
                                     </button>
                                 </div>
+                                <p className="text-xs text-slate-400 mt-3">
+                                    Note: Removing a participant here will allow them to be added again from the registrations page.
+                                </p>
                             </div>
                         )}
 
