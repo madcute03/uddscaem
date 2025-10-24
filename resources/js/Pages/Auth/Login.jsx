@@ -28,7 +28,7 @@ export default function Login({ status, canResetPassword }) {
             <section 
                     className="relative min-h-screen flex items-center justify-center px-4 sm:px-7 lg:px-8 h-20"
                     style={{
-                        backgroundImage: "url('/images/logo2.png')",
+                        backgroundImage: "url('/images/logo.png')",
                         backgroundPosition: "50% 20%",
                         backgroundRepeat: "no-repeat",
                         backgroundSize: "cover",

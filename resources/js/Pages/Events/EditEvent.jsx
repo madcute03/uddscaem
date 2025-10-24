@@ -143,7 +143,11 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
 
     const isSelected = (date) => {
         if (!date || !dateValue) return false;
-        return date.toISOString().split('T')[0] === dateValue;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const localDateString = `${year}-${month}-${day}`;
+        return localDateString === dateValue;
     };
 
     const isToday = (date) => {
@@ -182,7 +186,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                         >
                             <div className="flex items-start justify-between mb-6">
                                 <div>
-                                    <h3 className="text-xl font-semibold text-white">Select Event Start</h3>
+                                    <h3 className="text-xl font-semibold text-white">{label || 'Select Date & Time'}</h3>
                                     <p className="text-sm text-slate-400 mt-1">{monthYear}</p>
                                 </div>
                                 <button type="button" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
@@ -684,7 +688,7 @@ export default function EditEvent({ auth, event }) {
                                     <DateTimePicker
                                         value={data.event_date}
                                         onChange={(value) => setData('event_date', value)}
-                                        label=""
+                                        label="Select Event Start"
                                         placeholder="Select event date and time"
                                     />
                                     {errors.event_date && <p className="text-red-500 text-xs mt-1">{errors.event_date}</p>}
@@ -726,7 +730,7 @@ export default function EditEvent({ auth, event }) {
                                                 <DateTimePicker
                                                     value={data.registration_end_date}
                                                     onChange={(value) => setData('registration_end_date', value)}
-                                                    label=""
+                                                    label="Select Registration End"
                                                     placeholder="Select registration end date and time"
                                                 />
                                             </div>
