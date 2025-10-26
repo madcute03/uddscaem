@@ -14,6 +14,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\BracketController;
 use App\Http\Controllers\CreateBracketController;
 use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\RequirementsController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\DoubleEliminationController;
 use App\Http\Controllers\SingleEliminationController;
@@ -76,6 +77,11 @@ Route::get('/events/{event}/registrations', [EventRegistrationController::class,
 // ============================================
 Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
 Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+
+// ============================================
+// Requirements (Public)
+// ============================================
+Route::get('/requirements', [RequirementsController::class, 'index'])->name('requirements.index');
 
 // ============================================
 // News (Public)
@@ -162,6 +168,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/complaints', [ComplaintController::class, 'adminIndex'])->name('admin.complaints.index');
         Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('admin.complaints.destroy');
+    });
+
+    // Requirements Management
+    Route::prefix('admin')->group(function () {
+        Route::get('/requirements', [RequirementsController::class, 'adminIndex'])->name('admin.requirements.index');
+        Route::post('/requirements', [RequirementsController::class, 'store'])->name('admin.requirements.store');
+        Route::delete('/requirements/{requirement}', [RequirementsController::class, 'destroy'])->name('admin.requirements.destroy');
     });
 
     // News and Writer Management

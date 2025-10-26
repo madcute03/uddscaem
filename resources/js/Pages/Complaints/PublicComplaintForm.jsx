@@ -6,16 +6,39 @@ export default function PublicComplaintForm({ events }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         department: '',
-        complaint_letter: '',
+        complaint_letter: null,
         event_id: ''
     });
 
+    const departments = [
+        'School of Information Technology',
+        'School of Engineering',
+        'School of Teacher Education',
+        'School of Business and Accountancy',
+        'School of International Hospitality Management',
+        'School of Humanities',
+        'School of Health and Sciences',
+        'School of Criminology',
+    ];
+
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        // Validate file is selected
+        if (!data.complaint_letter) {
+            alert('Please upload a protest document');
+            return;
+        }
+        
         post(route('complaints.store'), {
+            forceFormData: true,
             onSuccess: () => {
-                alert('Thank you for your complaint. We will review it shortly.');
+                alert('Thank you for your protest. We will review it shortly.');
                 reset();
+            },
+            onError: (errors) => {
+                console.error('Submission errors:', errors);
+                alert('Failed to submit protest. Please check all fields and try again.');
             }
         });
     };
@@ -29,7 +52,7 @@ export default function PublicComplaintForm({ events }) {
                     <h1 className="text-2xl font-bold mb-6">File a Protest</h1>
                     
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium mb-1">Full Name</label>
                                 <input
@@ -43,13 +66,19 @@ export default function PublicComplaintForm({ events }) {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Department</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={data.department}
                                     onChange={e => setData('department', e.target.value)}
                                     className="w-full bg-slate-800/50 border border-slate-700 text-slate-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     required
-                                />
+                                >
+                                    <option value="">Select Department</option>
+                                    {departments.map(dept => (
+                                        <option key={dept} value={dept}>
+                                            {dept}
+                                        </option>
+                                    ))}
+                                </select>
                                 {errors.department && <p className="text-red-400 text-sm mt-1">{errors.department}</p>}
                             </div>
 
@@ -73,15 +102,50 @@ export default function PublicComplaintForm({ events }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Protest Details</label>
-                            <textarea
-                                value={data.complaint_letter}
-                                onChange={e => setData('complaint_letter', e.target.value)}
-                                rows={5}
-                                className="w-full bg-slate-800/50 border border-slate-700 text-slate-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Please describe your complaint in detail..."
-                                required
-                            />
+                            <label className="block text-sm font-medium mb-2">Upload Handwritten Protest</label>
+                            <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                                data.complaint_letter ? 'border-green-500 bg-green-500/10' : 'border-slate-700 hover:border-blue-500'
+                            }`}>
+                                <input
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    onChange={e => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setData('complaint_letter', file);
+                                        }
+                                    }}
+                                    className="hidden"
+                                    id="complaint_file"
+                                    required
+                                />
+                                <label htmlFor="complaint_file" className="cursor-pointer block">
+                                    {data.complaint_letter ? (
+                                        <>
+                                            <svg className="w-12 h-12 mx-auto mb-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p className="text-green-300 mb-1 font-medium">
+                                                {data.complaint_letter.name}
+                                            </p>
+                                            <p className="text-slate-400 text-sm">
+                                                {(data.complaint_letter.size / 1024 / 1024).toFixed(2)} MB
+                                            </p>
+                                            <p className="text-blue-400 text-sm mt-2">Click to change file</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <p className="text-slate-300 mb-1">
+                                                Click to upload
+                                            </p>
+                                            <p className="text-slate-500 text-sm">PDF, JPG, JPEG or PNG (Max 10MB)</p>
+                                        </>
+                                    )}
+                                </label>
+                            </div>
                             {errors.complaint_letter && <p className="text-red-400 text-sm mt-1">{errors.complaint_letter}</p>}
                         </div>
 

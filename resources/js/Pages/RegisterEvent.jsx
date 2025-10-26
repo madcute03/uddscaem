@@ -89,6 +89,7 @@ export default function RegisterEvent({ event }) {
             preserveScroll: true,
             onSuccess: () => {
                 router.visit(route('events.show', event.id), {
+                    replace: true, // Replace history entry so back button goes to events list
                     only: ['event'],
                     data: { success: 'Registration successful!' },
                     onFinish: () => reset()

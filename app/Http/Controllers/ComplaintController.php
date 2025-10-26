@@ -37,11 +37,21 @@ class ComplaintController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'block' => 'required|string|max:255',
             'department' => 'required|string|max:255',
-            'complaint_letter' => 'required|string',
+            'complaint_letter' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'event_id' => 'required|exists:events,id',
         ]);
+
+        // Add default block value
+        $validated['block'] = 'N/A';
+
+        // Handle file upload
+        if ($request->hasFile('complaint_letter')) {
+            $file = $request->file('complaint_letter');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('complaints', $filename, 'public');
+            $validated['complaint_letter'] = $path;
+        }
 
         Complaint::create($validated);
 

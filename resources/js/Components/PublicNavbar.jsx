@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 export default function PublicNavbar({
     active = false,
@@ -9,6 +9,7 @@ export default function PublicNavbar({
     ...props
 }) {
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [requestDropdownOpen, setRequestDropdownOpen] = useState(false);
     return (
         <nav className="bg-slate-900 border-b border-slate-800 shadow-md shadow-blue-950/20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,30 +66,68 @@ export default function PublicNavbar({
                         >
                             News
                         </Link>
-                        <Link
-                            href={route('borrow.index')}
-                            className={
-                                "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none " +
-                                (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
-                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
-                                className
-                            }
-                        >
-                            Borrow
-                        </Link>
-                        <Link
-                            href={route('complaints.index')}
-                            className={
-                                "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none mr-8 " +
-                                (active
-                                    ? "text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 tracking-wide"
-                                    : "text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200") +
-                                className
-                            }
-                        >
-                            Protest
-                        </Link>
+                        
+                        {/* Request Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setRequestDropdownOpen(!requestDropdownOpen)}
+                                className="inline-flex items-center border-b-2 px-1 pt-1 text-xl border-transparent text-slate-300 hover:border-sky-300/60 hover:text-sky-200 focus:border-sky-300 focus:text-sky-200 font-medium leading-5 transition duration-150 ease-in-out focus:outline-none"
+                            >
+                                Request
+                                <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            {requestDropdownOpen && (
+                                <>
+                                    <div 
+                                        className="fixed inset-0 z-40" 
+                                        onClick={() => setRequestDropdownOpen(false)}
+                                    />
+                                    <div className="absolute left-0 mt-3 w-56 rounded-xl shadow-2xl bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 z-50 overflow-hidden">
+                                        <div className="py-2">
+                                            <button
+                                                onClick={() => {
+                                                    setRequestDropdownOpen(false);
+                                                    router.visit(route('borrow.index'));
+                                                }}
+                                                className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-blue-600/20 hover:text-white transition-all duration-200 group"
+                                            >
+                                                <svg className="w-5 h-5 text-blue-400 group-hover:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h14a2 2 0 012 2v8a2 2 0 01-2 2H7l-4 4V9a2 2 0 012-2z" />
+                                                </svg>
+                                                <span className="font-medium">Borrow</span>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setRequestDropdownOpen(false);
+                                                    router.visit(route('complaints.index'));
+                                                }}
+                                                className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-blue-600/20 hover:text-white transition-all duration-200 group"
+                                            >
+                                                <svg className="w-5 h-5 text-yellow-400 group-hover:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                <span className="font-medium">Protest</span>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setRequestDropdownOpen(false);
+                                                    router.visit(route('requirements.index'));
+                                                }}
+                                                className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-blue-600/20 hover:text-white transition-all duration-200 group"
+                                            >
+                                                <svg className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <span className="font-medium">Requirements</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
                         <Link
                             href={route('login')}
                             className={
@@ -121,20 +160,45 @@ export default function PublicNavbar({
                     >
                         News
                     </Link>
-                    <Link
-                        href={route('borrow.index')}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        Borrow
-                    </Link>
-                    <Link
-                        href={route('complaints.index')}
-                        className="block py-2 text-lg font-semibold text-slate-100 hover:text-sky-200 mr-12"
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        Protest
-                    </Link>
+                    
+                    {/* Request Section in Mobile */}
+                    <div>
+                        <button
+                            onClick={() => setRequestDropdownOpen(!requestDropdownOpen)}
+                            className="flex items-center justify-between w-full py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"
+                        >
+                            Request
+                            <svg className={`h-4 w-4 transition-transform ${requestDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {requestDropdownOpen && (
+                            <div className="pl-4 space-y-2 mt-2">
+                                <Link
+                                    href={route('borrow.index')}
+                                    className="block py-2 text-base text-slate-300 hover:text-sky-200"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    Borrow
+                                </Link>
+                                <Link
+                                    href={route('complaints.index')}
+                                    className="block py-2 text-base text-slate-300 hover:text-sky-200"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    Protest
+                                </Link>
+                                <Link
+                                    href={route('requirements.index')}
+                                    className="block py-2 text-base text-slate-300 hover:text-sky-200"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    Requirements
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+
                     <Link
                         href={route('login')}
                         className="flex items-center py-2 text-lg font-semibold text-slate-100 hover:text-sky-200"

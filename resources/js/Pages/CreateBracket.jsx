@@ -177,17 +177,6 @@ export default function CreateBracket({ events = [] }) {
                                             onClick={() => {
                                                 if (!isEventOngoing(event)) {
                                                     setPendingEvent(event);
-                                                    setPendingAction('create');
-                                                    setShowEventStatusWarning(true);
-                                                    return;
-                                                }
-                                                
-                                                if (event.bracket_type) {
-                                                    setPendingEvent(event);
-                                                    setShowConfirmation(true);
-                                                } else {
-                                                    // If no existing bracket, proceed directly
-                                                    setSelectedEvent(event);
                                                     setBracketType(null);
                                                     setTeamCount(null);
                                                     setIsBracketModalOpen(false);
@@ -334,7 +323,10 @@ export default function CreateBracket({ events = [] }) {
                                             </Dialog.Title>
                                             <div className="mt-2">
                                                 <p className="text-sm text-yellow-200">
-                                                    This event is not currently ongoing. Are you sure you want to {pendingAction === 'create' ? 'create a bracket' : 'view the bracket'}?
+                                                    This event is not currently ongoing. Are you sure you want to {
+                                                        pendingAction === 'create' ? 'create a bracket' : 
+                                                        'view the bracket'
+                                                    }?
                                                 </p>
                                             </div>
 
