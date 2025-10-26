@@ -38,8 +38,15 @@ export default function CreateBracket({ events = [] }) {
     // Check if an event is ongoing
     const isEventOngoing = (event) => {
         if (!event) return false;
-        const today = new Date().toISOString().split('T')[0];
-        return today >= event.event_date && !event.is_done;
+        const today = new Date();
+        const eventDate = new Date(event.event_date);
+        
+        // Set both dates to start of day for comparison
+        today.setHours(0, 0, 0, 0);
+        eventDate.setHours(0, 0, 0, 0);
+        
+        console.log('Today:', today.toISOString(), 'Event date:', eventDate.toISOString()); // Debug
+        return eventDate <= today && !event.is_done;
     };
 
     const handleTeamCountSelection = async (count) => {
@@ -175,8 +182,16 @@ export default function CreateBracket({ events = [] }) {
                                     <div className="flex flex-col space-y-3">
                                         <button
                                             onClick={() => {
+                                                setPendingEvent(event);
+                                                setPendingAction('create');
                                                 if (!isEventOngoing(event)) {
-                                                    setPendingEvent(event);
+                                                    setShowEventStatusWarning(true);
+                                                    return;
+                                                }
+                                                if (event.bracket_type) {
+                                                    setShowConfirmation(true);
+                                                } else {
+                                                    setSelectedEvent(event);
                                                     setBracketType(null);
                                                     setTeamCount(null);
                                                     setIsBracketModalOpen(false);
