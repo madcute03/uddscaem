@@ -271,8 +271,12 @@ class EventController extends Controller
         $eventData = $event->toArray();
         $eventData['images_path'] = $event->images_path;
 
+        // Load tournament data if exists
+        $tournament = $event->tournaments()->with(['matches.team1', 'matches.team2', 'matches.winner'])->latest()->first();
+
         return Inertia::render('ShowEvent', [
             'event' => $eventData,
+            'tournament' => $tournament,
         ]);
     }
 

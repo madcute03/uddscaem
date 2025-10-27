@@ -9,17 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Bracket extends Model {
     use HasFactory;
 
-    protected $fillable = [
-        'event_id',
-        'matches',
-        'champion',
-        'game_number',
-        'round',
-        'home_team_id',
-        'visitor_team_id',
-        'home_score',
-        'visitor_score'
-    ];
+    protected $fillable = ['event_id', 'matches', 'champion'];
 
     protected $casts = [
         'matches' => 'array', // automatically cast JSON to array

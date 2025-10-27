@@ -9,7 +9,7 @@ class CreateBracketController extends Controller
 {
     public function bracket()
     {
-        $events = Event::orderBy('event_date')->get();
+        $events = Event::with('tournaments')->orderBy('event_date')->get();
 
         return Inertia::render('CreateBracket', [
             'events' => $events,

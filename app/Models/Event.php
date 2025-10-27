@@ -110,4 +110,20 @@ class Event extends Model
     {
         return $this->hasOne(Bracket::class, 'event_id');
     }
+
+    /**
+     * Get the tournaments for the event.
+     */
+    public function tournaments()
+    {
+        return $this->hasMany(Tournament::class);
+    }
+
+    /**
+     * Get the teams for the event.
+     */
+    public function teams()
+    {
+        return $this->hasMany(Team::class);
+    }
 }

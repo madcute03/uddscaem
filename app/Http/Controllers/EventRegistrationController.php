@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\EventRegistration;
+use App\Models\RegisteredPlayer;
 use Illuminate\Http\Request;
-use App\Models\Player;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class EventRegistrationController extends Controller
 {
@@ -16,161 +15,163 @@ class EventRegistrationController extends Controller
     {
         return Inertia::render('RegisterEvent', [
             'event' => $event,
-            // Default to 1 if not configured to avoid empty form
-            'requiredPlayers' => $event->required_players ?? 1,
         ]);
     }
 
-    // Store registration
+    // Store registration (handles both individual and team)
     public function store(Request $request, Event $event)
     {
-        try {
-            // Validate input
+        if ($event->registration_type === 'team') {
+            // Team registration validation
             $validated = $request->validate(
                 [
-                    'team_name' => 'nullable|string|max:255',
-                    'players' => 'required|array|min:1',
-                    'players.*.student_id' => 'required|string|max:255|unique:players,student_id',
-                    'players.*.name' => 'required|string|max:255',
-                    'players.*.email' => 'required|email|ends_with:@cdd.edu.ph|unique:players,email',
-                    'players.*.department' => 'required|string|max:255',
-                    'players.*.age' => 'required|integer',
-                    'players.*.gdrive_link' => 'required|url',
+                    'team_name' => [
+                        'required',
+                        'string',
+                        'max:255',
+                        \Illuminate\Validation\Rule::unique('registered_players', 'team_name')->where(function ($query) use ($event) {
+                            return $query->where('event_id', $event->id);
+                        })
+                    ],
+                    'team_members' => 'required|array|min:2|max:50',
+                    'team_members.*.student_id' => [
+                        'required',
+                        'string',
+                        'max:255',
+                        \Illuminate\Validation\Rule::unique('registered_players', 'student_id')->where(function ($query) use ($event) {
+                            return $query->where('event_id', $event->id);
+                        })
+                    ],
+                    'team_members.*.name' => 'required|string|max:255',
+                    'team_members.*.email' => [
+                        'required',
+                        'email',
+                        \Illuminate\Validation\Rule::unique('registered_players', 'email')->where(function ($query) use ($event) {
+                            return $query->where('event_id', $event->id);
+                        })
+                    ],
+                    'team_members.*.department' => 'required|string|max:255',
+                    'team_members.*.age' => 'required|integer',
+                    'team_members.*.gdrive_link' => 'required|url',
                 ],
                 [
-                    'players.required' => 'At least one player is required.',
-                    'players.array' => 'Invalid player data format.',
-                    'players.min' => 'At least one player is required.',
-                    'players.*.email.unique' => 'This email is already registered.',
-                    'players.*.student_id.unique' => 'This student ID is already registered.',
-                    'players.*.email.ends_with' => 'Email must end with @cdd.edu.ph.',
-                    'players.*.gdrive_link.url' => 'Please enter a valid Google Drive link.',
+                    'team_members.required' => 'At least 2 team members are required.',
+                    'team_members.min' => 'At least 2 team members are required.',
+                    'team_members.max' => 'Maximum 50 team members allowed.',
+                    'team_members.*.email.unique' => 'This email is already registered for this event.',
+                    'team_members.*.student_id.unique' => 'This student ID is already registered for this event.',
+                    'team_members.*.gdrive_link.url' => 'Please enter a valid Google Drive link.',
+                    'team_name.unique' => 'This team name is already taken for this event.',
                 ]
             );
 
-            // ✅ Safety check (should never happen due to validation, but just in case)
-            if (empty($validated['players'])) {
-                return back()->withErrors(['players' => 'At least one player is required.'])->withInput();
-            }
-
-            // Get team name if it's a team registration
-            $teamName = $validated['team_name'] ?? null;
-
-            // ✅ Loop through and save each player directly to the event
-            foreach ($validated['players'] as $player) {
-                Player::create([
-                    'event_id' => $event->id,
-                    'student_id' => $player['student_id'],
-                    'name' => $player['name'],
-                    'email' => $player['email'],
-                    'department' => $player['department'],
-                    'age' => $player['age'],
-                    'gdrive_link' => $player['gdrive_link'],
-                    'team_name' => $teamName,
+            // Validate team size matches event requirement
+            if (count($validated['team_members']) !== $event->team_size) {
+                return back()->withErrors([
+                    'team_members' => "Team must have exactly {$event->team_size} members."
                 ]);
             }
 
-            // ✅ Redirect with success message
+            // Create team registration
+            DB::transaction(function () use ($event, $validated) {
+                foreach ($validated['team_members'] as $member) {
+                    RegisteredPlayer::create([
+                        'event_id' => $event->id,
+                        'student_id' => $member['student_id'],
+                        'name' => $member['name'],
+                        'email' => $member['email'],
+                        'department' => $member['department'],
+                        'age' => $member['age'],
+                        'gdrive_link' => $member['gdrive_link'],
+                        'team_name' => $validated['team_name'],
+                        'status' => 'pending',
+                        'registered_at' => now(),
+                    ]);
+                }
+            });
+
             return redirect()
                 ->route('events.show', $event->id)
-                ->with('success', 'Registration successful!');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Re-throw validation exceptions so they're handled properly by Laravel
-            throw $e;
-        } catch (\Exception $e) {
-            \Log::error('Registration error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Registration failed: ' . $e->getMessage()])->withInput();
+                ->with('success', 'Team registration successful!');
+
+        } else {
+            // Individual registration validation
+            $validated = $request->validate(
+                [
+                    'student_id' => [
+                        'required',
+                        'string',
+                        'max:255',
+                        \Illuminate\Validation\Rule::unique('registered_players', 'student_id')->where(function ($query) use ($event) {
+                            return $query->where('event_id', $event->id);
+                        })
+                    ],
+                    'name' => 'required|string|max:255',
+                    'email' => [
+                        'required',
+                        'email',
+                        \Illuminate\Validation\Rule::unique('registered_players', 'email')->where(function ($query) use ($event) {
+                            return $query->where('event_id', $event->id);
+                        })
+                    ],
+                    'department' => 'required|string|max:255',
+                    'age' => 'required|integer',
+                    'gdrive_link' => 'required|url',
+                ],
+                [
+                    'email.unique' => 'This email is already registered for this event.',
+                    'student_id.unique' => 'This student ID is already registered for this event.',
+                    'gdrive_link.url' => 'Please enter a valid Google Drive link.',
+                ]
+            );
+
+            // Create individual registration
+            RegisteredPlayer::create([
+                'event_id' => $event->id,
+                'student_id' => $validated['student_id'],
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'department' => $validated['department'],
+                'age' => $validated['age'],
+                'gdrive_link' => $validated['gdrive_link'],
+                'status' => 'pending',
+                'registered_at' => now(),
+            ]);
+
+            return redirect()
+                ->route('events.show', $event->id)
+                ->with('success', '%registration successful!');
         }
     }
 
-    // Show registered players for an event
+
+    // Show all registered players for an event
     public function showPlayers(Event $event)
     {
-        // Fetch all players registered for this event
-        $players = Player::where('event_id', $event->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Get all registered players for this event
+        $players = RegisteredPlayer::where('event_id', $event->id)->get();
 
-        // Route to appropriate component based on event type
-        if ($event->event_type === 'tryout') {
-            return Inertia::render('Registrations/TryoutRegistrations', [
-                'players' => $players,
-                'event' => $event,
-            ]);
-        } else {
-            // Competition events (both solo and team registrations)
-            return Inertia::render('Registrations/CompetitionRegistrations', [
-                'players' => $players,
-                'event' => $event,
-            ]);
-        }
-    }
+        // Route to the appropriate component based on event type
+        $component = $event->event_type === 'tryout' 
+            ? 'Registrations/TryoutRegistrations' 
+            : 'Registrations/CompetitionRegistrations';
 
-    // Show registered teams and players
-    public function showTeamRegistrations(Event $event)
-    {
-        // Fetch registrations with players
-        $registrations = EventRegistration::with('players')
-            ->where('event_id', $event->id)
-            ->get();
-
-        // Count the number of teams for the frontend
-        $teamsCount = $registrations->count();
-
-        return Inertia::render('Registrations/RegisteredTeams', [
-            'registrations' => $registrations,
+        return Inertia::render($component, [
+            'players' => $players,
             'event' => $event,
-            'teams_count' => $teamsCount, // ✅ pass count explicitly
         ]);
     }
 
     // Get registration count for an event (for dashboard)
     public function getRegistrationCount(Event $event)
     {
-        try {
-            $count = Player::where('event_id', $event->id)->count();
+        $count = RegisteredPlayer::where('event_id', $event->id)->count();
+        $newCount = RegisteredPlayer::getNewRegistrationsCount($event->id, 24); // New registrations in last 24 hours
 
-            return response()->json([
-                'count' => $count
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error getting registration count: ' . $e->getMessage());
-            return response()->json([
-                'count' => 0,
-                'error' => $e->getMessage()
-            ], 200);
-        }
+        return response()->json([
+            'count' => $count,
+            'new_count' => $newCount
+        ]);
     }
 
-    // Add a specific registered player/team as participant to the event
-    public function addAsParticipants(Request $request, Event $event)
-    {
-        try {
-            $participantName = $request->input('participant_name');
-
-            if (!$participantName) {
-                return back()->with('error', 'Participant name is required.');
-            }
-
-            // Get current participants array
-            $currentParticipants = $event->participants ?? [];
-
-            // Check if participant already exists
-            if (in_array($participantName, $currentParticipants)) {
-                return back()->with('error', '"' . $participantName . '" is already a participant.');
-            }
-
-            // Add the new participant
-            $currentParticipants[] = $participantName;
-
-            // Update the event's participants
-            $event->participants = $currentParticipants;
-            $event->save();
-
-            return back()->with('success', 'Successfully added "' . $participantName . '" as a participant!');
-        } catch (\Exception $e) {
-            \Log::error('Error adding participant: ' . $e->getMessage());
-            return back()->with('error', 'Failed to add participant: ' . $e->getMessage());
-        }
-    }
 }

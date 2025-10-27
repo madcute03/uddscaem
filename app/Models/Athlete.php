@@ -28,6 +28,7 @@ class Athlete extends Model
     protected $casts = [
         'registered_at' => 'datetime',
         'birthdate' => 'date',
+        'gpa' => 'decimal:2',
     ];
 
     /**

@@ -20,6 +20,7 @@ use App\Http\Controllers\DoubleEliminationController;
 use App\Http\Controllers\SingleEliminationController;
 use App\Http\Controllers\RoundRobinController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\TournamentController;
 
 // ============================================
 // Public Routes
@@ -47,6 +48,7 @@ Route::get('/events', function () {
 // ============================================
 
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::get('/events/{event}/bracket/view', [TournamentController::class, 'publicViewBracket'])->name('events.publicViewBracket');
 Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
 Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
 
@@ -158,6 +160,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Bracket Management
     Route::get('/dashboard/bracket', [CreateBracketController::class, 'bracket'])->name('bracket');
+    Route::get('/events/{event}/dynamic-bracket', [TournamentController::class, 'showDynamicBracket'])->name('events.dynamicBracket');
+    Route::get('/events/{event}/dynamic-bracket/view', [TournamentController::class, 'viewDynamicBracket'])->name('events.viewDynamicBracket');
+    Route::get('/events/{event}/dynamic-bracket/manage', [TournamentController::class, 'manageBracket'])->name('events.manageBracket');
     Route::post('/events/{event}/bracket-settings', [BracketController::class, 'storeBracketSettings'])->name('bracket.storeSettings');
     Route::post('/single-elimination/save', [SingleEliminationController::class, 'save'])->name('single-elimination.save');
     Route::post('/double-elimination/save', [DoubleEliminationController::class, 'save'])->name('double-elimination.save');
@@ -214,6 +219,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/athletes/{id}', [AthleteController::class, 'update'])->name('athletes.update');
         Route::delete('/athletes/{id}', [AthleteController::class, 'destroy'])->name('athletes.destroy');
         Route::get('/export/csv', [AthleteController::class, 'exportCsv'])->name('export.csv');
+    });
+
+    // Tournament Bracket Management (API-style routes)
+    Route::prefix('api')->group(function () {
+        Route::post('/bracket/generate', [TournamentController::class, 'generateBracket'])->name('api.bracket.generate');
+        Route::post('/bracket/store', [TournamentController::class, 'storeBracket'])->name('api.bracket.store');
+        Route::get('/bracket/{eventId}', [TournamentController::class, 'getBracket'])->name('api.bracket.get');
+        Route::put('/bracket/match/{matchId}', [TournamentController::class, 'updateMatchResult'])->name('api.bracket.updateMatch');
     });
 
     // User Profile

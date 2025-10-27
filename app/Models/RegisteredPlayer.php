@@ -33,4 +33,18 @@ class RegisteredPlayer extends Model
     {
         return $this->belongsTo(Athlete::class, 'student_id', 'student_id');
     }
+
+    /**
+     * Get count of new registrations within specified hours
+     * 
+     * @param int $eventId
+     * @param int $hours
+     * @return int
+     */
+    public static function getNewRegistrationsCount($eventId, $hours = 24)
+    {
+        return static::where('event_id', $eventId)
+            ->where('registered_at', '>=', now()->subHours($hours))
+            ->count();
+    }
 }

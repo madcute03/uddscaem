@@ -148,9 +148,9 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
             const counts = {};
 
             for (const event of recentEvents) {
+                const url = `/events/${event.id}/registrations/count`;
                 try {
                     // Use axios to fetch registration count for this event
-                    const url = `/events/${event.id}/registrations/count`;
                     console.log(`Fetching count for event ${event.id} from:`, url);
                     const response = await axios.get(url, {
                         withCredentials: true,

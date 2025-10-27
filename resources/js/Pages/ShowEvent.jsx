@@ -2,12 +2,13 @@ import { Head, Link, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import PublicLayout from "@/Layouts/PublicLayout";
 
-export default function ShowEvent({ event }) {
+export default function ShowEvent({ event, tournament = null }) {
     // ==================== STATE MANAGEMENT ====================
     const [showSoonModal, setShowSoonModal] = useState(false);
     const [showAuthRequiredModal, setShowAuthRequiredModal] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const { auth } = usePage().props;
+    const isAdmin = auth?.user?.role === 'admin';
 
     // ==================== COMPUTED VALUES ====================
     const today = new Date().toISOString().split("T")[0];
@@ -165,6 +166,7 @@ export default function ShowEvent({ event }) {
                 {/* Action Buttons */}
                 <ActionButtons
                     event={event}
+                    tournament={tournament}
                     isRegistrationOpen={isRegistrationOpen}
                     isUpcoming={isUpcoming}
                     hasBracket={hasBracket}
@@ -284,7 +286,9 @@ function ParticipantsList({ participants }) {
     );
 }
 
-function ActionButtons({ event, isRegistrationOpen, isUpcoming, hasBracket, formatDate, handleViewBracket }) {
+function ActionButtons({ event, tournament, isRegistrationOpen, isUpcoming, hasBracket, formatDate, handleViewBracket }) {
+    const { auth } = usePage().props;
+    const isAdmin = auth?.user?.role === 'admin';
     const showRegistration = event.has_registration_end_date && 
                             (event.event_type === 'tryouts' || event.event_type === 'competition');
     
@@ -339,29 +343,52 @@ function ActionButtons({ event, isRegistrationOpen, isUpcoming, hasBracket, form
                 </div>
             )}
 
-            {/* View Bracket Button */}
+            {/* Tournament Bracket Section */}
             {hasBracket && (
                 <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl">
-                    <div className="flex flex-col items-start gap-3 items-center h-[130px] w-[300px]">
+                    <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-2 mb-2">
                             <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                             </svg>
                             <span className="text-lg font-semibold text-blue-300">Tournament Bracket</span>
                         </div>
-                        <Link
-                            href={route("bracket.show", { event: event.id })}
-                            onClick={(e) => handleViewBracket(e, 'bracket')}
-                            className="inline-block px-8 py-3 rounded-2xl cursor-pointer 
-                                     transition duration-300 ease-in-out 
-                                     bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
-                                     bg-[#2e8eff]/20 
-                                     hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                                     focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]
-                                     text-white font-medium"
-                        >
-                            View Bracket
-                        </Link>
+
+                        {/* Tournament Status */}
+                        {tournament && (
+                            <div className="bg-slate-700/30 rounded-lg p-3 mb-2">
+                                <p className="text-sm text-gray-300">
+                                    <span className="font-semibold">{tournament.name}</span>
+                                    {' '}-{' '}
+                                    <span className="capitalize">{tournament.bracket_type} Elimination</span>
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Status: <span className="capitalize text-green-400">{tournament.status}</span>
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 flex-wrap">
+                            {/* View Dynamic Bracket Button (Everyone) */}
+                            {tournament && (
+                                <Link
+                                    href={route("events.publicViewBracket", { event: event.id })}
+                                    className="inline-flex items-center px-6 py-3 rounded-2xl cursor-pointer 
+                                             transition duration-300 ease-in-out 
+                                             bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                             bg-[#2e8eff]/20 
+                                             hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                             focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]
+                                             text-white font-medium"
+                                >
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    View Dynamic Bracket
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
