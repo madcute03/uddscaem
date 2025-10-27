@@ -319,10 +319,10 @@ class TournamentController extends Controller
         $secondRoundSize = $nextPowerOf2 / 2;
         
         // Calculate total rounds
-        // If there are byes: 1 (first round) + rounds from second round to finals
-        // If no byes: just rounds from first round to finals
-        // Rounds from N teams to finals = log2(N)
-        $totalRounds = ($byeCount > 0 ? 1 : 0) + ceil(log($secondRoundSize, 2));
+        // Total rounds = log2(nextPowerOf2)
+        // For 8 teams: log2(8) = 3 rounds
+        // For 10 teams: log2(16) = 4 rounds
+        $totalRounds = ceil(log($nextPowerOf2, 2));
         
         // Generate standard bracket pairings (1 vs N, 2 vs N-1, etc.)
         $initialPairings = $this->generateStandardPairings($nextPowerOf2);
@@ -474,11 +474,16 @@ class TournamentController extends Controller
         } else {
             // No byes - all teams play in first round
             $firstRoundMatches = [];
+            $numR1Matches = count($currentRoundPairings);
+            $r2StartMatch = $globalMatchNumber + $numR1Matches;
+            
             foreach ($currentRoundPairings as $pairIndex => $pair) {
                 $seed1 = $pair[0] - 1;
                 $seed2 = $pair[1] - 1;
                 
-                $r2MatchNum = $globalMatchNumber + count($currentRoundPairings) + floor($pairIndex / 2);
+                // Calculate which Round 2 match this winner goes to
+                // Matches pair up: 0,1 → 0; 2,3 → 1; etc.
+                $r2MatchNum = $r2StartMatch + floor($pairIndex / 2);
                 
                 $firstRoundMatches[] = [
                     'temp_id' => 'match_1_' . $globalMatchNumber,
