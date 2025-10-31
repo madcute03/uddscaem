@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import TreeBracket from "@/Components/TournamentBracket/TreeBracket";
 
 export default function ViewBracket({ event }) {
     const [generatedBracket, setGeneratedBracket] = useState(null);
@@ -47,7 +48,9 @@ export default function ViewBracket({ event }) {
                 bracket_type: bracketType,
                 teams: generatedBracket.teams,
                 matches: generatedBracket.matches,
-                total_rounds: generatedBracket.total_rounds
+                total_rounds: generatedBracket.total_rounds,
+                winners_rounds: generatedBracket.winners_rounds,
+                losers_rounds: generatedBracket.losers_rounds
             });
 
             if (response.data.success) {
@@ -206,37 +209,48 @@ export default function ViewBracket({ event }) {
                             </div>
                         </div>
 
-                        {/* Visual Bracket Structure */}
+                        {/* Tree Bracket Preview */}
                         {bracketType !== 'round-robin' && generatedBracket.matches && (
                             <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                                <h3 className="text-white font-semibold text-lg mb-4">Bracket Structure</h3>
-                                <div className="overflow-x-auto pb-4">
-                                    <div className="flex gap-12 min-w-max">
-                                        {Array.from(new Set(generatedBracket.matches.map(m => m.round))).map(round => (
-                                            <div key={round} className="flex flex-col justify-around min-h-[400px]">
-                                                <div className="text-sm text-gray-300 font-semibold mb-4 text-center bg-gray-700/50 rounded-lg py-2 px-4">
-                                                    {round === generatedBracket.total_rounds ? '🏆 Final' : `Round ${round}`}
-                                                </div>
-                                                <div className="space-y-6">
-                                                    {generatedBracket.matches
-                                                        .filter(m => m.round === round)
-                                                        .map((match, idx) => (
-                                                            <div key={idx} className="bg-gray-700/50 rounded-lg p-3 w-48 border border-gray-600 hover:border-blue-500 transition-colors">
-                                                                <div className="text-xs text-gray-400 mb-2 font-medium">Match {match.match_number}</div>
-                                                                <div className="space-y-2">
-                                                                    <div className="px-3 py-2 rounded text-sm font-medium bg-gray-800 text-white border border-gray-600">
-                                                                        {match.team1_name || 'TBD'}
-                                                                    </div>
-                                                                    <div className="text-center text-gray-500 text-xs">vs</div>
-                                                                    <div className="px-3 py-2 rounded text-sm font-medium bg-gray-800 text-white border border-gray-600">
-                                                                        {match.team2_name || 'TBD'}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                </div>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-white font-semibold text-lg">Tournament Tree Preview</h3>
+                                    <div className="flex items-center gap-4 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 border-2 border-green-500 rounded"></div>
+                                            <span className="text-gray-300">Winners Bracket</span>
+                                        </div>
+                                        {bracketType === 'double' && (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 border-2 border-red-500 rounded"></div>
+                                                <span className="text-gray-300">Losers Bracket</span>
                                             </div>
-                                        ))}
+                                        )}
+                                        {bracketType === 'double' && (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 border-2 border-yellow-500 rounded"></div>
+                                                <span className="text-gray-300">Grand Finals</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <TreeBracket 
+                                    matches={generatedBracket.matches}
+                                    tournament={{ 
+                                        name: tournamentName, 
+                                        bracket_type: bracketType,
+                                        total_rounds: generatedBracket.total_rounds
+                                    }}
+                                    onReportScore={() => {}} // No scoring in preview mode
+                                />
+                                
+                                <div className="mt-8 bg-gray-700/30 border border-gray-600 rounded-lg p-4">
+                                    <h4 className="text-white font-medium mb-3">Legacy View (Hidden)</h4>
+                                    
+                                    {/* Legacy horizontal layout - hidden but kept for reference */}
+                                    <div style={{ display: 'none' }} className="overflow-x-auto pb-4">
+                                        {/* Original layout code preserved but hidden */}
+                                        <p className="text-gray-500 text-sm">Legacy horizontal bracket view has been replaced with the tree structure above.</p>
                                     </div>
                                 </div>
                             </div>

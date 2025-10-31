@@ -61,28 +61,26 @@ export default function RegisterEvent({ event }) {
             return; // Prevent submission if duplicates exist
         }
 
-        // Format data for backend - backend expects 'players' array
+        // Format data for backend
         console.log('Registration type:', event.registration_type);
         console.log('Form data before formatting:', data);
         
         const formData = event.registration_type === 'team' 
             ? {
                 team_name: data.team_name,
-                players: data.team_members
+                team_members: data.team_members
             }
             : {
-                players: [{
-                    student_id: data.student_id,
-                    name: data.name,
-                    email: data.email,
-                    department: data.department,
-                    age: data.age,
-                    gdrive_link: data.gdrive_link
-                }]
+                student_id: data.student_id,
+                name: data.name,
+                email: data.email,
+                department: data.department,
+                age: data.age,
+                gdrive_link: data.gdrive_link
             };
 
         console.log('Formatted data for submission:', formData);
-        console.log('Players array:', formData.players);
+        console.log('Team members/Players:', event.registration_type === 'team' ? formData.team_members : formData);
 
         // Use router.post to send custom formData
         router.post(route('eventregistrations.store', event.id), formData, {
@@ -195,6 +193,9 @@ export default function RegisterEvent({ event }) {
 
                                     <div className="space-y-4">
                                         <h4 className="font-medium text-slate-200">Team Members</h4>
+                                        {errors.team_members && (
+                                            <p className="text-red-400 text-sm mt-1">{errors.team_members}</p>
+                                        )}
                                         {data.team_members.map((member, index) => (
                                             <div key={index} className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-lg">
                                                 <div className="flex items-center justify-between mb-3">

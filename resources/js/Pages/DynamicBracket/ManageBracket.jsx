@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import TreeBracket from "@/Components/TournamentBracket/TreeBracket";
 
 export default function ManageBracket({ event, tournament }) {
     const [matches, setMatches] = useState([]);
@@ -10,6 +11,7 @@ export default function ManageBracket({ event, tournament }) {
     const [currentMatch, setCurrentMatch] = useState(null);
     const [scoreInput, setScoreInput] = useState({ team1: "", team2: "" });
     const [showSavePopup, setShowSavePopup] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const boxRefs = useRef({});
     const [lines, setLines] = useState([]);
 
@@ -35,7 +37,7 @@ export default function ManageBracket({ event, tournament }) {
 
     // Submit score and determine winner
     const submitScore = async () => {
-        if (!currentMatch) return;
+        if (!currentMatch || isSubmitting) return;
 
         const team1Score = parseInt(scoreInput.team1) || 0;
         const team2Score = parseInt(scoreInput.team2) || 0;
@@ -47,6 +49,8 @@ export default function ManageBracket({ event, tournament }) {
 
         const winnerId = team1Score > team2Score ? currentMatch.team1_id : currentMatch.team2_id;
         const winnerName = team1Score > team2Score ? currentMatch.team1?.name : currentMatch.team2?.name;
+
+        setIsSubmitting(true);
 
         try {
             const response = await axios.put(route('api.bracket.updateMatch', { matchId: currentMatch.id }), {
@@ -101,6 +105,8 @@ export default function ManageBracket({ event, tournament }) {
         } catch (error) {
             console.error('Error updating match:', error);
             alert('Failed to update match. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -193,8 +199,12 @@ export default function ManageBracket({ event, tournament }) {
         setLines(newLines);
     }, [matches]);
 
-    // Group matches by round
+    // Group matches by bracket and round
     const matchesByRound = {};
+    const winnerMatches = matches.filter(m => m.bracket === 'winners' || !m.bracket);
+    const loserMatches = matches.filter(m => m.bracket === 'losers');
+    const grandFinalsMatches = matches.filter(m => m.bracket === 'grand_finals');
+    
     matches.forEach(match => {
         if (!matchesByRound[match.round]) {
             matchesByRound[match.round] = [];
@@ -203,13 +213,14 @@ export default function ManageBracket({ event, tournament }) {
     });
 
     const rounds = Object.keys(matchesByRound).sort((a, b) => a - b);
+    const isDoubleElim = tournament?.bracket_type === 'double';
 
     return (
         <AuthenticatedLayout>
             <Head title={`Manage Bracket - ${event?.title}`} />
 
             <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
+                <div className="mx-auto">
                     {/* Header */}
                     <div className="mb-8">
                         <Link
@@ -228,29 +239,122 @@ export default function ManageBracket({ event, tournament }) {
                     </div>
 
                     {/* Bracket Display */}
-                    <div id="bracket-container" className="relative bg-gray-800/30 border border-gray-700 rounded-xl p-6 overflow-x-auto">
-                        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                            {lines.map((d, i) => (
-                                <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
-                            ))}
-                        </svg>
-
-                        <div className="flex gap-20 min-w-max">
-                            {rounds.map(round => (
-                                <div key={round} className="mb-8">
-                                    <h2 className="font-bold text-sm mb-4 text-center text-gray-300">
-                                        {round == tournament.total_rounds ? '🏆 Finals' : `Round ${round}`}
-                                    </h2>
-                                    <div className="space-y-8">
-                                        {matchesByRound[round].map((match, idx) => (
-                                            <div key={match.id}>
-                                                {renderMatch(match, `Match ${match.match_number}`)}
-                                            </div>
-                                        ))}
-                                    </div>
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-white">Tournament Tree</h2>
+                            <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 border-2 border-green-500 rounded"></div>
+                                    <span className="text-gray-300">Winners Bracket</span>
                                 </div>
-                            ))}
+                                {isDoubleElim && (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 border-2 border-red-500 rounded"></div>
+                                        <span className="text-gray-300">Losers Bracket</span>
+                                    </div>
+                                )}
+                                {isDoubleElim && (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 border-2 border-yellow-500 rounded"></div>
+                                        <span className="text-gray-300">Grand Finals</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                        
+                        <TreeBracket 
+                            matches={matches}
+                            tournament={tournament}
+                            onReportScore={openReportScore}
+                        />
+                    </div>
+                    
+                    <div id="bracket-container" className="relative bg-gray-800/30 border border-gray-700 rounded-xl p-6 overflow-x-auto" style={{ display: 'none' }}>
+                        {isDoubleElim ? (
+                            /* Double Elimination: Two Rows Layout */
+                            <div>
+                                {/* Winners Bracket Row */}
+                                <div className="flex gap-20 min-w-max mb-12">
+                                    {Array.from(new Set(winnerMatches.map(m => m.round))).sort((a, b) => a - b).map(round => (
+                                        <div key={`w${round}`} className="flex flex-col">
+                                            <div className="text-sm text-green-400 font-semibold mb-2 text-center">Winners Bracket</div>
+                                            <h2 className="font-bold text-sm mb-4 text-center bg-green-900/30 border border-green-700 rounded-lg py-2 px-4 text-gray-300">
+                                                Round {round}
+                                            </h2>
+                                            <div className="space-y-8">
+                                                {winnerMatches.filter(m => m.round === round).map((match) => (
+                                                    <div key={match.id} ref={el => boxRefs.current[match.id] = el}>
+                                                        {renderMatch(match, `Match ${match.match_number}`)}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Grand Finals Column */}
+                                    {grandFinalsMatches.length > 0 && (
+                                        <div className="flex flex-col">
+                                            <div className="text-sm text-yellow-400 font-semibold mb-2 text-center">🏆 Grand Finals</div>
+                                            <h2 className="font-bold text-sm mb-4 text-center bg-yellow-900/30 border border-yellow-700 rounded-lg py-2 px-4 text-gray-300">
+                                                Finals
+                                            </h2>
+                                            <div className="space-y-8">
+                                                {grandFinalsMatches.map((match) => (
+                                                    <div key={match.id} ref={el => boxRefs.current[match.id] = el}>
+                                                        {renderMatch(match, `Match ${match.match_number}`)}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Losers Bracket Row */}
+                                <div className="flex gap-20 min-w-max">
+                                    {Array.from(new Set(loserMatches.map(m => m.round))).sort((a, b) => a - b).map(round => (
+                                        <div key={`l${round}`} className="flex flex-col">
+                                            <div className="text-sm text-red-400 font-semibold mb-2 text-center">Losers Bracket</div>
+                                            <h2 className="font-bold text-sm mb-4 text-center bg-red-900/30 border border-red-700 rounded-lg py-2 px-4 text-gray-300">
+                                                Losers R{round - (tournament.winners_rounds || 0)}
+                                            </h2>
+                                            <div className="space-y-8">
+                                                {loserMatches.filter(m => m.round === round).map((match) => (
+                                                    <div key={match.id} ref={el => boxRefs.current[match.id] = el}>
+                                                        {renderMatch(match, `Match ${match.match_number}`)}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Single Elimination Layout */
+                            <>
+                                <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                                    {lines.map((d, i) => (
+                                        <path key={i} d={d} stroke="white" strokeWidth="2" fill="none" />
+                                    ))}
+                                </svg>
+
+                                <div className="flex gap-20 min-w-max">
+                                    {rounds.map(round => (
+                                        <div key={round} className="mb-8">
+                                            <h2 className="font-bold text-sm mb-4 text-center text-gray-300">
+                                                {round == tournament.total_rounds ? '🏆 Finals' : `Round ${round}`}
+                                            </h2>
+                                            <div className="space-y-8">
+                                                {matchesByRound[round].map((match, idx) => (
+                                                    <div key={match.id}>
+                                                        {renderMatch(match, `Match ${match.match_number}`)}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
 
                         {/* Champion Display */}
                         {champion && (
@@ -314,15 +418,17 @@ export default function ManageBracket({ event, tournament }) {
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-medium transition-colors"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={submitScore}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition-colors"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Submit Score
+                                    {isSubmitting ? 'Submitting...' : 'Submit Score'}
                                 </button>
                             </div>
                         </div>

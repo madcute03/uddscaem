@@ -174,4 +174,30 @@ class EventRegistrationController extends Controller
         ]);
     }
 
+    // Add registered player/team as participant to the event
+    public function addAsParticipants(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'participant_name' => 'required|string|max:255'
+        ]);
+
+        $participantName = $validated['participant_name'];
+
+        // Get current participants array
+        $participants = $event->participants ?? [];
+
+        // Check if participant already exists
+        if (in_array($participantName, $participants)) {
+            return back()->with('error', 'This participant is already added to the event.');
+        }
+
+        // Add the new participant
+        $participants[] = $participantName;
+
+        // Update the event
+        $event->update(['participants' => $participants]);
+
+        return back()->with('success', "Successfully added \"{$participantName}\" as a participant!");
+    }
+
 }

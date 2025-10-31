@@ -14,6 +14,8 @@ class Tournament extends Model
         'name',
         'bracket_type',
         'total_rounds',
+        'winners_rounds',
+        'losers_rounds',
         'winner_id',
         'status',
     ];
