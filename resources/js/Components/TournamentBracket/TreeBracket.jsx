@@ -1,6 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, useMemo } from "react";
 
-const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
+const TreeBracket = ({ matches = [], tournament = {}, onReportScore, zoomLevel = 0.6, customSpacing = null }) => {
     const [lines, setLines] = useState([]);
     const boxRefs = useRef({});
     const containerRef = useRef(null);
@@ -36,15 +36,185 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
     // Determine tournament type first
     const isDoubleElim = tournament?.bracket_type === 'double';
 
+    // Use custom spacing if provided (for ManageBracket with Report Score buttons), otherwise use default
+    const baseMatchSpacing = customSpacing?.matchSpacing ?? 120;
+    const baseMatchHeight = customSpacing?.matchHeight ?? 120;
+    const baseLosersSpacing = customSpacing?.losersSpacing ?? 180;
+    
+    const matchSpacing = baseMatchSpacing; // Vertical spacing for winners bracket matches
+    const matchHeight = baseMatchHeight; // Approximate height of a match card
+    const LOSERS_VERTICAL_SPACING = baseLosersSpacing; // Vertical spacing for losers bracket matches
+    const WINNERS_SECTION_PADDING = 120; // Extra breathing room around winners bracket
+    const LOSERS_SECTION_PADDING = 160; // Extra breathing room around losers bracket
+    const WINNERS_CONTENT_OFFSET = 50; // Matches are rendered 50px below winners container top
+    const LOSERS_CONTENT_OFFSET = 30; // Matches are rendered 30px below losers container top
+    const SINGLE_ELIM_BASE_SPACING = 160; // Base spacing for single elimination rounds
+    const COLUMN_SPACING = 380; // Horizontal spacing between rounds for tree layout
+    const MATCH_CARD_WIDTH = 240; // Approximate width of a match card
+    const teamCount = tournament?.team_count;
+    const isTwentyOneTeamSingleElim = !isDoubleElim && (teamCount === 21 || matches.length === 20);
+
+    const computeRoundSpacing = (roundIndex, totalMatches, baseSpacing = matchSpacing, isForSingleElim = false, totalRoundsInBracket = 0) => {
+        // Expanding tree for single elimination: spacing increases with each round
+        if (isForSingleElim) {
+            const isSemifinalsRound = totalRoundsInBracket > 0 && roundIndex === totalRoundsInBracket - 2;
+            
+            if (roundIndex === 0) {
+                // R1: Tight spacing but enough to prevent overlap (dependent on R2)
+                return baseSpacing * 0.85;
+            } else if (roundIndex === 1) {
+                // R2: Reduced spacing with minimum guarantees to prevent overlaps
+                if (isSemifinalsRound) {
+                    // Semifinals: spacing adapts based on how many matches (2-8 typical)
+                    const semiMultiplier = 2 + (totalMatches * 0.5); // 3x for 2 matches, 6x for 8 matches
+                    return baseSpacing * semiMultiplier;
+                }
+                // Round before Semifinals: adaptive spacing based on match count
+                const isBeforeSemifinals = totalRoundsInBracket > 0 && roundIndex === totalRoundsInBracket - 3;
+                if (isBeforeSemifinals) {
+                    const multiplier = 1.1 + (totalMatches * 0.06); // Further reduced multiplier
+                    return baseSpacing * multiplier;
+                }
+                // Minimum spacing to accommodate R1 pairs
+                const minRequiredSpacing = 370; // Increased by 10px more to prevent R1 overlap
+                const calculatedSpacing = baseSpacing * (1.5 + (totalMatches * 0.05));
+                return Math.max(minRequiredSpacing, calculatedSpacing);
+            } else if (roundIndex === 2) {
+                // R3: Bigger gaps or adaptive Semifinals
+                if (isSemifinalsRound) {
+                    const semiMultiplier = 2.5 + (totalMatches * 0.5);
+                    return baseSpacing * semiMultiplier;
+                }
+                // Round before Semifinals: adaptive spacing
+                const isBeforeSemifinals = totalRoundsInBracket > 0 && roundIndex === totalRoundsInBracket - 3;
+                if (isBeforeSemifinals) {
+                    const multiplier = 1.8 + (totalMatches * 0.1);
+                    return baseSpacing * multiplier;
+                }
+                return baseSpacing * 2.2;
+            } else if (roundIndex === 3) {
+                // R4: Even bigger gaps or adaptive Semifinals
+                if (isSemifinalsRound) {
+                    const semiMultiplier = 3 + (totalMatches * 0.5);
+                    return baseSpacing * semiMultiplier;
+                }
+                // Round before Semifinals: adaptive spacing
+                const isBeforeSemifinals = totalRoundsInBracket > 0 && roundIndex === totalRoundsInBracket - 3;
+                if (isBeforeSemifinals) {
+                    const multiplier = 2.5 + (totalMatches * 0.1);
+                    return baseSpacing * multiplier;
+                }
+                return baseSpacing * 3;
+            } else {
+                // R5+: Largest gaps or adaptive Semifinals
+                if (isSemifinalsRound) {
+                    const semiMultiplier = 3.5 + (totalMatches * 0.5);
+                    return baseSpacing * semiMultiplier;
+                }
+                // Round before Semifinals: adaptive spacing
+                const isBeforeSemifinals = totalRoundsInBracket > 0 && roundIndex === totalRoundsInBracket - 3;
+                if (isBeforeSemifinals) {
+                    const multiplier = 3 + (totalMatches * 0.1);
+                    return baseSpacing * multiplier;
+                }
+                return baseSpacing * 4;
+            }
+        }
+
+        // Double elimination: use similar adaptive logic with minimum spacing guarantees
+        if (roundIndex === 0) {
+            return baseSpacing * 0.85;
+        } else if (roundIndex === 1) {
+            // R2: Increased spacing to prevent R1 overlaps
+            // Each R2 match needs to accommodate 2 R1 pairs (4 matches total)
+            // Minimum spacing = (2 pairs * pair_gap) + pair_height + extra buffer
+            const minRequiredSpacing = 370; // Increased by 10px more to prevent R1 overlap
+            const calculatedSpacing = baseSpacing * (1.5 + (totalMatches * 0.05));
+            return Math.max(minRequiredSpacing, calculatedSpacing);
+        } else if (roundIndex === 2) {
+            const multiplier = 1.6 + (totalMatches * 0.06);
+            return baseSpacing * multiplier;
+        } else {
+            // R3+: Progressive spacing
+            const multiplier = 2.0 + (roundIndex - 2) * 0.4;
+            return baseSpacing * multiplier;
+        }
+    };
+
+    const singleElimMetrics = useMemo(() => {
+        if (isDoubleElim || matches.length === 0) return null;
+
+        const rounds = Array.from(new Set(matches.map(m => m.round))).sort((a, b) => a - b);
+        if (rounds.length === 0) return null;
+
+        let minY = Infinity;
+        let maxY = -Infinity;
+        const roundConfigs = new Map();
+
+        rounds.forEach((round, roundIndex) => {
+            const roundMatches = matches.filter(m => m.round === round);
+            if (roundMatches.length === 0) return;
+
+            let spacing, startY, roundMin, roundMax;
+            const totalMatches = roundMatches.length;
+
+            if (roundIndex === 0) {
+                // R1: Calculate based on paired positioning
+                const pairGap = SINGLE_ELIM_BASE_SPACING;
+                const withinPairGap = 120; // Gap between R1 pairs
+                const totalPairs = Math.ceil(totalMatches / 2);
+                const totalPairHeight = (totalPairs - 1) * pairGap;
+                startY = -(totalPairHeight / 2);
+                spacing = pairGap; // Store pair gap as spacing for reference
+                
+                // Calculate min/max considering paired layout
+                roundMin = startY - matchHeight / 2;
+                roundMax = startY + totalPairHeight + withinPairGap + matchHeight / 2;
+            } else {
+                // R2+: Use progressive spacing
+                spacing = computeRoundSpacing(roundIndex, totalMatches, SINGLE_ELIM_BASE_SPACING, true, rounds.length);
+                const totalHeight = totalMatches > 1 ? (totalMatches - 1) * spacing : 0;
+                startY = totalMatches > 1 ? -(totalHeight / 2) : 0;
+                roundMin = startY - matchHeight / 2;
+                roundMax = startY + totalHeight + matchHeight / 2;
+            }
+
+            roundConfigs.set(round, { spacing, startY });
+
+            minY = Math.min(minY, roundMin);
+            maxY = Math.max(maxY, roundMax);
+        });
+
+        if (minY === Infinity) {
+            minY = -matchHeight / 2;
+            maxY = matchHeight / 2;
+        }
+
+        const verticalSpan = maxY - minY;
+
+        return { roundConfigs, minY, maxY, verticalSpan };
+    }, [isDoubleElim, matches, matchSpacing, matchHeight, isTwentyOneTeamSingleElim]);
+
     // Calculate dynamic top offset to ensure all matches are visible
     const firstRoundMatches = matches.filter(m => m.round === 1).length;
-    const matchSpacing = 160;
     
     // Find the maximum number of matches in any round to calculate proper centering
     const matchCountsByRound = Array.from(new Set(matches.map(m => m.round))).map(round => 
         matches.filter(m => m.round === round).length
     );
     const maxMatchesInAnyRound = Math.max(...matchCountsByRound, 1);
+
+    const loserRoundsArray = layout.losers && layout.losers.length > 0
+        ? Array.from(new Set(layout.losers.map(m => m.round)))
+        : [];
+    const maxLosersMatchesInRound = loserRoundsArray.length
+        ? Math.max(...loserRoundsArray.map(round =>
+            layout.losers.filter(m => m.round === round).length
+        ))
+        : 0;
+    const estimatedLosersSpan = maxLosersMatchesInRound > 0
+        ? ((maxLosersMatchesInRound - 1) * LOSERS_VERTICAL_SPACING) + matchHeight
+        : matchHeight;
     
     // For double elimination, calculate based on winners bracket first round
     const winnersFirstRound = isDoubleElim 
@@ -55,11 +225,88 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
     const maxNegativeY = maxMatchesInAnyRound > 1 ? -((maxMatchesInAnyRound - 1) * matchSpacing / 2) : 0;
     const winnersMaxNegativeY = winnersFirstRound > 1 ? -((winnersFirstRound - 1) * matchSpacing / 2) : 0;
     
-    // Layout offsets to control spacing between brackets
-    const WINNERS_SECTION_TOP = isDoubleElim ? Math.abs(winnersMaxNegativeY) + 500 : 360;
-    const LOSERS_SECTION_TOP = WINNERS_SECTION_TOP + 1000; // Increased spacing between winners and losers brackets
-    const GRAND_FINALS_TOP = Math.round((WINNERS_SECTION_TOP + LOSERS_SECTION_TOP) / 2);
-    const SINGLE_ELIM_TOP = Math.abs(maxNegativeY) + 150; // Add buffer to prevent cutoff
+    // Layout offsets - Challonge-style vertical stacking with FIXED gaps
+    // Calculate actual winners bracket vertical span
+    let winnersMinY = Infinity;
+    let winnersMaxY = -Infinity;
+    if (layout.winners && layout.winners.length > 0) {
+        const winnerRoundsList = Array.from(new Set(layout.winners.map(m => m.round))).sort((a, b) => a - b);
+        winnerRoundsList.forEach((round, roundIndex) => {
+            const roundMatches = layout.winners.filter(m => m.round === round);
+            const totalMatches = roundMatches.length;
+            const spacing = computeRoundSpacing(roundIndex, totalMatches);
+            const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+            roundMatches.forEach((match, matchIndex) => {
+                const centerY = startY + matchIndex * spacing;
+                const top = centerY - matchHeight / 2;
+                const bottom = centerY + matchHeight / 2;
+                winnersMinY = Math.min(winnersMinY, top);
+                winnersMaxY = Math.max(winnersMaxY, bottom);
+            });
+        });
+    }
+
+    if (winnersMinY === Infinity) {
+        winnersMinY = -matchHeight / 2;
+        winnersMaxY = matchHeight / 2;
+    }
+
+    const winnersPaddingTop = WINNERS_SECTION_PADDING / 2;
+    const winnersPaddingBottom = WINNERS_SECTION_PADDING / 2;
+    const winnersSectionTop = winnersMinY - winnersPaddingTop;
+    const winnersSectionBottom = winnersMaxY + winnersPaddingBottom;
+    const winnersSectionHeight = winnersSectionBottom - winnersSectionTop;
+    
+    // Fixed positioning - Challonge style
+    const ROUND_LABEL_HEIGHT = 30; // Approximate label height
+    const ROUND_LABEL_TO_WINNERS_GAP = 192; // 2 inches @ 96px per inch
+    const BASE_WINNERS_TOP = ROUND_LABEL_HEIGHT + ROUND_LABEL_TO_WINNERS_GAP; // Labels + desired gap
+    const WINNERS_TOP = Math.max(BASE_WINNERS_TOP - (WINNERS_CONTENT_OFFSET + winnersMinY), 0);
+
+    // Calculate losers bracket bounds (relative to their internal coordinate system)
+    let losersMinY = Infinity;
+    let losersMaxY = -Infinity;
+    if (layout.losers && layout.losers.length > 0) {
+        const loserRoundsList = Array.from(new Set(layout.losers.map(m => m.round))).sort((a, b) => a - b);
+        loserRoundsList.forEach((round, roundIndex) => {
+            const roundMatches = layout.losers.filter(m => m.round === round);
+            const totalMatches = roundMatches.length;
+            const spacing = LOSERS_VERTICAL_SPACING;
+            const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+            roundMatches.forEach((match, matchIndex) => {
+                const centerY = startY + matchIndex * spacing;
+                const top = centerY - matchHeight / 2;
+                const bottom = centerY + matchHeight / 2;
+                losersMinY = Math.min(losersMinY, top);
+                losersMaxY = Math.max(losersMaxY, bottom);
+            });
+        });
+    }
+
+    if (losersMinY === Infinity) {
+        losersMinY = -matchHeight / 2;
+        losersMaxY = matchHeight / 2;
+    }
+
+    const actualWinnersBottom = WINNERS_TOP + WINNERS_CONTENT_OFFSET + winnersMaxY;
+    const desiredActualLosersTop = actualWinnersBottom + 192; // 2 inches @ 96px per inch
+    const LOSERS_TOP = desiredActualLosersTop - LOSERS_CONTENT_OFFSET - losersMinY; // Align losers bracket top to maintain exact gap
+    
+    // Horizontal positioning (all brackets start at same X)
+    const BRACKET_LEFT = 100;
+    
+    // Grand Finals positioned vertically between Winners and Losers, horizontally to the right
+    const winnersRounds = layout.winners ? Array.from(new Set(layout.winners.map(m => m.round))).length : 1;
+    const losersRounds = layout.losers ? Array.from(new Set(layout.losers.map(m => m.round))).length : 0;
+    const maxRoundsWidth = Math.max(winnersRounds, losersRounds) * COLUMN_SPACING;
+    const FINALS_LEFT = BRACKET_LEFT + maxRoundsWidth + 400; // Finals to the right
+    const GRAND_FINALS_TOP = Math.round((WINNERS_TOP + LOSERS_TOP) / 2); // Centered between Winners and Losers
+    
+    const SINGLE_ELIM_VERTICAL_PADDING = 200;
+    const SINGLE_ELIM_BASE_TOP = ROUND_LABEL_HEIGHT + ROUND_LABEL_TO_WINNERS_GAP;
+    const SINGLE_ELIM_TOP = !isDoubleElim && singleElimMetrics
+        ? Math.max(SINGLE_ELIM_BASE_TOP - (WINNERS_CONTENT_OFFSET + singleElimMetrics.minY), 0)
+        : Math.max(SINGLE_ELIM_BASE_TOP - (WINNERS_CONTENT_OFFSET + maxNegativeY), 0);
     
     // Debug logging (remove in production)
     // console.log('TreeBracket Debug:', { totalMatches: matches.length, layout });
@@ -96,6 +343,7 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
 
         const container = containerRef.current;
         const newLines = [];
+        const scale = zoomLevel || 1;
 
         // Group matches by parent-child relationships
         const connections = new Map();
@@ -120,8 +368,8 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
             const parentRect = parentEl.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
             
-            const parentX = parentRect.left + parentRect.width / 2 - containerRect.left;
-            const parentY = parentRect.top + parentRect.height / 2 - containerRect.top;
+            const parentX = (parentRect.left + parentRect.width / 2 - containerRect.left) / scale;
+            const parentY = (parentRect.top + parentRect.height / 2 - containerRect.top) / scale;
             const childPoints = [];
             childIds.forEach(childId => {
                 const childEl = boxRefs.current[`match-${childId}`];
@@ -130,8 +378,8 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                 const childRect = childEl.getBoundingClientRect();
                 childPoints.push({
                     id: childId,
-                    x: childRect.right - containerRect.left,
-                    y: childRect.top + childRect.height / 2 - containerRect.top
+                    x: (childRect.right - containerRect.left) / scale,
+                    y: (childRect.top + childRect.height / 2 - containerRect.top) / scale
                 });
             });
 
@@ -187,9 +435,21 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
     };
 
     useLayoutEffect(() => {
-        const timer = setTimeout(drawTreeLines, 100);
-        return () => clearTimeout(timer);
-    }, [matches]);
+        if (!matches.length) {
+            setLines([]);
+            return;
+        }
+
+        const rafId = requestAnimationFrame(drawTreeLines);
+        const timeoutId = setTimeout(drawTreeLines, 240); // ensure redraw after zoom transition
+        const spacingTimeoutId = setTimeout(drawTreeLines, 100); // redraw after spacing changes
+
+        return () => {
+            cancelAnimationFrame(rafId);
+            clearTimeout(timeoutId);
+            clearTimeout(spacingTimeoutId);
+        };
+    }, [matches, zoomLevel, matchSpacing, matchHeight, LOSERS_VERTICAL_SPACING]);
 
     // Render match component
     const renderMatch = (match, position) => {
@@ -260,7 +520,7 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                 </div>
 
                 {/* Report Score Button */}
-                {hasBothTeams && !hasWinner && (
+                {onReportScore && hasBothTeams && !hasWinner && (
                     <button
                         onClick={() => onReportScore(match)}
                         className="px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded font-medium text-xs w-full transition-colors"
@@ -289,20 +549,51 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
     };
 
     // Calculate container dimensions based on tournament structure
-    const winnersRounds = (layout.winners && layout.winners.length > 0) ? 
-        Array.from(new Set(layout.winners.map(m => m.round))).length : 1;
-    const losersRounds = (layout.losers && layout.losers.length > 0) ? 
-        Array.from(new Set(layout.losers.map(m => m.round))).length : 0;
     const maxRounds = Math.max(winnersRounds, losersRounds, 1);
     
-    // Calculate height based on the maximum vertical spread across all rounds (reuse variables from above)
-    const matchHeight = 120; // Approximate height of a match card
+    // Calculate height based on the maximum vertical spread across all rounds
     const totalVerticalSpan = (maxMatchesInAnyRound - 1) * matchSpacing + matchHeight;
-    const singleElimHeight = Math.max(totalVerticalSpan + 400, 1250); // Extra padding top and bottom
+    const singleElimHeight = !isDoubleElim && singleElimMetrics
+        ? Math.max(
+            singleElimMetrics.verticalSpan + SINGLE_ELIM_VERTICAL_PADDING * 2,
+            SINGLE_ELIM_TOP + WINNERS_CONTENT_OFFSET + singleElimMetrics.maxY + SINGLE_ELIM_VERTICAL_PADDING,
+            1250
+        )
+        : Math.max(totalVerticalSpan + 400, 1250);
     
-    const containerWidth = Math.max((maxRounds * 420) + 800, 2400); // Increased width for better spacing and more rounds
-    const containerHeight = isDoubleElim ? 2200 : singleElimHeight; // Extra space for separated brackets
+    // Dynamic width calculation: Challonge-style vertical stacking
+    // Total width = Bracket left + max rounds width + Finals gap + Finals width + right padding
+    const singleElimRoundsCount = Array.from(new Set(matches.map(m => m.round))).length || 1;
+    const singleElimWidth = BRACKET_LEFT + (singleElimRoundsCount - 1) * COLUMN_SPACING + MATCH_CARD_WIDTH + 400;
+    const containerWidth = isDoubleElim
+        ? FINALS_LEFT + MATCH_CARD_WIDTH + 500
+        : Math.max(singleElimWidth, 1200);
     
+    // Dynamic height calculation for double elimination
+    // Calculate actual winners bracket height
+    
+// Calculate actual losers bracket height
+const losersMaxMatches = layout.losers && layout.losers.length > 0
+    ? Math.max(...Array.from(new Set(layout.losers.map(m => m.round))).map(round =>
+        layout.losers.filter(m => m.round === round).length
+    ))
+    : 1;
+const losersVerticalSpan = (losersMaxMatches - 1) * LOSERS_VERTICAL_SPACING + matchHeight;
+const losersSectionHeight = losersVerticalSpan + LOSERS_SECTION_PADDING;
+
+    const paddedWinnersBottom = WINNERS_TOP + WINNERS_CONTENT_OFFSET + winnersMaxY + WINNERS_SECTION_PADDING / 2;
+    const paddedLosersBottom = layout.losers && layout.losers.length > 0
+        ? LOSERS_TOP + LOSERS_CONTENT_OFFSET + losersMaxY + LOSERS_SECTION_PADDING / 2
+        : 0;
+    const grandFinalsBottom = layout.grandFinals && layout.grandFinals.length > 0
+        ? GRAND_FINALS_TOP + (matchHeight / 2) + (layout.grandFinals.length - 1) * (matchHeight + 40)
+        : 0;
+    const doubleElimContentBottom = Math.max(paddedWinnersBottom, paddedLosersBottom, grandFinalsBottom);
+
+    const containerHeight = isDoubleElim
+        ? Math.max(doubleElimContentBottom + 200, 1250)
+        : singleElimHeight;
+
     // Check if there are any matches to display
     if (!matches || matches.length === 0) {
         return (
@@ -319,14 +610,13 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
     }
 
     return (
-        <div className="relative overflow-auto">
+        <div className="relative overflow-auto w-full h-full">
             <div 
                 ref={containerRef}
                 className="relative bg-gray-900/50 rounded-xl p-8 border border-gray-700"
                 style={{ 
                     width: `${containerWidth}px`, 
-                    height: `${containerHeight}px`,
-                    minWidth: '100%'
+                    height: `${containerHeight}px`
                 }}
             >
                 {/* SVG for connecting lines */}
@@ -361,7 +651,7 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                         // Double Elimination Tree Layout
                         <>
                             {/* Winners Bracket */}
-                            <div className="absolute" style={{ top: `${WINNERS_SECTION_TOP}px`, left: '100px' }}>
+                            <div className="absolute" style={{ top: `${WINNERS_TOP}px`, left: `${BRACKET_LEFT}px` }}>
                                 
                                 
                                 {/* Winners matches positioned under the label */}
@@ -375,13 +665,62 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                                                 {/* Round Label */}
                                                 {/* Matches for this round */}
                                                 {roundMatches.map((match, matchIndex) => {
-                                                    const x = roundIndex * 380;
+                                                    const x = roundIndex * COLUMN_SPACING;
                                                     const totalMatches = roundMatches.length;
-                                                    // Dynamic spacing: increases with each round for better tree structure
-                                                    const baseSpacing = 160;
-                                                    const spacing = roundIndex === 0 ? baseSpacing : baseSpacing * (1 + roundIndex * 0.8);
-                                                    const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
-                                                    const y = startY + matchIndex * spacing;
+                                                    
+                                                    let y;
+                                                    if (roundIndex === 0) {
+                                                        // WR1: Position based on parent WR2 match position
+                                                        const nextMatch = matches.find(m => m.id === match.next_match_id);
+                                                        if (nextMatch && nextMatch.bracket === 'winners') {
+                                                            // Find WR2 matches and their positions
+                                                            const wr2Matches = layout.winners.filter(m => m.round === round + 1);
+                                                            const wr2Index = wr2Matches.findIndex(m => m.id === nextMatch.id);
+                                                            
+                                                            if (wr2Index !== -1) {
+                                                                // Calculate WR2 position using updated spacing logic
+                                                                const allWinnersRoundsCount = Array.from(new Set(layout.winners.map(m => m.round))).length;
+                                                                const wr2TotalMatches = wr2Matches.length;
+                                                                const wr2Spacing = computeRoundSpacing(1, wr2TotalMatches, matchSpacing, false, allWinnersRoundsCount);
+                                                                const wr2StartY = wr2TotalMatches > 1 ? -(wr2TotalMatches - 1) * wr2Spacing / 2 : 0;
+                                                                const wr2Y = wr2StartY + wr2Index * wr2Spacing;
+                                                                
+                                                                // Position WR1 matches around their WR2 parent
+                                                                const wr2Children = layout.winners.filter(m => m.next_match_id === nextMatch.id && m.round === round);
+                                                                const childIndex = wr2Children.findIndex(m => m.id === match.id);
+                                                                const withinPairGap = 120; // Gap between R1 pairs
+                                                                const pairOffset = (withinPairGap / 2);
+                                                                
+                                                                // Center the pair around WR2 position
+                                                                if (childIndex === 0) {
+                                                                    y = wr2Y - pairOffset;
+                                                                } else {
+                                                                    y = wr2Y + pairOffset;
+                                                                }
+                                                            } else {
+                                                                // Fallback
+                                                                const spacing = computeRoundSpacing(roundIndex, totalMatches);
+                                                                const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+                                                                y = startY + matchIndex * spacing;
+                                                            }
+                                                        } else {
+                                                            // Fallback
+                                                            const spacing = computeRoundSpacing(roundIndex, totalMatches);
+                                                            const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+                                                            y = startY + matchIndex * spacing;
+                                                        }
+                                                    } else {
+                                                        // WR2+: Use progressive spacing
+                                                        const roundConfig = singleElimMetrics?.roundConfigs.get(round);
+                                                        const spacing = roundConfig
+                                                            ? roundConfig.spacing
+                                                            : computeRoundSpacing(roundIndex, totalMatches);
+                                                        
+                                                        const startY = roundConfig
+                                                            ? roundConfig.startY
+                                                            : (totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0);
+                                                        y = startY + matchIndex * spacing;
+                                                    }
                                                     
                                                     return (
                                                         <div key={match.id} style={{
@@ -401,7 +740,7 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                             
 
                             {/* Losers Bracket */}
-                            <div className="absolute" style={{ top: `${LOSERS_SECTION_TOP}px`, left: '100px' }}>
+                            <div className="absolute" style={{ top: `${LOSERS_TOP}px`, left: `${BRACKET_LEFT}px` }}>
                                 
                                 
                                 {/* Losers matches positioned under the label */}
@@ -419,14 +758,17 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                                                 
                                                 // Special handling for specific rounds and team counts
                                                 const isLR1_14teams = (roundIndex === 0 && matches.length === 26 && matchNumbersSet.has(7) && matchNumbersSet.has(8));
+                                                const isLR1_15teams = (roundIndex === 0 && matches.length === 28 && matchNumbersSet.has(8) && matchNumbersSet.has(9) && matchNumbersSet.has(10));
                                                 const isLR3_14teams = (roundIndex === 2 && matches.length === 26 && matchNumbersSet.has(17) && matchNumbersSet.has(18));
+                                                const isLR4_17teams = (roundIndex === 3 && matches.length === 32 && matchNumbersSet.has(23) && matchNumbersSet.has(24));
                                                 
-                                                // For LR3 14-teams: keep descending (M18 on top, M17 below)
-                                                if (isLR3_14teams) {
-                                                    roundMatches = matchNumbersDesc; // Keep descending: [18, 17]
+                                                // For LR3 14-teams and LR4 17-teams: keep descending order
+                                                if (isLR3_14teams || isLR4_17teams) {
+                                                    roundMatches = matchNumbersDesc; // Keep descending
                                                 } else {
                                                     const shouldForceAscending = (roundIndex > 2)
                                                         || isLR1_14teams  // LR1 for 14 teams: M7 then M8
+                                                        || isLR1_15teams  // LR1 for 15 teams: M8, M9, M10
                                                         || (roundIndex === 2 && (
                                                             (matches.length === 22 && matchNumbersSet.has(17) && matchNumbersSet.has(18)) || // 11 teams
                                                             (matches.length === 20 && matchNumbersSet.has(15) && matchNumbersSet.has(16))    // 12 teams
@@ -449,11 +791,55 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                                                 
                                                 {/* Matches for this round */}
                                                 {roundMatches.map((match, matchIndex) => {
-                                                    const x = roundIndex * 380;
+                                                    const x = roundIndex * COLUMN_SPACING;
                                                     const totalMatches = roundMatches.length;
-                                                    const spacing = 160; // Increased spacing for better visibility
-                                                    const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
-                                                    const y = startY + matchIndex * spacing;
+                                                    
+                                                    let y;
+                                                    if (roundIndex === 0) {
+                                                        // LR1: Position based on parent LR2 match position (if applicable)
+                                                        const nextMatch = matches.find(m => m.id === match.next_match_id);
+                                                        if (nextMatch && nextMatch.bracket === 'losers') {
+                                                            // Find LR2 matches and their positions
+                                                            const lr2Matches = layout.losers.filter(m => m.round === round + 1);
+                                                            const lr2Index = lr2Matches.findIndex(m => m.id === nextMatch.id);
+                                                            
+                                                            if (lr2Index !== -1) {
+                                                                // Calculate LR2 position
+                                                                const lr2TotalMatches = lr2Matches.length;
+                                                                const lr2Spacing = LOSERS_VERTICAL_SPACING;
+                                                                const lr2StartY = lr2TotalMatches > 1 ? -(lr2TotalMatches - 1) * lr2Spacing / 2 : 0;
+                                                                const lr2Y = lr2StartY + lr2Index * lr2Spacing;
+                                                                
+                                                                // Position LR1 matches around their LR2 parent
+                                                                const lr2Children = layout.losers.filter(m => m.next_match_id === nextMatch.id && m.round === round);
+                                                                const childIndex = lr2Children.findIndex(m => m.id === match.id);
+                                                                const withinPairGap = 120; // Gap between R1 pairs
+                                                                const pairOffset = (withinPairGap / 2);
+                                                                
+                                                                // Center the pair around LR2 position
+                                                                if (childIndex === 0) {
+                                                                    y = lr2Y - pairOffset;
+                                                                } else {
+                                                                    y = lr2Y + pairOffset;
+                                                                }
+                                                            } else {
+                                                                // Fallback
+                                                                const spacing = LOSERS_VERTICAL_SPACING;
+                                                                const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+                                                                y = startY + matchIndex * spacing;
+                                                            }
+                                                        } else {
+                                                            // Fallback
+                                                            const spacing = LOSERS_VERTICAL_SPACING;
+                                                            const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+                                                            y = startY + matchIndex * spacing;
+                                                        }
+                                                    } else {
+                                                        // LR2+: Use standard losers spacing
+                                                        const spacing = LOSERS_VERTICAL_SPACING;
+                                                        const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
+                                                        y = startY + matchIndex * spacing;
+                                                    }
                                                     
                                                     return (
                                                         <div key={match.id} style={{
@@ -474,7 +860,7 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
 
                             {/* Grand Finals */}
                             {layout.grandFinals && layout.grandFinals.length > 0 && (
-                                <div className="absolute" style={{ top: `${GRAND_FINALS_TOP}px`, right: '500px' }}>
+                                <div className="absolute" style={{ top: `${GRAND_FINALS_TOP}px`, left: `${FINALS_LEFT}px` }}>
                                     
                                     {layout.grandFinals.map((match, index) => {
                                         return (
@@ -502,13 +888,75 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
                                             <div key={`round-${round}`}>
                                                 {/* Matches for this round - using tree positioning */}
                                                 {roundMatches.map((match, matchIndex) => {
-                                                    const x = roundIndex * 380;
+                                                    const x = roundIndex * COLUMN_SPACING;
                                                     const totalMatches = roundMatches.length;
-                                                    // Dynamic spacing: increases with each round for better tree structure
-                                                    const baseSpacing = 160;
-                                                    const spacing = roundIndex === 0 ? baseSpacing : baseSpacing * (1 + roundIndex * 0.8);
-                                                    const startY = totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0;
-                                                    const y = startY + matchIndex * spacing;
+                                                    
+                                                    let y;
+                                                    if (roundIndex === 0) {
+                                                        // R1: Position based on parent R2 match position
+                                                        // Find the next match (R2 parent)
+                                                        const nextMatch = matches.find(m => m.id === match.next_match_id);
+                                                        if (nextMatch) {
+                                                            // Find R2 matches and their positions
+                                                            const r2Matches = matches.filter(m => m.round === 2);
+                                                            const r2Index = r2Matches.findIndex(m => m.id === nextMatch.id);
+                                                            
+                                                            if (r2Index !== -1) {
+                                                                // Calculate R2 position using updated spacing logic
+                                                                const allRoundsCount = Array.from(new Set(matches.map(m => m.round))).length;
+                                                                const r2TotalMatches = r2Matches.length;
+                                                                const r2Spacing = computeRoundSpacing(1, r2TotalMatches, SINGLE_ELIM_BASE_SPACING, true, allRoundsCount);
+                                                                const r2StartY = r2TotalMatches > 1 ? -(r2TotalMatches - 1) * r2Spacing / 2 : 0;
+                                                                const r2Y = r2StartY + r2Index * r2Spacing;
+                                                                
+                                                                // Position R1 matches around their R2 parent
+                                                                // Find which child this is (0 or 1)
+                                                                const r2Children = matches.filter(m => m.next_match_id === nextMatch.id && m.round === 1);
+                                                                const childIndex = r2Children.findIndex(m => m.id === match.id);
+                                                                const withinPairGap = 120; // Gap between R1 pairs
+                                                                const pairOffset = (withinPairGap / 2);
+                                                                
+                                                                // Center the pair around R2 position
+                                                                if (childIndex === 0) {
+                                                                    y = r2Y - pairOffset;
+                                                                } else {
+                                                                    y = r2Y + pairOffset;
+                                                                }
+                                                            } else {
+                                                                // Fallback to old logic
+                                                                const pairIndex = Math.floor(matchIndex / 2);
+                                                                const withinPairIndex = matchIndex % 2;
+                                                                const pairGap = SINGLE_ELIM_BASE_SPACING;
+                                                                const withinPairGap = matchHeight + 60; // Increased gap to prevent overlap
+                                                                const totalPairs = Math.ceil(totalMatches / 2);
+                                                                const totalPairHeight = (totalPairs - 1) * pairGap;
+                                                                const startY = -(totalPairHeight / 2);
+                                                                y = startY + (pairIndex * pairGap) + (withinPairIndex * withinPairGap);
+                                                            }
+                                                        } else {
+                                                            // Fallback for matches without next_match_id
+                                                            const pairIndex = Math.floor(matchIndex / 2);
+                                                            const withinPairIndex = matchIndex % 2;
+                                                            const pairGap = SINGLE_ELIM_BASE_SPACING;
+                                                            const withinPairGap = matchHeight + 20;
+                                                            const totalPairs = Math.ceil(totalMatches / 2);
+                                                            const totalPairHeight = (totalPairs - 1) * pairGap;
+                                                            const startY = -(totalPairHeight / 2);
+                                                            y = startY + (pairIndex * pairGap) + (withinPairIndex * withinPairGap);
+                                                        }
+                                                    } else {
+                                                        // R2+: Use progressive spacing
+                                                        const allRounds = Array.from(new Set(matches.map(m => m.round))).sort((a, b) => a - b);
+                                                        const roundConfig = singleElimMetrics?.roundConfigs.get(round);
+                                                        const spacing = roundConfig
+                                                            ? roundConfig.spacing
+                                                            : computeRoundSpacing(roundIndex, totalMatches, SINGLE_ELIM_BASE_SPACING, true, allRounds.length);
+                                                        
+                                                        const startY = roundConfig
+                                                            ? roundConfig.startY
+                                                            : (totalMatches > 1 ? -(totalMatches - 1) * spacing / 2 : 0);
+                                                        y = startY + matchIndex * spacing;
+                                                    }
                                                     
                                                     return (
                                                         <div key={match.id} style={{
@@ -531,18 +979,31 @@ const TreeBracket = ({ matches = [], tournament = {}, onReportScore }) => {
 
                 {/* Round Labels */}
                 <div className="absolute top-4 left-0 right-0" style={{ zIndex: 3 }}>
-                    {Array.from({ length: maxRounds }, (_, i) => (
-                        <div
-                            key={i}
-                            className="absolute text-gray-300 font-semibold text-sm"
-                            style={{ 
-                                left: `${70 + (i * 400)}px`,
-                                transform: 'translateX(-50%)'
-                            }}
-                        >
-                            {i + 1 === maxRounds ? '🏆 Finals' : `Round ${i + 1}`}
-                        </div>
-                    ))}
+                    {Array.from({ length: maxRounds }, (_, i) => {
+                        const roundNumber = i + 1;
+                        let label;
+                        
+                        if (roundNumber === maxRounds) {
+                            label = '🏆 Finals';
+                        } else if (roundNumber === maxRounds - 1) {
+                            label = 'Semifinals';
+                        } else {
+                            label = `Round ${roundNumber}`;
+                        }
+                        
+                        return (
+                            <div
+                                key={i}
+                                className="absolute text-gray-300 font-semibold text-sm"
+                                style={{ 
+                                    left: `${70 + (i * 400)}px`,
+                                    transform: 'translateX(-50%)'
+                                }}
+                            >
+                                {label}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>

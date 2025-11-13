@@ -12,6 +12,7 @@ export default function BorrowersIndex() {
     const [deletingRequests, setDeletingRequests] = useState(new Set());
     const [isSubmittingAction, setIsSubmittingAction] = useState(false);
     const [editingItemId, setEditingItemId] = useState(null);
+    const [activeTab, setActiveTab] = useState('inventory');
 
     const openAction = (action, request) => setActionModal({ open: true, action, request, send_mail: true, note: '' });
     const closeAction = () => setActionModal((m) => ({ ...m, open: false }));
@@ -174,67 +175,170 @@ export default function BorrowersIndex() {
     };
 
     return (
-        <AuthenticatedLayout header={<h2>Borrowers Management</h2>}>
+        <AuthenticatedLayout 
+            user={usePage().props.auth.user}
+            header={
+                <div className="flex justify-between items-center">
+                    <h1 className="font-semibold text-xl text-white leading-tight">
+                        Borrowers Management
+                    </h1>
+                </div>
+            }
+        >
             <Head title="Borrowers Management" />
-            <div className="max-w-full space-y-8 align-content-start">
-                <section>
-                    <h3 className="text-xl font-semibold mb-3">Inventory Dashboard</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-                        <div className="rounded-lg bg-slate-900/50 border border-slate-800 p-6">
-                            <div className="text-sm text-slate-400">Total Items</div>
-                            <div className="text-3xl font-bold">{stats.total_items ?? 0}</div>
-                        </div>
-                        <div className="rounded-lg bg-slate-900/50 border border-slate-800 p-6">
-                            <div className="text-sm text-slate-400">Borrowed Items</div>
-                            <div className="text-3xl font-bold">{stats.borrowed_items ?? 0}</div>
-                        </div>
-                        <div className="rounded-lg bg-slate-900/50 border border-slate-800 p-6">
-                            <div className="text-sm text-slate-400">Pending Requests</div>
-                            <div className="text-3xl font-bold">{stats.pending_requests ?? 0}</div>
-                        </div>
-                    </div>
-                </section>
+            
+            <div className="py-12 px-8">
+                <div className="ml-8 mr-8 space-y-8">
+                
+                {/* Tab Navigation */}
+                <div className="flex gap-4 mb-6">
+                    <button
+                        onClick={() => setActiveTab('inventory')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeTab === 'inventory'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-800/60 text-slate-300 hover:text-white hover:bg-slate-700/80'
+                        }`}
+                    >
+                        Inventory Management
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('requests')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeTab === 'requests'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-800/60 text-slate-300 hover:text-white hover:bg-slate-700/80'
+                        }`}
+                    >
+                        Borrow Requests
+                    </button>
+                </div>
 
+                {/* Inventory Tab */}
+                {activeTab === 'inventory' && (
+                <>
                 <section>
-                    <h3 className="text-xl font-semibold mb-3">Inventory Management</h3>
-                    <div className="rounded-lg border border-slate-700 bg-slate-900/30 overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead className="bg-slate-900/60">
-                                <tr className="text-left">
-                                    <th className="px-4 py-2">Item ID</th>
-                                    <th className="px-4 py-2">Item Name</th>
-                                    <th className="px-4 py-2">Quantity</th>
-                                    <th className="px-4 py-2">Available</th>
-                                    <th className="px-4 py-2">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {items.map((it) => (
-                                    <tr key={it.id} className="border-t border-slate-800">
-                                        <td className="px-4 py-2">{it.id}</td>
-                                        <td className="px-4 py-2">{it.name}</td>
-                                        <td className="px-4 py-2">{it.quantity}</td>
-                                        <td className="px-4 py-2">{it.available}</td>
-                                        <td className="px-4 py-2 space-x-2">
+                    <h3 className="text-xl font-semibold mb-6 text-white">Inventory Management</h3>
+                    <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                        {/* Mobile Cards View */}
+                        <div className="md:hidden divide-y divide-slate-700">
+                            {items.map((it) => (
+                                <div key={it.id} className="p-4 hover:bg-slate-800/30 transition-colors">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="text-white font-semibold">{it.name}</h3>
+                                                <p className="text-slate-400 text-sm">ID: {it.id}</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                                <span className="text-slate-400">Quantity:</span>
+                                                <p className="text-slate-300">{it.quantity}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-slate-400">Available:</span>
+                                                <p className="text-slate-300">{it.available}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end gap-2 pt-2 border-t border-slate-700">
                                             <button
                                                 onClick={() => handleEditItem(it.id)}
                                                 disabled={editingItems.has(it.id)}
-                                                className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="p-2 rounded-lg text-yellow-400 hover:text-yellow-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                             >
-                                                {editingItems.has(it.id) ? 'Updating...' : 'Edit'}
+                                                {editingItems.has(it.id) ? (
+                                                    <span className="text-xs font-medium text-yellow-200">Updating...</span>
+                                                ) : (
+                                                    <>
+                                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                        <span className="sr-only">Edit item</span>
+                                                    </>
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteItem(it.id)}
                                                 disabled={deletingItems.has(it.id)}
-                                                className="px-3 py-1 rounded bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="p-2 rounded-lg text-red-400 hover:text-red-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                             >
-                                                {deletingItems.has(it.id) ? 'Deleting...' : 'Delete'}
+                                                {deletingItems.has(it.id) ? (
+                                                    <span className="text-xs font-medium text-red-200">Deleting...</span>
+                                                ) : (
+                                                    <>
+                                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        <span className="sr-only">Delete item</span>
+                                                    </>
+                                                )}
                                             </button>
-                                        </td>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-700">
+                                <thead className="bg-slate-700">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Item ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Item Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Quantity</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Available</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {items.map((it) => (
+                                        <tr key={it.id} className="hover:bg-slate-700/30 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap">{it.id}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{it.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{it.quantity}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{it.available}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleEditItem(it.id)}
+                                                        disabled={editingItems.has(it.id)}
+                                                        className="p-2 rounded-lg text-yellow-400 hover:text-yellow-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                                    >
+                                                        {editingItems.has(it.id) ? (
+                                                            <span className="text-xs font-medium text-yellow-200">Updating...</span>
+                                                        ) : (
+                                                            <>
+                                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                </svg>
+                                                                <span className="sr-only">Edit item</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteItem(it.id)}
+                                                        disabled={deletingItems.has(it.id)}
+                                                        className="p-2 rounded-lg text-red-400 hover:text-red-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                                    >
+                                                        {deletingItems.has(it.id) ? (
+                                                            <span className="text-xs font-medium text-red-200">Deleting...</span>
+                                                        ) : (
+                                                            <>
+                                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-3h4m-4 0a1 1 0 00-1 1v3m6-4a1 1 0 011 1v3m-7 4v6m4-6v6M4 7h16" />
+                                                                </svg>
+                                                                <span className="sr-only">Delete item</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div className="mt-3 space-y-2">
                         {editingItemId && (
@@ -263,13 +367,23 @@ export default function BorrowersIndex() {
                                     <button
                                         disabled={processing || editingItems.has(editingItemId)}
                                         onClick={() => handleUpdateItem(editingItemId)}
-                                        className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50"
+                                        className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                     >
                                         {editingItems.has(editingItemId) ? 'Updating...' : 'Update Item'}
                                     </button>
                                     <button
                                         onClick={handleCancelEdit}
-                                        className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
+                                        className="w-[105px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808 ]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                     >
                                         Cancel
                                     </button>
@@ -293,45 +407,93 @@ export default function BorrowersIndex() {
                 </section>
 
                 <section>
-                    <h3 className="text-xl font-semibold mb-3">Borrow Requests</h3>
-                    <div className="rounded-lg border border-slate-700 bg-slate-900/30 overflow-hidden">
-                        <table className="w-full text-sm">
-                                <thead className="bg-slate-800/60">
-                                    <tr className="text-left border-b border-slate-600">
-                                        <th className="px-3 py-3 font-medium text-slate-300">Student ID</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Student Name</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Email</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Item</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Qty</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Purpose</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Contact</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Date</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Status</th>
-                                        <th className="px-3 py-3 font-medium text-slate-300">Actions</th>
+                    <h3 className="text-xl font-semibold mb-6 text-white">Borrowing Logs</h3>
+                    <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-700">
+                                <thead className="bg-slate-700">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Student ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Student Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Email</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Item</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Qty</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Purpose</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Contact</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Borrowed On</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Returned On</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {requests.map((r) => (
-                                        <tr key={r.id} className="border-t border-slate-700 hover:bg-slate-800/20">
-                                            <td className="px-3 py-2">{r.student_id}</td>
-                                            <td className="px-3 py-2">{r.student_name}</td>
-                                            <td className="px-3 py-2">
-                                                <div className="flex items-center gap-2">
-                                                    {r.email}
-                                                    {r.status === 'approved' && (
-                                                        <button
-                                                            onClick={() => openEmailModal(r.email)}
-                                                            className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors border border-blue-500"
-                                                            title="Send message to student"
-                                                        >
-                                                            Message
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-2">{r.item?.name}</td>
-                                            <td className="px-3 py-2">{r.quantity || 1}</td>
-                                            <td className="px-3 py-2">
+                            <tbody className="divide-y divide-slate-700">
+                                {logs.map((r) => (
+                                    <tr key={r.id} className="hover:bg-slate-700/30 transition-colors duration-150">
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.student_id}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.student_name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.email}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.item?.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.quantity || 1}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {r.purpose ? (
+                                                <button
+                                                    onClick={() => openPurposeModal(`Purpose - Log #${r.id}`, r.purpose)}
+                                                    className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
+                                                    title="Click to view purpose"
+                                                >
+                                                    View
+                                                </button>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.contact_number || '—'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.approved_at ? new Date(r.approved_at).toLocaleDateString() : '—'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{r.returned_at ? new Date(r.returned_at).toLocaleDateString() : '—'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="whitespace-nowrap" title={r.returned_at ? 'Returned' : (r.status === 'approved' ? 'Borrowed' : r.status)}>
+                                                {r.returned_at ? 'Returned' : (r.status === 'approved' ? 'Borrowed' : r.status)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                </section>
+                </>
+                )}
+
+                {/* Requests Tab */}
+                {activeTab === 'requests' && (
+                <>
+                <section>
+                    <h3 className="text-xl font-semibold mb-6 text-white">Borrow Requests</h3>
+                    <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-700">
+                                    <thead className="bg-slate-700">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Student ID</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Student Name</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Email</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Item</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Qty</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Purpose</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Contact</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Date</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                                        </tr>
+                                    </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {requests.filter(r => r.status === 'pending').map((r) => (
+                                        <tr key={r.id} className="hover:bg-slate-700/30 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.student_id}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.student_name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.email}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.item?.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.quantity || 1}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 {r.purpose ? (
                                                     <button
                                                         onClick={() => openPurposeModal(`Purpose - Request #${r.id}`, r.purpose)}
@@ -344,12 +506,9 @@ export default function BorrowersIndex() {
                                                     '—'
                                                 )}
                                             </td>
-                                            <td className="px-3 py-2">{r.contact_number || '—'}</td>
-                                            <td className="px-3 py-2">{new Date(r.requested_at ?? r.created_at).toLocaleDateString()}</td>
-                                            <td className="px-3 py-2">
-                                                <span className="capitalize whitespace-nowrap" title={r.status}>{r.status}</span>
-                                            </td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.contact_number || '—'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{new Date(r.requested_at ?? r.created_at).toLocaleDateString()}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
                                                     <button
                                                         onClick={() => openAction('approve', r)}
@@ -389,64 +548,84 @@ export default function BorrowersIndex() {
                                             </td>
                                         </tr>
                                     ))}
+                                    {requests.filter(r => r.status === 'pending').length === 0 && (
+                                        <tr>
+                                            <td colSpan="9" className="px-3 py-8 text-center text-slate-400">
+                                                No pending borrow requests
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
-                        </table>
+                            </table>
+                        </div>
                     </div>
                 </section>
 
                 <section>
-                    <h3 className="text-xl font-semibold mb-3">Borrowing Logs</h3>
-                    <div className="w-[1200px] rounded-lg border border-slate-700 bg-slate-900/30 overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead className="bg-slate-900/60">
-                                <tr className="text-left">
-                                    <th className="px-4 py-2">Student ID</th>
-                                    <th className="px-4 py-2">Student Name</th>
-                                    <th className="px-4 py-2">Email</th>
-                                    <th className="px-4 py-2">Item</th>
-                                    <th className="px-4 py-2">Qty</th>
-                                    <th className="px-4 py-2">Purpose</th>
-                                    <th className="px-4 py-2">Contact</th>
-                                    <th className="px-4 py-2">Borrowed On</th>
-                                    <th className="px-4 py-2">Returned On</th>
-                                    <th className="px-4 py-2">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {logs.map((r) => (
-                                    <tr key={r.id} className="border-t border-slate-800">
-                                        <td className="px-4 py-2">{r.student_id}</td>
-                                        <td className="px-4 py-2">{r.student_name}</td>
-                                        <td className="px-4 py-2">{r.email}</td>
-                                        <td className="px-4 py-2">{r.item?.name}</td>
-                                        <td className="px-4 py-2">{r.quantity || 1}</td>
-                                        <td className="px-4 py-2 max-w-xs">
-                                            {r.purpose ? (
-                                                <button
-                                                    onClick={() => openPurposeModal(`Purpose - Log #${r.id}`, r.purpose)}
-                                                    className="px-2 py-1 text-xs rounded bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
-                                                    title="Click to view purpose"
-                                                >
-                                                    View
-                                                </button>
-                                            ) : (
-                                                '—'
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-2">{r.contact_number || '—'}</td>
-                                        <td className="px-4 py-2">{r.approved_at ? new Date(r.approved_at).toLocaleDateString() : '—'}</td>
-                                        <td className="px-4 py-2">{r.returned_at ? new Date(r.returned_at).toLocaleDateString() : '—'}</td>
-                                        <td className="px-4 py-2">
-                                            <span className="whitespace-nowrap" title={r.returned_at ? 'Returned' : (r.status === 'approved' ? 'Borrowed' : r.status)}>
-                                                {r.returned_at ? 'Returned' : (r.status === 'approved' ? 'Borrowed' : r.status)}
-                                            </span>
-                                        </td>
+                    <h3 className="text-xl font-semibold mb-6 text-white">Borrowed Items</h3>
+                    <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-700">
+                                <thead className="bg-slate-700">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Student ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Student Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Email</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Item</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Qty</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Borrowed On</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Contact</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {requests.filter(r => r.status === 'approved' && !r.returned_at).map((r) => (
+                                        <tr key={r.id} className="hover:bg-slate-700/30 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.student_id}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.student_name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    {r.email}
+                                                    <button
+                                                        onClick={() => openEmailModal(r.email)}
+                                                        className="text-[11px] bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-2.5 py-1 rounded border border-blue-500/30 transition-colors flex items-center gap-1"
+                                                        title="Send message to student"
+                                                    >
+                                                        Message
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.item?.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.quantity || 1}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.approved_at ? new Date(r.approved_at).toLocaleDateString() : '—'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{r.contact_number || '—'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => openAction('returned', r)}
+                                                    disabled={deletingRequests.has(r.id)}
+                                                    className="text-[11px] bg-green-500/20 hover:bg-green-500/30 text-green-300 px-2.5 py-1 rounded border border-green-500/30 transition-colors flex items-center gap-1"
+                                                    title="Mark as Returned"
+                                                >
+                                                    Mark Returned
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {requests.filter(r => r.status === 'approved' && !r.returned_at).length === 0 && (
+                                        <tr>
+                                            <td colSpan="8" className="px-3 py-8 text-center text-slate-400">
+                                                No borrowed items currently
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
+                </>
+                )}
+                </div>
             </div>
             <Modal show={actionModal.open} onClose={closeAction} maxWidth="md">
                 <div className="p-6 bg-slate-900 text-slate-100">
@@ -465,8 +644,18 @@ export default function BorrowersIndex() {
                         <textarea value={actionModal.note} onChange={(e)=>setActionModal((m)=>({...m, note: e.target.value}))} className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-700" rows={3} placeholder="Add a note to include in the email..." />
                     </div>
                     <div className="flex justify-end gap-2">
-                        <button onClick={closeAction} className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-600">Cancel</button>
-                        <button onClick={submitAction} disabled={isSubmittingAction} className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <button onClick={closeAction} className="w-[110px] h-[40px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Cancel</button>
+                        <button onClick={submitAction} disabled={isSubmittingAction} className="w-[135px] h-[40px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">
                             {isSubmittingAction ? 'Processing...' : `Confirm ${actionModal.action ? actionModal.action.charAt(0).toUpperCase() + actionModal.action.slice(1) : 'Action'}`}
                         </button>
                     </div>

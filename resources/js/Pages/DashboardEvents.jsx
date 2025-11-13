@@ -199,7 +199,7 @@ const DateTimePicker = ({ value, onChange, label, placeholder = "Select date and
                 <label className="block mb-1 text-slate-300">{label}</label>
             )}
             <div
-                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
+                className="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
                 onClick={() => {
                     setIsOpen(true);
                     setActiveTab('date');
@@ -523,7 +523,7 @@ const DatePicker = ({ value, onChange, label, placeholder = "Select date" }) => 
                 <label className="block mb-1 text-slate-300">{label}</label>
             )}
             <div
-                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
+                className="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-md px-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600/50 flex items-center justify-between"
                 onClick={() => setIsOpen(true)}
             >
                 <span className={selectedDate ? 'text-slate-100' : 'text-slate-400'}>
@@ -1377,7 +1377,7 @@ function Dashboard() {
             )}
 
 
-            <div>
+            <div className="py-12 px-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 className="text-2xl font-bold text-white">Events</h2>
                     <div className="flex flex-wrap gap-3">
@@ -1748,7 +1748,7 @@ function Dashboard() {
                                                                 type="number"
                                                                 min="2"
                                                                 max="50"
-                                                                className="w-full bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                                                                className="w-full bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600/50"
                                                                 value={editData.team_size}
                                                                 onChange={(e) => setEditData(prev => ({ ...prev, team_size: e.target.value }))}
                                                                 placeholder="Enter number of players per team"

@@ -55,6 +55,22 @@ class RequirementsController extends Controller
         return redirect()->back()->with('success', 'Requirement uploaded successfully!');
     }
 
+    // View a requirement file inline (for viewing, not downloading)
+    public function view(Requirement $requirement)
+    {
+        if (!$requirement->file_path || !Storage::disk('public')->exists($requirement->file_path)) {
+            abort(404, 'File not found');
+        }
+
+        $filePath = Storage::disk('public')->path($requirement->file_path);
+        $mimeType = Storage::disk('public')->mimeType($requirement->file_path);
+        
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . basename($requirement->file_path) . '"'
+        ]);
+    }
+
     // Delete a requirement (admin only)
     public function destroy(Requirement $requirement)
     {

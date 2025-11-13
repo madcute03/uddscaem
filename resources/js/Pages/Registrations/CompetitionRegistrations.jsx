@@ -82,7 +82,7 @@ export default function CompetitionRegistrations({ players: initialPlayers, even
                     ← Back to dashboard
                 </Link>
 
-                <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
+                <div className="mt-8 mx-auto w-full max-w-6xl overflow-hidden rounded-xl shadow-2xl border border-white/15 bg-white/10 backdrop-blur-xl p-4 sm:p-6 md:p-8">
                     {/* Success/Error Messages */}
                     {flash?.success && (
                         <div className="mb-4 p-4 rounded-lg bg-green-500/20 border border-green-400/30 text-green-300">

@@ -1,0 +1,47 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║              CHALLONGE vs MY CURRENT IMPLEMENTATION                  ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+10 TEAMS
+════════
+Challonge:  LR1=2, LR2=2, LR3=2, LR4=1, LR5=1
+My Current: LR1=1, LR2=2, LR3=1, LR4=2, LR5=1, LR6=1
+Status:     ❌ COMPLETELY WRONG
+
+11 TEAMS
+════════
+Challonge:  LR1=3, LR2=2, LR3=2, LR4=1, LR5=1
+My Current: LR1=1, LR2=3, LR3=1, LR4=2, LR5=1, LR6=1
+Status:     ❌ COMPLETELY WRONG
+
+12 TEAMS
+════════
+Challonge:  LR1=4, LR2=2, LR3=2, LR4=2, LR5=1
+My Current: LR1=2, LR2=3, LR3=1, LR4=2, LR5=1, LR6=1
+Status:     ❌ COMPLETELY WRONG
+
+13 TEAMS
+════════
+Challonge:  LR1=2, LR2=4, LR3=2, LR4=2, LR5=1, LR6=1
+My Current: LR1=2, LR2=3, LR3=2, LR4=2, LR5=1, LR6=1
+Status:     ❌ LR2 WRONG (should be 4, not 3)
+
+16 TEAMS
+════════
+Challonge:  LR1=4, LR2=4, LR3=2, LR4=2, LR5=1, LR6=1
+My Current: LR1=4, LR2=4, LR3=2, LR4=2, LR5=1, LR6=1
+Status:     ✅ CORRECT!
+
+8 TEAMS
+═══════
+Challonge:  LR1=2, LR2=2, LR3=1, LR4=1
+My Current: LR1=2, LR2=2, LR3=1, LR4=1
+Status:     ✅ CORRECT!
+
+
+SUMMARY
+═══════
+✅ Power of 2 (8, 16): CORRECT
+❌ Non-power of 2 (10, 11, 12, 13): ALL WRONG
+
+The non-power-of-2 algorithm needs to be completely rewritten!

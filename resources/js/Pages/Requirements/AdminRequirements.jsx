@@ -33,8 +33,8 @@ export default function AdminRequirements({ requirements }) {
         <AuthenticatedLayout>
             <Head title="Manage Requirements" />
 
-            <div className="max-w-7xl mx-auto">
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl shadow-xl p-6">
+            <div className="py-12 px-8">
+                <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50 p-6">
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h1 className="text-2xl font-bold text-white">Manage Requirements</h1>
@@ -64,24 +64,25 @@ export default function AdminRequirements({ requirements }) {
                             <p className="text-slate-400 mb-4">No requirements uploaded yet.</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-700">
-                                <thead>
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Title</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Description</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Uploaded By</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Actions</th>
+                        <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-700">
+                                    <thead className="bg-slate-700">
+                                        <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Title</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Description</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Uploaded By</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-slate-800/50 divide-y divide-slate-700">
+                                <tbody className="divide-y divide-slate-700">
                                     {requirements.map((requirement) => (
-                                        <tr key={requirement.id} className="hover:bg-slate-800/70">
+                                        <tr key={requirement.id} className="hover:bg-slate-700/30 transition-colors duration-150">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-slate-100">{requirement.title}</div>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-slate-300 max-w-md truncate">
                                                     {requirement.description || 'No description'}
                                                 </div>
@@ -97,14 +98,14 @@ export default function AdminRequirements({ requirements }) {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <div className="flex items-center gap-3">
                                                     <a
-                                                        href={`/storage/${requirement.file_path}`}
+                                                        href={route('admin.requirements.view', requirement.id)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-emerald-400 hover:text-emerald-300 transition-colors"
                                                         title="View"
                                                     >
                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                         </svg>
                                                     </a>
@@ -123,6 +124,7 @@ export default function AdminRequirements({ requirements }) {
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -225,14 +227,24 @@ export default function AdminRequirements({ requirements }) {
                                         setShowUploadModal(false);
                                         reset();
                                     }}
-                                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                                    className="w-[110px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                                    className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                 >
                                     {processing ? (
                                         <>

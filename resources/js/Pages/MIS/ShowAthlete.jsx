@@ -8,7 +8,7 @@ export default function ShowAthlete({ auth, athlete }) {
         <AuthenticatedLayout user={auth.user}>
             <Head title={`View Athlete - ${athlete.name}`} />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="py-12 px-8">
                 <div className="max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
@@ -111,21 +111,7 @@ export default function ShowAthlete({ auth, athlete }) {
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-end gap-4 pt-6 border-t border-slate-700">
-                            <Link
-                                href={route('mis.dashboard')}
-                                className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                            >
-                                Back
-                            </Link>
-                            <Link
-                                href={route('mis.athletes.edit', athlete.id)}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                            >
-                                Edit Profile
-                            </Link>
-                        </div>
+                        
                     </div>
                 </div>
             </div>

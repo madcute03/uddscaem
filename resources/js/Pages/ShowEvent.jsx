@@ -110,7 +110,7 @@ export default function ShowEvent({ event, tournament = null }) {
         // For guests, prevent Inertia navigation and try to open the public page
         e.preventDefault();
         const url = type === 'bracket'
-            ? route('bracket.show', { event: event.id })
+            ? route('events.publicViewBracket', { event: event.id })
             : route('standing.show', { event: event.id });
 
         const ok = await tryOpenPublic(url);
@@ -120,7 +120,7 @@ export default function ShowEvent({ event, tournament = null }) {
     };
 
     const handleViewRulebook = () => {
-        window.open(route("events.rulebook.download", event.id), '_blank', 'noopener,noreferrer');
+        window.open(route("events.rulebook.view", event.id), '_blank', 'noopener,noreferrer');
     };
 
     // ==================== EFFECTS ====================
@@ -148,7 +148,7 @@ export default function ShowEvent({ event, tournament = null }) {
             />
 
             {/* Event Details Section */}
-            <div className="max-w-7xl ml-8 px-4 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Event Title */}
                 <EventTitle title={event.title} />
 
@@ -239,7 +239,7 @@ function EventTitle({ title }) {
 
 function EventSchedule({ eventDate, eventEndDate, venue, formatDate }) {
     return (
-        <div className="mb-8 ml-3 mt-7">
+        <div className="mb-8 mt-7">
             <p className="text-lg tracking-wider text-blue-300 mb-2">Event Schedule</p>
             <p className="text-sm text-white">
                 {formatDate(eventDate, true)} - {formatDate(eventEndDate)}
@@ -268,7 +268,7 @@ function EventDescription({ description }) {
 
 function ParticipantsList({ participants }) {
     return (
-        <div className="mt-6 mb-6 p-6 bg-slate-600/20 border border-slate-600 rounded-xl w-[720px] justify-center mx-auto">
+        <div className="mt-6 mb-6 p-6 bg-slate-600/20 border border-slate-600 rounded-xl max-w-3xl mx-auto">
             <div className="flex items-center gap-2 mb-4 justify-center">
                 <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -295,10 +295,10 @@ function ActionButtons({ event, tournament, isRegistrationOpen, isUpcoming, hasB
     if (!showRegistration && !hasBracket) return null;
 
     return (
-        <div className="flex flex-wrap items-center gap-4 mt-8 mb-3 justify-center ">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-8 mb-3 justify-center">
             {/* Register Button */}
             {showRegistration && (
-                <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl w-[360px] h-[240px]">
+                <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl w-full sm:w-80 h-60">
                     {isRegistrationOpen ? (
                         <div className="flex flex-col items-center justify-between h-full">
                             <div className="flex items-center gap-2">
@@ -345,7 +345,7 @@ function ActionButtons({ event, tournament, isRegistrationOpen, isUpcoming, hasB
 
             {/* Tournament Bracket Section */}
             {hasBracket && (
-                <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl w-[360px] h-[240px]">
+                <div className="p-6 bg-slate-600/20 border border-slate-600 rounded-xl w-full sm:w-80 h-60">
                     <div className="flex flex-col justify-between h-full">
                         <div className="flex items-center gap-2 justify-center">
                             <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -396,7 +396,7 @@ function ActionButtons({ event, tournament, isRegistrationOpen, isUpcoming, hasB
 
 function RulebookSection({ onView }) {
     return (
-        <div className="w-[720px] mt-3 mb-8 p-6 bg-slate-600/20 border border-slate-600 rounded-xl justify-center mx-auto">
+        <div className="max-w-3xl mt-3 mb-8 p-6 bg-slate-600/20 border border-slate-600 rounded-xl mx-auto">
             <p className="text-xl text-blue-300 mb-4">Event Rulebook</p>
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">

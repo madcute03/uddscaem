@@ -133,7 +133,7 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
         <AuthenticatedLayout>
             <Head title={`Create Bracket - ${event?.title}`} />
             
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="py-12 px-8">
                 <div className="max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
@@ -212,7 +212,12 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
                             {/* Bulk Add Button */}
                             <button
                                 onClick={() => setShowBulkAddModal(true)}
-                                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center justify-center"
+                                className="w-[450px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#FF2A00] to-[#FF2A00]/0 
+                                                               bg-[#FF2A00]/20 flex items-center justify-center 
+                                                               hover:bg-[#FF2A00]/70 hover:shadow-[0_0_10px_rgba(255,165,0,0.5)] 
+                                                               focus:outline-none focus:bg-[#FF2A00]/70 focus:shadow-[0_0_10px_rgba(255,165,0,0.5)]"
                             >
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -260,7 +265,12 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
                         {/* Add Team Button */}
                         <button
                             onClick={addTeam}
-                            className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center"
+                            className="w-full h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#20F20D] to-[#20F20D]/0 
+                                                               bg-[#20F20D]/20 flex items-center justify-center 
+                                                               hover:bg-[#20F20D]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#20F20D]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                         >
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -272,7 +282,12 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
                         <button
                             onClick={generateBracket}
                             disabled={isGenerating || teams.length < 2}
-                            className="w-full mt-4 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold flex items-center justify-center"
+                            className="mt-4 w-full h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                         >
                             {isGenerating ? (
                                 <>
@@ -327,7 +342,12 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
                             <div className="flex gap-3 mt-4">
                                 <button
                                     onClick={handleBulkAdd}
-                                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
+                                    className="w-full h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                 >
                                     Add Teams
                                 </button>
@@ -336,7 +356,12 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
                                         setShowBulkAddModal(false);
                                         setBulkTeamText('');
                                     }}
-                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                                    className="w-[110px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                 >
                                     Cancel
                                 </button>

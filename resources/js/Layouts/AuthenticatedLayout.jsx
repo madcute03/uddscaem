@@ -200,7 +200,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 />
             )}
             <aside
-                className={`fixed left-0 top-14 sm:top-0 h-[calc(100vh-3.5rem)] sm:h-full w-64 md:w-80 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 sm:z-30 transition-transform duration-300 ease-in-out
+                className={`fixed left-0 top-14 sm:top-0 h-[calc(100vh-3.5rem)] sm:h-full w-64 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 sm:z-30 transition-transform duration-300 ease-in-out
                 ${showingNavigationDropdown ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 sm:block`}
                 style={{ display: showingNavigationDropdown ? 'block' : undefined }}
             >
@@ -236,7 +236,7 @@ export default function AuthenticatedLayout({ header, children }) {
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 pl-0 pt-16 sm:pl-64 md:pl-80 sm:pt-24">
+            <div className="flex-1 pl-0 pt-16 sm:pl-64 sm:pt-24 overflow-x-hidden">
                 <div className="hidden sm:block fixed inset-x-0 top-0 z-40 sm:z-50 bg-slate-900/70 backdrop-blur border-b border-slate-800/60 shadow-lg shadow-blue-950/20">
                     <div className="flex items-center gap-6 px-4 md:px-6 lg:px-8 py-4">
                         <div className="flex-1 flex items-center gap-6 min-w-0">
@@ -307,7 +307,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 {header && (
                     <header className="sm:hidden bg-slate-900/60 backdrop-blur border-b border-slate-800/50 shadow-lg shadow-blue-950/20">
-                        <div className="mx-auto max-w-2xl md:max-w-4xl lg:max-w-5xl px-2 py-4 sm:px-4 md:px-6 lg:px-8">
+                        <div className="px-4 py-4">
                             {header}
                         </div>
                     </header>
@@ -330,7 +330,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 )}
 
-                <main className="min-h-screen w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6">{children}</main>
+                <main className="min-h-screen w-full">{children}</main>
             </div>
         </div>
     );

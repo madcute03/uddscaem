@@ -10,27 +10,6 @@ use Inertia\Inertia;
 
 class BracketController extends Controller
 {
-    // Single elimination bracket
-    public function single($teams)
-    {
-        $teams = (int) $teams;
-
-        // Dynamically load the correct JSX component
-        return Inertia::render("Bracket/SingleEliminationBracket/Bracket{$teams}", [
-            'teams' => $teams,
-        ]);
-    }
-
-    // Double elimination bracket
-    public function double($teams)
-    {
-        $teams = (int) $teams;
-
-        // Dynamically load the correct JSX component
-        return Inertia::render("Bracket/DoubleEliminationBracket/Bracket{$teams}/Bracket", [
-            'teams' => $teams,
-        ]);
-    }
     public function create()
     {
         return Inertia::render('Bracket/CreateBracket', [
@@ -58,79 +37,6 @@ class BracketController extends Controller
 
         return redirect()->back()->with('success', 'Bracket saved successfully!');
     }
-
-
-    public function ShowBracket($eventId)
-    {
-        $event = Event::with('bracket')->findOrFail($eventId);
-
-        // Get team count and bracket type
-        $teamCount   = $event->teams ?? 8;
-        $bracketType = $event->bracket_type ?? 'DoubleElimination';
-
-        // Normalize and map folder names
-        $bracketMap = [
-            'single' => 'SingleElimination',
-            'double' => 'DoubleElimination',
-            'round'  => 'RoundRobin',
-        ];
-
-        $normalizedType = strtolower($bracketType);
-        $bracketFolder = $bracketMap[$normalizedType] ?? 'DoubleElimination';
-
-        // Build correct path
-        $pagePath = $bracketFolder === 'RoundRobin'
-            ? "Bracket/RoundRobinBracket/ShowBracket"
-            : "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowBracket";
-
-        $bracket = $event->bracket;
-
-        return Inertia::render($pagePath, [
-            'eventId'     => $eventId,
-            'teamCount'   => $teamCount,
-            'matches'     => $bracket?->matches ?? [],
-            'champion'    => $bracket?->champion ?? null,
-            'bracketType' => $bracketFolder,
-        ]);
-    }
-
-    public function ShowStanding($eventId)
-    {
-        $event = Event::with('bracket')->findOrFail($eventId);
-
-        // Get team count and bracket type
-        $teamCount   = $event->teams ?? 8;
-        $bracketType = $event->bracket_type ?? 'DoubleElimination';
-
-        // Normalize and map folder names
-        $bracketMap = [
-            'single' => 'SingleElimination',
-            'double' => 'DoubleElimination',
-            'round'  => 'RoundRobin',
-        ];
-
-        $normalizedType = strtolower($bracketType);
-        $bracketFolder = $bracketMap[$normalizedType] ?? 'DoubleElimination';
-
-        // Build correct path
-        $pagePath = $bracketFolder === 'RoundRobin'
-            ? "Bracket/RoundRobinBracket/ShowStanding"
-            : "Bracket/{$bracketFolder}Bracket/Bracket{$teamCount}/ShowStanding";
-
-        $bracket = $event->bracket;
-
-        return Inertia::render($pagePath, [
-            'eventId'     => $eventId,
-            'teamCount'   => $teamCount,
-            'matches'     => $bracket?->matches ?? [],
-            'champion'    => $bracket?->champion ?? null,
-            'bracketType' => $bracketFolder,
-        ]);
-    }
-
-
-
-
 
 
 

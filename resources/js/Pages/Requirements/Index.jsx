@@ -45,7 +45,12 @@ export default function RequirementsIndex({ requirements }) {
                                             <a
                                                 href={`/storage/${requirement.file_path}`}
                                                 download
-                                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                                className="w-[131px] h-[40px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

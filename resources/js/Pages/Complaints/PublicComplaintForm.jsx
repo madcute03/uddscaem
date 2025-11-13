@@ -47,7 +47,7 @@ export default function PublicComplaintForm({ events }) {
         <PublicLayout>
             <Head title="File a Complaint" />
             
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto py-12 px-4">
                 <div className="bg-slate-900/60 border border-slate-800 rounded-xl shadow-xl p-6">
                     <h1 className="text-2xl font-bold mb-6">File a Protest</h1>
                     
@@ -153,7 +153,12 @@ export default function PublicComplaintForm({ events }) {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+                                className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                             >
                                 {processing ? 'Submitting...' : 'Submit Protest'}
                             </button>

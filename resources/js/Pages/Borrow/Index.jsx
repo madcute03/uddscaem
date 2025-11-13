@@ -81,7 +81,7 @@ export default function BorrowIndex() {
     return (
         <PublicLayout>
             <Head title="Borrow" />
-            <div className="max-w-3xl mx-auto px-4 py-10">
+            <div className="mt-8 max-w-3xl mx-auto px-6 py-8 bg-slate-800/60 rounded-xl border border-slate-700">
                 <h1 className="text-2xl font-bold mb-6">Available Items</h1>
 
                 {/* Search Form */}
@@ -116,7 +116,12 @@ export default function BorrowIndex() {
                         <button
                             onClick={handleSearch}
                             disabled={isSearching}
-                            className="px-6 py-2 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+                            className="w-[141px] h-[45px] rounded-[15px] cursor-pointer
+                                                               transition duration-300 ease-in-out
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0
+                                                               bg-[#2e8eff]/20 flex items-center justify-center
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                         >
                             {isSearching ? 'Searching...' : 'Find My Requests'}
                         </button>
@@ -138,7 +143,18 @@ export default function BorrowIndex() {
                                     <td className="px-4 py-2">{it.name}</td>
                                     <td className="px-4 py-2">{it.available}</td>
                                     <td className="px-4 py-2">
-                                        <Link href={route('borrow.request', { item_id: it.id })} className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white">Request</Link>
+                                        {it.available > 0 ? (
+                                            <Link 
+                                                href={route('borrow.request', { item_id: it.id })} 
+                                                className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                                            >
+                                                Request
+                                            </Link>
+                                        ) : (
+                                            <span className="px-3 py-1 rounded bg-gray-600 text-gray-300 cursor-not-allowed">
+                                                Out of Stock
+                                            </span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -163,7 +179,7 @@ export default function BorrowIndex() {
                                         <th className="px-4 py-2">Item</th>
                                         <th className="px-4 py-2">Status</th>
                                         <th className="px-4 py-2">Requested Date</th>
-                                        <th className="px-4 py-2">Actions</th>
+                                            
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -198,12 +214,7 @@ export default function BorrowIndex() {
                                                             </button>
                                                         </div>
                                                     )}
-                                                    {request.status === 'approved' && (
-                                                        <span className="text-emerald-400">Approved - Check with admin</span>
-                                                    )}
-                                                    {request.status === 'denied' && (
-                                                        <span className="text-rose-400">Request denied</span>
-                                                    )}
+                                                    
                                                 </td>
                                             </tr>
                                         ))

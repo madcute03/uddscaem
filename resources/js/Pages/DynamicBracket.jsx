@@ -179,7 +179,7 @@ export default function DynamicBracket({ event, registeredPlayers = [] }) {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Left Panel - Team Input */}
-                        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                             <h2 className="text-xl font-semibold text-white mb-4">Setup Teams</h2>
                             
                             {/* Tournament Name */}
@@ -308,7 +308,7 @@ export default function DynamicBracket({ event, registeredPlayers = [] }) {
                         </div>
 
                         {/* Right Panel - Bracket Preview */}
-                        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-xl font-semibold text-white">Bracket Preview</h2>
                                 {generatedBracket && !showSuccess && (
@@ -349,7 +349,7 @@ export default function DynamicBracket({ event, registeredPlayers = [] }) {
                                 <div className="overflow-auto max-h-[600px]">
                                     {/* Bracket Structure Display */}
                                     <div className="space-y-4">
-                                        <div className="bg-gray-700/50 rounded-lg p-4">
+                                        <div className="bg-gray-700 rounded-lg p-4">
                                             <h3 className="text-white font-semibold mb-2">Tournament Info</h3>
                                             <div className="text-sm text-gray-300 space-y-1">
                                                 <p><span className="font-medium">Type:</span> {bracketType === 'single' ? 'Single Elimination' : bracketType === 'double' ? 'Double Elimination' : 'Round Robin'}</p>
@@ -365,7 +365,7 @@ export default function DynamicBracket({ event, registeredPlayers = [] }) {
                                         </div>
 
                                         {/* Teams */}
-                                        <div className="bg-gray-700/50 rounded-lg p-4">
+                                        <div className="bg-gray-700 rounded-lg p-4">
                                             <h3 className="text-white font-semibold mb-2">Competing Teams</h3>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {generatedBracket.teams?.filter(t => !t.isBye).map((team, idx) => (
@@ -379,7 +379,7 @@ export default function DynamicBracket({ event, registeredPlayers = [] }) {
 
                                         {/* Visual Bracket Preview */}
                                         {bracketType !== 'round-robin' && generatedBracket.matches && (
-                                            <div className="bg-gray-700/50 rounded-lg p-4">
+                                            <div className="bg-gray-700 rounded-lg p-4">
                                                 <h3 className="text-white font-semibold mb-3">Bracket Structure</h3>
                                                 <div className="overflow-x-auto">
                                                     <div className="flex gap-8 min-w-max">
@@ -414,7 +414,7 @@ export default function DynamicBracket({ event, registeredPlayers = [] }) {
 
                                         {/* Round Robin Matches */}
                                         {bracketType === 'round-robin' && generatedBracket.matches && (
-                                            <div className="bg-gray-700/50 rounded-lg p-4">
+                                            <div className="bg-gray-700 rounded-lg p-4">
                                                 <h3 className="text-white font-semibold mb-2">All Matches</h3>
                                                 <div className="space-y-2">
                                                     {generatedBracket.matches.map((match, idx) => (

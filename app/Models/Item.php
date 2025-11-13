@@ -25,7 +25,7 @@ class Item extends Model
         $borrowed = $this->borrowRequests()
             ->where('status', 'approved')
             ->whereNull('returned_at')
-            ->count();
+            ->sum('quantity');
         return max(0, (int) $this->quantity - $borrowed);
     }
 }

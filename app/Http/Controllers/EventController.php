@@ -118,9 +118,13 @@ class EventController extends Controller
                 'id',
                 'student_name',
                 'student_id',
+                'email',
+                'contact_number',
                 'item_id',
                 'status',
                 'requested_at',
+                'approved_at',
+                'returned_at',
                 'purpose',
                 'quantity'
             )
@@ -132,9 +136,13 @@ class EventController extends Controller
                     'id' => $request->id,
                     'student_name' => $request->student_name,
                     'student_id' => $request->student_id,
+                    'email' => $request->email,
+                    'contact_number' => $request->contact_number,
                     'item_name' => $request->item ? $request->item->name : 'Unknown Item',
                     'status' => $request->status,
                     'requested_at' => $request->requested_at,
+                    'approved_at' => $request->approved_at,
+                    'returned_at' => $request->returned_at,
                     'purpose' => $request->purpose,
                     'quantity' => $request->quantity,
                 ];
@@ -664,9 +672,9 @@ class EventController extends Controller
     }
 
     /**
-     * Serve rulebook file for an event
+     * View rulebook file inline for an event
      */
-    public function downloadRulebook(Event $event)
+    public function viewRulebook(Event $event)
     {
         if (!$event->rulebook_path) {
             abort(404, 'Rulebook not found');
@@ -684,8 +692,16 @@ class EventController extends Controller
         // Force inline display (view in browser) instead of download
         return response()->file($filePath, [
             'Content-Type' => $mimeType ?: 'application/pdf',
-            'Content-Disposition' => 'inline',
+            'Content-Disposition' => 'inline; filename="' . basename($event->rulebook_path) . '"',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    /**
+     * Serve rulebook file for an event (legacy method - kept for backward compatibility)
+     */
+    public function downloadRulebook(Event $event)
+    {
+        return $this->viewRulebook($event);
     }
 }

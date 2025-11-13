@@ -553,7 +553,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                         {paginatedEvents.map((event) => (
                             <div 
                                 key={`mobile-${event.id}-${event.status}`}
-                                className="bg-slate-800/50 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
+                                className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
                             >
                                 <div className="space-y-2">
                                     {/* Event Name */}
@@ -636,8 +636,8 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
 
                     {/* Desktop View - Table Layout */}
                     <div className="hidden sm:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800/80">
-                            <thead className="bg-slate-800/80">
+                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800">
+                            <thead className="bg-slate-800">
                                 <tr>
                                     <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Event Name
@@ -731,7 +731,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                     </div>
 
                     {totalPages > 1 && (
-                        <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800/30">
+                        <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800">
                             <div className="flex-1 flex justify-between sm:hidden">
                                 <button
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -854,7 +854,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                         {paginatedNews.map((article) => (
                             <div
                                 key={`mobile-news-${article.id}`}
-                                className="bg-slate-800/50 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
+                                className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
                             >
                                 <div className="space-y-2">
                                     {/* Article Title */}
@@ -909,8 +909,8 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
 
                     {/* Desktop View - Table Layout */}
                     <div className="hidden sm:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800/80">
-                            <thead className="bg-slate-800/80">
+                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800">
+                            <thead className="bg-slate-800">
                                 <tr>
                                     <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Title
@@ -975,7 +975,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                     </div>
 
                     {totalPages > 1 && (
-                        <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800/30">
+                        <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800">
                             <div className="flex-1 flex justify-between sm:hidden">
                                 <button
                                     onClick={() => setNewsCurrentPage(p => Math.max(1, p - 1))}
@@ -1094,7 +1094,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                         {paginatedRequests.map((request) => (
                             <div
                                 key={`mobile-borrow-${request.id}`}
-                                className="bg-slate-800/50 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
+                                className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:bg-slate-700/30 transition-colors duration-150"
                             >
                                 <div className="space-y-2">
                                     {/* Student Info */}
@@ -1154,8 +1154,8 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
 
                     {/* Desktop View - Table Layout */}
                     <div className="hidden sm:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800/80">
-                            <thead className="bg-slate-800/80">
+                        <table className="min-w-full divide-y divide-slate-700 bg-slate-800">
+                            <thead className="bg-slate-800">
                                 <tr>
                                     <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                                         Student
@@ -1229,7 +1229,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                     </div>
 
                     {totalPages > 1 && (
-                        <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800/30">
+                        <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800">
                             <div className="flex-1 flex justify-between sm:hidden">
                                 <button
                                     onClick={() => setBorrowCurrentPage(p => Math.max(1, p - 1))}
@@ -1386,7 +1386,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                     {filteredOngoing.length > 0 ? (
                                         renderEventsTable(filteredOngoing, '')
                                     ) : (
-                                        <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
+                                        <div className="p-4 text-center text-slate-400 bg-slate-800 rounded-lg">
                                             {searchTerm ? 'No matching ongoing events found' : 'No ongoing events'}
                                         </div>
                                     )}
@@ -1400,7 +1400,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                     {filteredUpcoming.length > 0 ? (
                                         renderEventsTable(filteredUpcoming, '')
                                     ) : (
-                                        <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
+                                        <div className="p-4 text-center text-slate-400 bg-slate-800 rounded-lg">
                                             {searchTerm ? 'No matching upcoming events found' : 'No upcoming events'}
                                         </div>
                                     )}
@@ -1414,7 +1414,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                     {filteredCompleted.length > 0 ? (
                                         renderEventsTable(filteredCompleted, '')
                                     ) : (
-                                        <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
+                                        <div className="p-4 text-center text-slate-400 bg-slate-800 rounded-lg">
                                             {searchTerm ? 'No matching completed events found' : 'No completed events'}
                                         </div>
                                     )}
@@ -1653,7 +1653,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* Tab Navigation */}
                         <div className="mb-8">
-                            <nav className="flex space-x-1 bg-slate-800/50 p-1 rounded-lg">
+                            <nav className="flex space-x-1 bg-slate-800 p-1 rounded-lg">
                                 <button
                                     onClick={() => setActiveTab('events')}
                                     className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
@@ -1700,7 +1700,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-medium text-slate-400">Total Events</p>
-                                                    <p className="text-2xl font-bold text-white">{stats?.total_events || 0}</p>
+                                                    <p className="text-2xl font-bold text-white">{stats?.total_events || 0}</p> 
                                                 </div>
                                             </div>
                                         </div>
@@ -1790,7 +1790,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                     {filteredOngoing.length > 0 ? (
                                                         renderEventsTable(filteredOngoing, '')
                                                     ) : (
-                                                        <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
+                                                        <div className="p-4 text-center text-slate-400 bg-slate-800 rounded-lg">
                                                             {searchTerm ? 'No matching ongoing events found' : 'No ongoing events'}
                                                         </div>
                                                     )}
@@ -1804,7 +1804,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                     {filteredUpcoming.length > 0 ? (
                                                         renderEventsTable(filteredUpcoming, '')
                                                     ) : (
-                                                        <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
+                                                        <div className="p-4 text-center text-slate-400 bg-slate-800 rounded-lg">
                                                             {searchTerm ? 'No matching upcoming events found' : 'No upcoming events'}
                                                         </div>
                                                     )}
@@ -1818,7 +1818,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                                     {filteredCompleted.length > 0 ? (
                                                         renderEventsTable(filteredCompleted, '')
                                                     ) : (
-                                                        <div className="p-4 text-center text-slate-400 bg-slate-800/30 rounded-lg">
+                                                        <div className="p-4 text-center text-slate-400 bg-slate-800 rounded-lg">
                                                             {searchTerm ? 'No matching completed events found' : 'No completed events'}
                                                         </div>
                                                     )}
@@ -2060,7 +2060,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
                                             {/* Desktop View - Table Layout */}
                                             <div className="w-full overflow-visible">
                                                 <table className="min-w-full divide-y divide-slate-700 table-fixed">
-                                                    <thead className="bg-slate-800/80">
+                                                    <thead className="bg-slate-800">
                                                         <tr>
                                                             <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-20">
                                                                 Student ID
@@ -2170,7 +2170,7 @@ export default function DashboardSummary({ auth, stats = {}, recentEvents = [], 
 
                                             {/* Pagination for Borrowing Logs */}
                                             {Math.ceil(recentBorrowRequests.length / 10) > 1 && (
-                                                <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800/30">
+                                                <div className="px-6 py-3 flex items-center justify-between border-t border-slate-700 bg-slate-800">
                                                     <div className="flex-1 flex justify-between sm:hidden">
                                                         <button
                                                             onClick={() => setBorrowCurrentPage(p => Math.max(1, p - 1))}

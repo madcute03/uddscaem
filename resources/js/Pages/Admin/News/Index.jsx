@@ -31,8 +31,8 @@ export default function NewsIndex({ news, stats }) {
         >
             <Head title="News Management" />
 
-            <div className="py-6 sm:py-8 lg:py-12">
-                <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+            <div className="py-6 sm:py-8">
+                <div className="ml-8 mr-8">
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 mb-6">
                         <Link
@@ -85,8 +85,8 @@ export default function NewsIndex({ news, stats }) {
                     </div>
 
                     {/* News Table */}
-                    <div className="bg-slate-900 overflow-hidden shadow-sm rounded-lg border border-slate-700">
-                        <div className="p-3 sm:p-4 lg:p-6">
+                    <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                        <div className="p-6">
                             {/* Mobile Search */}
                             <div className="mb-4 sm:hidden">
                                 <div className="relative">
@@ -103,31 +103,32 @@ export default function NewsIndex({ news, stats }) {
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-slate-700">
-                                    <thead className="bg-slate-800">
-                                        <tr>
-                                            <th className="px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                                Article
-                                            </th>
-                                            <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                                Status
-                                            </th>
-                                            <th className="hidden lg:table-cell px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                                Writer
-                                            </th>
-                                            <th className="hidden md:table-cell px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                                Date
-                                            </th>
-                                            <th className="px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                                                Actions
-                                            </th>
+                            <div className="bg-slate-800 backdrop-blur-md rounded-lg shadow overflow-hidden border border-slate-700/50">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-700">
+                                        <thead className="bg-slate-700">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                                                    Article
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                                                    Status
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                                                    Writer
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                                                    Date
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider whitespace-nowrap">
+                                                    Actions
+                                                </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-slate-900 divide-y divide-slate-700">
+                                    <tbody className="divide-y divide-slate-700">
                                         {news.map((article) => (
-                                            <tr key={article.id} className="hover:bg-slate-800/50">
-                                                <td className="px-3 py-4">
+                                            <tr key={article.id} className="hover:bg-slate-700/30 transition-colors duration-150">
+                                                <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center">
                                                         <img
                                                             className="h-10 w-10 rounded-lg object-cover border border-slate-600 flex-shrink-0"
@@ -143,14 +144,11 @@ export default function NewsIndex({ news, stats }) {
                                                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
                                                                     {article.category}
                                                                 </span>
-                                                                <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-medium text-slate-300">
-                                                                    {article.count} views
-                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="hidden sm:table-cell px-3 py-4">
+                                                <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                         article.status === 'active'
                                                             ? 'bg-green-500/20 text-green-300 border border-green-500/30'
@@ -161,14 +159,14 @@ export default function NewsIndex({ news, stats }) {
                                                         {article.status.charAt(0).toUpperCase() + article.status.slice(1)}
                                                     </span>
                                                 </td>
-                                                <td className="hidden lg:table-cell px-3 py-4 text-sm text-slate-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                                                     <div className="truncate max-w-[150px]">{article.writer_name}</div>
                                                 </td>
-                                                <td className="hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm text-slate-300">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                                                     {formatDate(article.date)}
                                                 </td>
-                                                <td className="px-2 py-4">
-                                                    <div className="flex  items-center gap-3">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-3">
                                                         <Link
                                                             href={route('admin.news.edit', article.id)}
                                                             className="text-blue-400 hover:text-blue-200 transition-colors duration-200"
@@ -200,6 +198,7 @@ export default function NewsIndex({ news, stats }) {
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
                             
                             {/* Pagination */}

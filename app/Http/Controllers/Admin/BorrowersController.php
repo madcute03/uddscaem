@@ -117,5 +117,9 @@ class BorrowersController extends Controller
         return back()->with('success', 'Message sent successfully');
     }
 
-
+    public function delete(BorrowRequest $borrowRequest)
+    {
+        $borrowRequest->delete();
+        return back()->with('success', 'Borrow request deleted');
+    }
 }

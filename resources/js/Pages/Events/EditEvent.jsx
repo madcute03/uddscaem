@@ -579,7 +579,7 @@ export default function EditEvent({ auth, event }) {
         <AuthenticatedLayout user={auth.user}>
             <Head title={`Edit Event - ${event.title}`} />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
+            <div className='mt-8 mb-8'>
                 <div className="max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
@@ -819,7 +819,12 @@ export default function EditEvent({ auth, event }) {
                                             <button
                                                 type="button"
                                                 onClick={() => removeParticipant(index)}
-                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                                                className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                                 title="Remove participant"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -916,7 +921,7 @@ export default function EditEvent({ auth, event }) {
                                         </svg>
                                         <span className="text-slate-300 text-sm flex-1">Current rulebook uploaded</span>
                                         <a
-                                            href={route('events.rulebook.download', event.id)}
+                                            href={route('events.rulebook.view', event.id)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-blue-400 hover:text-blue-300 text-sm"
@@ -932,14 +937,24 @@ export default function EditEvent({ auth, event }) {
                         <div className="flex justify-end gap-4">
                             <Link
                                 href={route('dashboard')}
-                                className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                                className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                             >
                                 Cancel
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                             >
                                 {processing ? 'Saving...' : 'Save Changes'}
                             </button>

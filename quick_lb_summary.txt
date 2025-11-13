@@ -1,0 +1,59 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║      19-TEAM LOSERS BRACKET SEEDING - QUICK REFERENCE                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+ROUTING TABLE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WB Round  →  Where Losers Go           LB Round  =  Total Matches
+────────────────────────────────────────────────────────────────────
+WR1 (3)   →  LR1                       LR1       =  3 matches
+WR2 (8)   →  LR1 (first 3)                        (3 WR1 + 3 WR2)
+             LR2 (last 5)              LR2       =  4 matches
+                                                    (5 WR2 + 3 LR1 winners)
+WR3 (4)   →  LR3                       LR3       =  4 matches
+                                                    (4 WR3 + 4 LR2 winners)
+             
+NONE      →  LR4                       LR4       =  2 matches
+                                                    (4 LR3 winners only)
+
+WR4 (2)   →  LR5                       LR5       =  2 matches
+                                                    (2 WR4 + 2 LR4 winners)
+
+NONE      →  LR6                       LR6       =  1 match
+                                                    (2 LR5 winners only)
+
+WR5 (1)   →  LR7                       LR7       =  1 match
+                                                    (1 WR5 + 1 LR6 winner)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SIMPLE PATTERN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ LR1 & LR2: Early losers mix (WR1 + WR2 → split between LR1 & LR2)
+
+✓ LR3, LR5, LR7: WB losers join (full WR round drops)
+
+✓ LR4, LR6: Consolidation rounds (NO WB losers, LB survivors only)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHY THIS STRUCTURE?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. FAIRNESS: Teams that lose early get more comeback chances
+   - WR1 loser → 7 possible LB matches
+   - WR5 loser → 1 possible LB match
+
+2. BALANCE: Alternating WB drops with LB-only rounds prevents 
+   overcrowding and ensures competitive matches
+
+3. CHALLONGE STANDARD: This exact structure matches Challonge's 
+   tournament system used worldwide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TOTAL: 17 LB matches + 18 WB matches + 1 GF = 36 total matches ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

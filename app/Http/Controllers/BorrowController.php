@@ -27,7 +27,15 @@ class BorrowController extends Controller
 
     public function create()
     {
-        $items = Item::orderBy('name')->get(['id', 'name']);
+        $items = Item::orderBy('name')->get(['id', 'name', 'quantity'])
+            ->map(function ($i) {
+                return [
+                    'id' => $i->id,
+                    'name' => $i->name,
+                    'quantity' => $i->quantity,
+                    'available' => $i->availableCount(),
+                ];
+            });
         return Inertia::render('Borrow/RequestForm', [
             'items' => $items,
         ]);
@@ -69,9 +77,19 @@ class BorrowController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'item_id' => ['required', 'exists:items,id'],
             'purpose' => ['required', 'string', 'max:5000'],
-            'quantity' => ['required', 'integer', 'min:1', 'max:10'],
+            'quantity' => ['required', 'integer', 'min:1'],
             'contact_number' => ['nullable', 'string', 'max:20'],
         ]);
+
+        // Check if requested quantity exceeds available quantity
+        $item = Item::find($validated['item_id']);
+        $availableQuantity = $item->availableCount();
+        
+        if ($validated['quantity'] > $availableQuantity) {
+            return redirect()->back()->withErrors([
+                'quantity' => "Requested quantity ({$validated['quantity']}) exceeds available quantity ({$availableQuantity})."
+            ])->withInput();
+        }
 
         $requestModel = BorrowRequest::create([
             ...$validated,

@@ -10,6 +10,8 @@ use App\Models\Event;
 use App\Models\RegisteredPlayer;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Http\Controllers\ChallongeDoubleEliminationController;
+use App\Http\Controllers\ChallongeSeedingController;
 
 class TournamentController extends Controller
 {
@@ -72,6 +74,18 @@ class TournamentController extends Controller
                 ->with('error', 'No tournament found for this event. Please create one first.');
         }
 
+        // Get all unique teams participating in this tournament
+        $teamIds = collect();
+        foreach ($tournament->matches as $match) {
+            if ($match->team1_id) $teamIds->push($match->team1_id);
+            if ($match->team2_id) $teamIds->push($match->team2_id);
+        }
+        
+        $teams = Team::whereIn('id', $teamIds->unique())->get();
+        
+        // Add teams to tournament data
+        $tournament->teams = $teams;
+
         return Inertia::render('DynamicBracket/ManageBracket', [
             'event' => $event,
             'tournament' => $tournament,
@@ -93,6 +107,18 @@ class TournamentController extends Controller
             return redirect()->route('events.show', $eventId)
                 ->with('error', 'No tournament bracket available for this event yet.');
         }
+
+        // Get all unique teams participating in this tournament
+        $teamIds = collect();
+        foreach ($tournament->matches as $match) {
+            if ($match->team1_id) $teamIds->push($match->team1_id);
+            if ($match->team2_id) $teamIds->push($match->team2_id);
+        }
+        
+        $teams = Team::whereIn('id', $teamIds->unique())->get();
+        
+        // Add teams to tournament data
+        $tournament->teams = $teams;
 
         return Inertia::render('DynamicBracket/PublicViewBracket', [
             'event' => $event,
@@ -183,6 +209,17 @@ class TournamentController extends Controller
 
             // Create matches with proper team IDs
             $matchMap = [];
+            
+            // DEBUG: Log first LR2 match
+            $lr2Found = false;
+            foreach ($request->matches as $m) {
+                if (!$lr2Found && ($m['bracket'] ?? '') === 'losers' && ($m['losers_round'] ?? 0) === 2) {
+                    \Log::info('FIRST LR2 MATCH FROM FRONTEND:', $m);
+                    $lr2Found = true;
+                }
+            }
+            \Log::info('Total matches from frontend: ' . count($request->matches));
+            
             foreach ($request->matches as $matchData) {
                 // Get team IDs, handling null/TBD cases
                 $team1Id = null;
@@ -195,16 +232,34 @@ class TournamentController extends Controller
                     $team2Id = $teamMap[$matchData['team2_temp_id']];
                 }
                 
+                // Get the semantic match ID (WR1_M1, LR2_M14, etc.)
+                $semanticId = $matchData['id'] ?? $matchData['temp_id'] ?? null;
+                
+                \Log::info('Creating match', [
+                    'semantic_id' => $semanticId,
+                    'round' => $matchData['round'],
+                    'bracket' => $matchData['bracket'] ?? null,
+                    'losers_round' => $matchData['losers_round'] ?? null,
+                ]);
+                
                 $match = TournamentMatch::create([
                     'tournament_id' => $tournament->id,
+                    'match_id' => $semanticId,  // Store semantic ID (WR1_M1, LR2_M14, etc.)
                     'round' => $matchData['round'],
                     'match_number' => $matchData['match_number'],
                     'bracket' => $matchData['bracket'] ?? null,
+                    'losers_round' => $matchData['losers_round'] ?? null,
+                    'round_name' => $matchData['round_name'] ?? null,
+                    'position' => $matchData['position'] ?? null,
                     'team1_id' => $team1Id,
                     'team2_id' => $team2Id,
+                    'team1_seed' => $matchData['team1_seed'] ?? null,
+                    'team2_seed' => $matchData['team2_seed'] ?? null,
+                    'previous_match_loser_1' => $matchData['previous_match_loser_1'] ?? null,
+                    'previous_match_loser_2' => $matchData['previous_match_loser_2'] ?? null,
                     'status' => 'pending',
                 ]);
-                $matchMap[$matchData['temp_id']] = $match->id;
+                $matchMap[$semanticId] = $match->id;
             }
 
             // Update next_match_id and loser_to references
@@ -258,6 +313,18 @@ class TournamentController extends Controller
             ], 404);
         }
 
+        // Get all unique teams participating in this tournament
+        $teamIds = collect();
+        foreach ($tournament->matches as $match) {
+            if ($match->team1_id) $teamIds->push($match->team1_id);
+            if ($match->team2_id) $teamIds->push($match->team2_id);
+        }
+        
+        $teams = Team::whereIn('id', $teamIds->unique())->get();
+        
+        // Add teams to tournament data
+        $tournament->teams = $teams;
+
         return response()->json([
             'success' => true,
             'tournament' => $tournament,
@@ -269,74 +336,109 @@ class TournamentController extends Controller
      */
     public function updateMatchResult(Request $request, $matchId)
     {
-        $request->validate([
-            'winner_id' => 'required|exists:teams,id',
-            'team1_score' => 'nullable|integer',
-            'team2_score' => 'nullable|integer',
-        ]);
-
         $match = TournamentMatch::findOrFail($matchId);
+        $tournament = Tournament::findOrFail($match->tournament_id);
         
-        // Prevent updating already completed matches (double-click protection)
-        if ($match->status === 'completed' && $match->winner_id) {
-            return response()->json([
-                'success' => true,
-                'match' => $match->load(['team1', 'team2', 'winner']),
-                'message' => 'Match already completed',
+        // Different validation rules for round robin vs elimination tournaments
+        if ($tournament->bracket_type === 'round-robin') {
+            $request->validate([
+                'team1_score' => 'required|integer|min:0',
+                'team2_score' => 'required|integer|min:0',
+            ]);
+        } else {
+            $request->validate([
+                'winner_id' => 'required|exists:teams,id',
+                'team1_score' => 'nullable|integer',
+                'team2_score' => 'nullable|integer',
             ]);
         }
         
-        // Determine loser
-        $loserId = null;
-        if ($match->team1_id && $match->team2_id) {
-            $loserId = ($request->winner_id == $match->team1_id) ? $match->team2_id : $match->team1_id;
-        }
-        
-        $match->update([
-            'winner_id' => $request->winner_id,
-            'team1_score' => $request->team1_score,
-            'team2_score' => $request->team2_score,
-            'status' => 'completed',
-        ]);
+        if ($tournament->bracket_type === 'round-robin') {
+            // For round robin, just update scores - no winner determination needed
+            $match->update([
+                'team1_score' => $request->team1_score,
+                'team2_score' => $request->team2_score,
+                'status' => 'completed',
+            ]);
+        } else {
+            // For elimination tournaments, handle winner logic
+            // Store old winner for comparison
+            $oldWinnerId = $match->winner_id;
+            $isWinnerChanged = $oldWinnerId && ($oldWinnerId != $request->winner_id);
+            
+            // Determine loser
+            $loserId = null;
+            if ($match->team1_id && $match->team2_id) {
+                $loserId = ($request->winner_id == $match->team1_id) ? $match->team2_id : $match->team1_id;
+            }
+            
+            $match->update([
+                'winner_id' => $request->winner_id,
+                'team1_score' => $request->team1_score,
+                'team2_score' => $request->team2_score,
+                'status' => 'completed',
+            ]);
 
-        // If there's a next match, update it with the winner
-        if ($match->next_match_id) {
-            $nextMatch = TournamentMatch::find($match->next_match_id);
-            if ($nextMatch) {
-                // Only place winner if they're not already in the next match
-                $winnerAlreadyInMatch = ($nextMatch->team1_id == $request->winner_id || $nextMatch->team2_id == $request->winner_id);
-                
-                if (!$winnerAlreadyInMatch) {
-                    // Place winner in the first empty slot (team1 or team2)
-                    if (!$nextMatch->team1_id) {
+            // Only update next matches if winner changed or match was not completed before
+            if (!$oldWinnerId || $isWinnerChanged) {
+            // If winner changed, we need to update subsequent matches
+            if ($isWinnerChanged && $match->next_match_id) {
+                $nextMatch = TournamentMatch::find($match->next_match_id);
+                if ($nextMatch) {
+                    // Remove old winner and place new winner
+                    if ($nextMatch->team1_id == $oldWinnerId) {
                         $nextMatch->update(['team1_id' => $request->winner_id]);
-                    } elseif (!$nextMatch->team2_id) {
+                    } elseif ($nextMatch->team2_id == $oldWinnerId) {
                         $nextMatch->update(['team2_id' => $request->winner_id]);
-                    } else {
-                        // Both slots filled - this shouldn't happen in a valid bracket
-                        \Log::warning("Both team slots already filled in match {$nextMatch->id}");
+                    }
+                }
+            } elseif (!$oldWinnerId && $match->next_match_id) {
+                // First time completing - place winner in next match
+                $nextMatch = TournamentMatch::find($match->next_match_id);
+                if ($nextMatch) {
+                    $winnerAlreadyInMatch = ($nextMatch->team1_id == $request->winner_id || $nextMatch->team2_id == $request->winner_id);
+                    
+                    if (!$winnerAlreadyInMatch) {
+                        if (!$nextMatch->team1_id) {
+                            $nextMatch->update(['team1_id' => $request->winner_id]);
+                        } elseif (!$nextMatch->team2_id) {
+                            $nextMatch->update(['team2_id' => $request->winner_id]);
+                        } else {
+                            \Log::warning("Both team slots already filled in match {$nextMatch->id}");
+                        }
                     }
                 }
             }
-        }
-        
-        // If there's a loser_to match (double elimination), send loser there
-        if ($match->loser_to && $loserId) {
-            $loserMatch = TournamentMatch::find($match->loser_to);
-            if ($loserMatch) {
-                // Only place loser if they're not already in the loser match
-                $loserAlreadyInMatch = ($loserMatch->team1_id == $loserId || $loserMatch->team2_id == $loserId);
-                
-                if (!$loserAlreadyInMatch) {
-                    // Place loser in the first empty slot
-                    if (!$loserMatch->team1_id) {
+            
+            // Handle loser bracket for double elimination
+            if ($isWinnerChanged && $match->loser_to) {
+                $loserMatch = TournamentMatch::find($match->loser_to);
+                if ($loserMatch) {
+                    // Remove old loser and place new loser
+                    $oldLoserId = ($oldWinnerId == $match->team1_id) ? $match->team2_id : $match->team1_id;
+                    if ($loserMatch->team1_id == $oldLoserId) {
                         $loserMatch->update(['team1_id' => $loserId]);
-                    } elseif (!$loserMatch->team2_id) {
+                    } elseif ($loserMatch->team2_id == $oldLoserId) {
                         $loserMatch->update(['team2_id' => $loserId]);
-                    } else {
-                        \Log::warning("Both team slots already filled in loser match {$loserMatch->id}");
                     }
                 }
+            } elseif (!$oldWinnerId && $match->loser_to && $loserId) {
+                // First time completing - place loser in loser bracket
+                $loserMatch = TournamentMatch::find($match->loser_to);
+                if ($loserMatch) {
+                    $loserAlreadyInMatch = ($loserMatch->team1_id == $loserId || $loserMatch->team2_id == $loserId);
+                    
+                    if (!$loserAlreadyInMatch) {
+                        if (!$loserMatch->team1_id) {
+                            $loserMatch->update(['team1_id' => $loserId]);
+                        } elseif (!$loserMatch->team2_id) {
+                            $loserMatch->update(['team2_id' => $loserId]);
+                        } else {
+                            \Log::warning("Both team slots already filled in loser match {$loserMatch->id}");
+                        }
+                    }
+                }
+            }
             }
         }
 
@@ -348,249 +450,14 @@ class TournamentController extends Controller
     }
 
     /**
-     * Generate single elimination bracket structure (4-30 teams)
-     * Uses standard tournament seeding with proper bye distribution
+     * Generate single elimination bracket structure using Challonge seeding
+     * Uses ChallongeSeedingController for proper Challonge-style bracket layout
      */
     private function generateSingleEliminationBracket($teams, $eventId)
     {
-        $teamCount = count($teams);
-        $matches = [];
-        
-        // Prepare teams with temp IDs and seeds
-        $teamsWithIds = [];
-        foreach ($teams as $index => $team) {
-            $teamsWithIds[] = array_merge($team, [
-                'temp_id' => 'team_' . $index,
-                'seed' => $index + 1,
-            ]);
-        }
-
-        // Calculate bracket structure
-        $nextPowerOf2 = pow(2, ceil(log($teamCount, 2)));
-        $byeCount = $nextPowerOf2 - $teamCount;
-        $secondRoundSize = $nextPowerOf2 / 2;
-        
-        // Calculate total rounds
-        // Total rounds = log2(nextPowerOf2)
-        // For 8 teams: log2(8) = 3 rounds
-        // For 10 teams: log2(16) = 4 rounds
-        $totalRounds = ceil(log($nextPowerOf2, 2));
-        
-        // Generate standard bracket pairings (1 vs N, 2 vs N-1, etc.)
-        $initialPairings = $this->generateStandardPairings($nextPowerOf2);
-        
-        $roundNumber = 1;
-        $currentRoundPairings = $initialPairings;
-        $globalMatchNumber = 1; // Continuous match numbering across all rounds
-        
-        // FIRST ROUND (if there are byes)
-        if ($byeCount > 0) {
-            // Build second round structure first to know where R1 winners go
-            $secondRoundSlots = [];
-            
-            foreach ($currentRoundPairings as $pairIndex => $pair) {
-                $seed1 = $pair[0] - 1;
-                $seed2 = $pair[1] - 1;
-                
-                if ($seed1 < $teamCount && $seed2 < $teamCount) {
-                    // Both exist - they play in R1
-                    $secondRoundSlots[] = ['type' => 'r1_winner', 'r1_match' => null];
-                } elseif ($seed1 < $teamCount) {
-                    // Seed1 gets bye
-                    $secondRoundSlots[] = ['type' => 'bye', 'team_index' => $seed1];
-                } elseif ($seed2 < $teamCount) {
-                    // Seed2 gets bye
-                    $secondRoundSlots[] = ['type' => 'bye', 'team_index' => $seed2];
-                } else {
-                    // Neither exists
-                    $secondRoundSlots[] = ['type' => 'empty'];
-                }
-            }
-            
-            // Create Round 1 matches
-            $firstRoundMatches = [];
-            $r1MatchIndex = 0;
-            
-            foreach ($currentRoundPairings as $pairIndex => $pair) {
-                $seed1 = $pair[0] - 1;
-                $seed2 = $pair[1] - 1;
-                
-                if ($seed1 < $teamCount && $seed2 < $teamCount) {
-                    $r1MatchNum = $r1MatchIndex + 1;
-                    
-                    // Find which R2 slot this winner goes to
-                    $r2SlotIndex = $pairIndex;
-                    
-                    $firstRoundMatches[] = [
-                        'temp_id' => 'match_1_' . $r1MatchNum,
-                        'round' => 1,
-                        'match_number' => $r1MatchNum,
-                        'team1_temp_id' => 'team_' . $seed1,
-                        'team2_temp_id' => 'team_' . $seed2,
-                        'team1_name' => $teams[$seed1]['name'],
-                        'team2_name' => $teams[$seed2]['name'],
-                        'next_match_temp_id' => null, // Will be set after R2 matches are created
-                        'r2_slot_index' => $r2SlotIndex,
-                    ];
-                    
-                    // Mark which R1 match feeds this R2 slot
-                    $secondRoundSlots[$pairIndex]['r1_match'] = $r1MatchNum;
-                    $r1MatchIndex++;
-                    $globalMatchNumber++;
-                }
-            }
-            
-            $matches = array_merge($matches, $firstRoundMatches);
-            
-            // SECOND ROUND - Create matches with specific ordering
-            // For 10 teams: Match 3 (AYSON vs q), Match 4 (BRAVO vs w), Match 5 (RAE vs R1W1), Match 6 (BELLE vs R1W2)
-            $secondRoundMatches = [];
-            $numSecondRoundMatches = count($secondRoundSlots) / 2;
-            $r2MatchToSlotMap = []; // Map slot index to R2 match number
-            
-            // Process slots in pairs to create matches
-            for ($i = 0; $i < $numSecondRoundMatches; $i++) {
-                $slot1 = $secondRoundSlots[$i * 2];
-                $slot2 = $secondRoundSlots[$i * 2 + 1];
-                
-                $team1_temp_id = null;
-                $team1_name = 'TBD';
-                $team2_temp_id = null;
-                $team2_name = 'TBD';
-                
-                // Set team1 from slot1
-                if ($slot1['type'] === 'bye') {
-                    $team1_temp_id = 'team_' . $slot1['team_index'];
-                    $team1_name = $teams[$slot1['team_index']]['name'];
-                }
-                
-                // Set team2 from slot2
-                if ($slot2['type'] === 'bye') {
-                    $team2_temp_id = 'team_' . $slot2['team_index'];
-                    $team2_name = $teams[$slot2['team_index']]['name'];
-                }
-                
-                $r2MatchNum = $globalMatchNumber;
-                $r2MatchToSlotMap[$i * 2] = $r2MatchNum;
-                $r2MatchToSlotMap[$i * 2 + 1] = $r2MatchNum;
-                
-                // Calculate next round match number
-                $nextRoundMatchNum = count($firstRoundMatches) + $numSecondRoundMatches + 1 + floor($i / 2);
-                
-                $secondRoundMatches[] = [
-                    'temp_id' => 'match_2_' . $r2MatchNum,
-                    'round' => 2,
-                    'match_number' => $r2MatchNum,
-                    'team1_temp_id' => $team1_temp_id,
-                    'team2_temp_id' => $team2_temp_id,
-                    'team1_name' => $team1_name,
-                    'team2_name' => $team2_name,
-                    'next_match_temp_id' => 'match_3_' . $nextRoundMatchNum,
-                ];
-                
-                $globalMatchNumber++;
-            }
-            
-            // Update R1 matches with correct next_match_temp_id
-            foreach ($matches as &$match) {
-                if ($match['round'] == 1 && isset($match['r2_slot_index'])) {
-                    $slotIndex = $match['r2_slot_index'];
-                    // For 11 teams: special routing to fix Match 2->M6, Match 3->M7
-                    if ($teamCount == 11) {
-                        // Slot 1 (Match 1) -> Match 4
-                        // Slot 5 (Match 2) -> Match 6
-                        // Slot 6 (Match 3) -> Match 7
-                        $slotToR2Match = [
-                            1 => 4,  // Match 1 -> Match 4
-                            5 => 6,  // Match 2 -> Match 6
-                            6 => 7,  // Match 3 -> Match 7
-                        ];
-                        if (isset($slotToR2Match[$slotIndex])) {
-                            $r2MatchNum = $slotToR2Match[$slotIndex];
-                            $match['next_match_temp_id'] = 'match_2_' . $r2MatchNum;
-                        }
-                    } elseif (isset($r2MatchToSlotMap[$slotIndex])) {
-                        $r2MatchNum = $r2MatchToSlotMap[$slotIndex];
-                        $match['next_match_temp_id'] = 'match_2_' . $r2MatchNum;
-                    }
-                    unset($match['r2_slot_index']); // Clean up temp field
-                }
-            }
-            
-            $matches = array_merge($matches, $secondRoundMatches);
-            $currentRoundSize = $numSecondRoundMatches;
-            $roundNumber = 3;
-        } else {
-            // No byes - all teams play in first round
-            $firstRoundMatches = [];
-            $numR1Matches = count($currentRoundPairings);
-            $r2StartMatch = $globalMatchNumber + $numR1Matches;
-            
-            foreach ($currentRoundPairings as $pairIndex => $pair) {
-                $seed1 = $pair[0] - 1;
-                $seed2 = $pair[1] - 1;
-                
-                // Calculate which Round 2 match this winner goes to
-                // Matches pair up: 0,1 → 0; 2,3 → 1; etc.
-                $r2MatchNum = $r2StartMatch + floor($pairIndex / 2);
-                
-                $firstRoundMatches[] = [
-                    'temp_id' => 'match_1_' . $globalMatchNumber,
-                    'round' => 1,
-                    'match_number' => $globalMatchNumber,
-                    'team1_temp_id' => 'team_' . $seed1,
-                    'team2_temp_id' => 'team_' . $seed2,
-                    'team1_name' => $teams[$seed1]['name'],
-                    'team2_name' => $teams[$seed2]['name'],
-                    'next_match_temp_id' => 'match_2_' . $r2MatchNum,
-                ];
-                
-                $globalMatchNumber++;
-            }
-            $matches = $firstRoundMatches;
-            $currentRoundSize = count($firstRoundMatches);
-            $roundNumber = 2;
-        }
-        
-        // Build remaining rounds with continuous match numbering
-        while ($currentRoundSize > 1) {
-            $nextRoundSize = $currentRoundSize / 2;
-            $roundMatches = [];
-            
-            // Calculate the starting match number for the next round
-            $nextRoundStartMatch = $globalMatchNumber + $nextRoundSize;
-            
-            for ($i = 0; $i < $nextRoundSize; $i++) {
-                $currentMatchNum = $globalMatchNumber;
-                
-                // Calculate which match in the next round this match feeds into
-                // Matches pair up: 0,1 → 0; 2,3 → 1; etc.
-                $nextMatchNum = $nextRoundStartMatch + floor($i / 2);
-                
-                $roundMatches[] = [
-                    'temp_id' => 'match_' . $roundNumber . '_' . $currentMatchNum,
-                    'round' => $roundNumber,
-                    'match_number' => $currentMatchNum,
-                    'team1_temp_id' => null,
-                    'team2_temp_id' => null,
-                    'team1_name' => 'TBD',
-                    'team2_name' => 'TBD',
-                    'next_match_temp_id' => $nextRoundSize > 1 ? 'match_' . ($roundNumber + 1) . '_' . $nextMatchNum : null,
-                ];
-                
-                $globalMatchNumber++;
-            }
-            
-            $matches = array_merge($matches, $roundMatches);
-            $currentRoundSize = $nextRoundSize;
-            $roundNumber++;
-        }
-
-        return [
-            'teams' => $teamsWithIds,
-            'matches' => $matches,
-            'total_rounds' => $totalRounds,
-        ];
+        // Use ChallongeSeedingController for proper Challonge seeding
+        $challongeController = new \App\Http\Controllers\ChallongeSeedingController();
+        return $challongeController->generateChallongeBracket($teams, $eventId);
     }
 
     private function generate13TeamDoubleElimination($teams, $eventId)
@@ -1510,6 +1377,597 @@ class TournamentController extends Controller
         ];
     }
 
+    private function generate16TeamDoubleElimination($teams, $eventId)
+    {
+        // Hardcoded 16-team double elimination structure (30 matches total)
+        // Structure: WR1(8) + WR2(4) + WR3(2) + WR4(1) + LR1(4) + LR2(4) + LR3(2) + LR4(2) + LR5(1) + LR6(1) + GF(1) = 30
+
+        $teamsWithIds = [];
+        foreach ($teams as $index => $team) {
+            $teamsWithIds[] = array_merge($team, [
+                'temp_id' => 'team_' . $index,
+                'seed' => $index + 1,
+            ]);
+        }
+
+        $matches = [];
+
+        // Winners Round 1 - Matches 1-8
+        $matches[] = ['temp_id' => 'WR1_M1', 'round' => 1, 'match_number' => 1, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_0', 'team2_temp_id' => 'team_15',
+            'team1_name' => $teams[0]['name'], 'team2_name' => $teams[15]['name'],
+            'next_match_temp_id' => 'WR2_M1', 'loser_to' => 'LR1_M1'];
+
+        $matches[] = ['temp_id' => 'WR1_M2', 'round' => 1, 'match_number' => 2, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_7', 'team2_temp_id' => 'team_8',
+            'team1_name' => $teams[7]['name'], 'team2_name' => $teams[8]['name'],
+            'next_match_temp_id' => 'WR2_M1', 'loser_to' => 'LR1_M1'];
+
+        $matches[] = ['temp_id' => 'WR1_M3', 'round' => 1, 'match_number' => 3, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_3', 'team2_temp_id' => 'team_12',
+            'team1_name' => $teams[3]['name'], 'team2_name' => $teams[12]['name'],
+            'next_match_temp_id' => 'WR2_M2', 'loser_to' => 'LR1_M2'];
+
+        $matches[] = ['temp_id' => 'WR1_M4', 'round' => 1, 'match_number' => 4, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_4', 'team2_temp_id' => 'team_11',
+            'team1_name' => $teams[4]['name'], 'team2_name' => $teams[11]['name'],
+            'next_match_temp_id' => 'WR2_M2', 'loser_to' => 'LR1_M2'];
+
+        $matches[] = ['temp_id' => 'WR1_M5', 'round' => 1, 'match_number' => 5, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_1', 'team2_temp_id' => 'team_14',
+            'team1_name' => $teams[1]['name'], 'team2_name' => $teams[14]['name'],
+            'next_match_temp_id' => 'WR2_M3', 'loser_to' => 'LR1_M3'];
+
+        $matches[] = ['temp_id' => 'WR1_M6', 'round' => 1, 'match_number' => 6, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_6', 'team2_temp_id' => 'team_9',
+            'team1_name' => $teams[6]['name'], 'team2_name' => $teams[9]['name'],
+            'next_match_temp_id' => 'WR2_M3', 'loser_to' => 'LR1_M3'];
+
+        $matches[] = ['temp_id' => 'WR1_M7', 'round' => 1, 'match_number' => 7, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_2', 'team2_temp_id' => 'team_13',
+            'team1_name' => $teams[2]['name'], 'team2_name' => $teams[13]['name'],
+            'next_match_temp_id' => 'WR2_M4', 'loser_to' => 'LR1_M4'];
+
+        $matches[] = ['temp_id' => 'WR1_M8', 'round' => 1, 'match_number' => 8, 'bracket' => 'winners',
+            'team1_temp_id' => 'team_5', 'team2_temp_id' => 'team_10',
+            'team1_name' => $teams[5]['name'], 'team2_name' => $teams[10]['name'],
+            'next_match_temp_id' => 'WR2_M4', 'loser_to' => 'LR1_M4'];
+
+        // Losers Round 1 - Matches 9-12
+        $matches[] = ['temp_id' => 'LR1_M1', 'round' => 5, 'match_number' => 9, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR2_M1', 'loser_to' => null,
+            'display_order' => 1];
+
+        $matches[] = ['temp_id' => 'LR1_M2', 'round' => 5, 'match_number' => 10, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR2_M2', 'loser_to' => null,
+            'display_order' => 2];
+
+        $matches[] = ['temp_id' => 'LR1_M3', 'round' => 5, 'match_number' => 11, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR2_M3', 'loser_to' => null,
+            'display_order' => 3];
+
+        $matches[] = ['temp_id' => 'LR1_M4', 'round' => 5, 'match_number' => 12, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR2_M4', 'loser_to' => null,
+            'display_order' => 4];
+
+        // Winners Round 2 - Matches 13-16
+        $matches[] = ['temp_id' => 'WR2_M1', 'round' => 2, 'match_number' => 13, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'WR3_M1', 'loser_to' => 'LR2_M1'];
+
+        $matches[] = ['temp_id' => 'WR2_M2', 'round' => 2, 'match_number' => 14, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'WR3_M1', 'loser_to' => 'LR2_M2'];
+
+        $matches[] = ['temp_id' => 'WR2_M3', 'round' => 2, 'match_number' => 15, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'WR3_M2', 'loser_to' => 'LR2_M3'];
+
+        $matches[] = ['temp_id' => 'WR2_M4', 'round' => 2, 'match_number' => 16, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'WR3_M2', 'loser_to' => 'LR2_M4'];
+
+        // Losers Round 2 - Matches 17-20
+        $matches[] = ['temp_id' => 'LR2_M1', 'round' => 6, 'match_number' => 17, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR3_M1', 'loser_to' => null,
+            'display_order' => 1];
+
+        $matches[] = ['temp_id' => 'LR2_M2', 'round' => 6, 'match_number' => 18, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR3_M1', 'loser_to' => null,
+            'display_order' => 2];
+
+        $matches[] = ['temp_id' => 'LR2_M3', 'round' => 6, 'match_number' => 19, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR3_M2', 'loser_to' => null,
+            'display_order' => 3];
+
+        $matches[] = ['temp_id' => 'LR2_M4', 'round' => 6, 'match_number' => 20, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR3_M2', 'loser_to' => null,
+            'display_order' => 4];
+
+        // Losers Round 3 - Matches 21-22
+        $matches[] = ['temp_id' => 'LR3_M1', 'round' => 7, 'match_number' => 21, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR4_M2', 'loser_to' => null,
+            'display_order' => 1];
+
+        $matches[] = ['temp_id' => 'LR3_M2', 'round' => 7, 'match_number' => 22, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR4_M1', 'loser_to' => null,
+            'display_order' => 2];
+
+        // Winners Round 3 - Matches 23-24
+        $matches[] = ['temp_id' => 'WR3_M1', 'round' => 3, 'match_number' => 23, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'WR4_M1', 'loser_to' => 'LR4_M1'];
+
+        $matches[] = ['temp_id' => 'WR3_M2', 'round' => 3, 'match_number' => 24, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'WR4_M1', 'loser_to' => 'LR4_M2'];
+
+        // Losers Round 4 - Matches 25-26
+        $matches[] = ['temp_id' => 'LR4_M1', 'round' => 8, 'match_number' => 25, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR5_M1', 'loser_to' => null,
+            'display_order' => 1];
+
+        $matches[] = ['temp_id' => 'LR4_M2', 'round' => 8, 'match_number' => 26, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR5_M1', 'loser_to' => null,
+            'display_order' => 2];
+
+        // Losers Round 5 - Match 27
+        $matches[] = ['temp_id' => 'LR5_M1', 'round' => 9, 'match_number' => 27, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'LR6_M1', 'loser_to' => null];
+
+        // Winners Round 4 (Winners Final) - Match 28
+        $matches[] = ['temp_id' => 'WR4_M1', 'round' => 4, 'match_number' => 28, 'bracket' => 'winners',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'GF', 'loser_to' => 'LR6_M1'];
+
+        // Losers Round 6 (Losers Final) - Match 29
+        $matches[] = ['temp_id' => 'LR6_M1', 'round' => 10, 'match_number' => 29, 'bracket' => 'losers',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => 'GF', 'loser_to' => null];
+
+        // Grand Finals - Match 30
+        $matches[] = ['temp_id' => 'GF', 'round' => 11, 'match_number' => 30, 'bracket' => 'grand_finals',
+            'team1_temp_id' => null, 'team2_temp_id' => null,
+            'team1_name' => 'TBD', 'team2_name' => 'TBD',
+            'next_match_temp_id' => null, 'loser_to' => null];
+
+        return [
+            'teams' => $teamsWithIds,
+            'matches' => $matches,
+            'total_rounds' => 11,
+            'bracket_type' => 'double',
+            'winners_rounds' => 4,
+            'losers_rounds' => 6,
+        ];
+    }
+
+    private function generate17TeamDoubleElimination($teams, $eventId)
+    {
+        // Corrected 17-team double elimination structure (32 matches total)
+        // Challonge layout: W1(1) + W2(8) + W3(4) + W4(2) + WSF(1) + L1(4) + L2(5) + L3(2) + L4(2) + L5(1) + L6(1) + GF(1)
+
+        $teamsWithIds = [];
+        foreach ($teams as $index => $team) {
+            $teamsWithIds[] = array_merge($team, [
+                'temp_id' => 'team_' . $index,
+                'seed' => $index + 1,
+            ]);
+        }
+
+        $matches = [
+            // Match 1 - Winners Round 1
+            ['temp_id' => 'M1', 'round' => 1, 'match_number' => 1, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_15', 'team2_temp_id' => 'team_16',
+                'team1_name' => $teams[15]['name'], 'team2_name' => $teams[16]['name'],
+                'next_match_temp_id' => 'M9', 'loser_to' => 'M10'],
+
+            // Winners Round 2 - M9 at top, then M8, M7, M6, M5, M4, M3, M2
+            // Match 9 - Winners Round 2 (TOP)
+            ['temp_id' => 'M9', 'round' => 2, 'match_number' => 9, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_0', 'team2_temp_id' => null,
+                'team1_name' => $teams[0]['name'], 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M18', 'loser_to' => 'M11'],
+            // Match 8 - Winners Round 2
+            ['temp_id' => 'M8', 'round' => 2, 'match_number' => 8, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_7', 'team2_temp_id' => 'team_8',
+                'team1_name' => $teams[7]['name'], 'team2_name' => $teams[8]['name'],
+                'next_match_temp_id' => 'M18', 'loser_to' => 'M10'],
+            // Match 7 - Winners Round 2
+            ['temp_id' => 'M7', 'round' => 2, 'match_number' => 7, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_3', 'team2_temp_id' => 'team_12',
+                'team1_name' => $teams[3]['name'], 'team2_name' => $teams[12]['name'],
+                'next_match_temp_id' => 'M17', 'loser_to' => 'M11'],
+            // Match 6 - Winners Round 2
+            ['temp_id' => 'M6', 'round' => 2, 'match_number' => 6, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_4', 'team2_temp_id' => 'team_11',
+                'team1_name' => $teams[4]['name'], 'team2_name' => $teams[11]['name'],
+                'next_match_temp_id' => 'M17', 'loser_to' => 'M12'],
+            // Match 5 - Winners Round 2
+            ['temp_id' => 'M5', 'round' => 2, 'match_number' => 5, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_1', 'team2_temp_id' => 'team_14',
+                'team1_name' => $teams[1]['name'], 'team2_name' => $teams[14]['name'],
+                'next_match_temp_id' => 'M16', 'loser_to' => 'M12'],
+            // Match 4 - Winners Round 2
+            ['temp_id' => 'M4', 'round' => 2, 'match_number' => 4, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_6', 'team2_temp_id' => 'team_9',
+                'team1_name' => $teams[6]['name'], 'team2_name' => $teams[9]['name'],
+                'next_match_temp_id' => 'M16', 'loser_to' => 'M13'],
+            // Match 3 - Winners Round 2
+            ['temp_id' => 'M3', 'round' => 2, 'match_number' => 3, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_2', 'team2_temp_id' => 'team_13',
+                'team1_name' => $teams[2]['name'], 'team2_name' => $teams[13]['name'],
+                'next_match_temp_id' => 'M15', 'loser_to' => 'M13'],
+            // Match 2 - Winners Round 2
+            ['temp_id' => 'M2', 'round' => 2, 'match_number' => 2, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_5', 'team2_temp_id' => 'team_10',
+                'team1_name' => $teams[5]['name'], 'team2_name' => $teams[10]['name'],
+                'next_match_temp_id' => 'M15', 'loser_to' => 'M14'],
+
+            // Match 10 - Losers Round 1
+            ['temp_id' => 'M10', 'round' => 6, 'match_number' => 10, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M14', 'loser_to' => null],
+
+            // Match 11 - Losers Round 2
+            ['temp_id' => 'M11', 'round' => 7, 'match_number' => 11, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M19', 'loser_to' => null],
+            // Match 12 - Losers Round 2
+            ['temp_id' => 'M12', 'round' => 7, 'match_number' => 12, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M20', 'loser_to' => null],
+            // Match 13 - Losers Round 2
+            ['temp_id' => 'M13', 'round' => 7, 'match_number' => 13, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M21', 'loser_to' => null],
+            // Match 14 - Losers Round 2
+            ['temp_id' => 'M14', 'round' => 7, 'match_number' => 14, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M22', 'loser_to' => null],
+
+            // Winners Round 3 - M18 at top, then M17, M16, M15
+            // Match 18 - Winners Round 3 (TOP)
+            ['temp_id' => 'M18', 'round' => 3, 'match_number' => 18, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M26', 'loser_to' => 'M22'],
+            // Match 17 - Winners Round 3
+            ['temp_id' => 'M17', 'round' => 3, 'match_number' => 17, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M26', 'loser_to' => 'M21'],
+            // Match 16 - Winners Round 3
+            ['temp_id' => 'M16', 'round' => 3, 'match_number' => 16, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M25', 'loser_to' => 'M20'],
+            // Match 15 - Winners Round 3
+            ['temp_id' => 'M15', 'round' => 3, 'match_number' => 15, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M25', 'loser_to' => 'M19'],
+
+            // Matches 19-22 - Losers Round 3 (4 matches)
+            ['temp_id' => 'M19', 'round' => 8, 'match_number' => 19, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M23', 'loser_to' => null],
+            ['temp_id' => 'M20', 'round' => 8, 'match_number' => 20, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M23', 'loser_to' => null],
+            ['temp_id' => 'M21', 'round' => 8, 'match_number' => 21, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M24', 'loser_to' => null],
+            ['temp_id' => 'M22', 'round' => 8, 'match_number' => 22, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M24', 'loser_to' => null],
+
+            // Losers Round 4 - M24 at top, then M23
+            // Match 24 - Losers Round 4 (TOP)
+            ['temp_id' => 'M24', 'round' => 9, 'match_number' => 24, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M27', 'loser_to' => null],
+            // Match 23 - Losers Round 4
+            ['temp_id' => 'M23', 'round' => 9, 'match_number' => 23, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M28', 'loser_to' => null],
+
+            // Winners Round 4 - M26 at top, then M25
+            // Match 26 - Winners Round 4 (TOP)
+            ['temp_id' => 'M26', 'round' => 4, 'match_number' => 26, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M30', 'loser_to' => 'M27'],
+            // Match 25 - Winners Round 4
+            ['temp_id' => 'M25', 'round' => 4, 'match_number' => 25, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M30', 'loser_to' => 'M28'],
+
+            // Matches 27-28 - Losers Round 5 (2 matches)
+            ['temp_id' => 'M27', 'round' => 10, 'match_number' => 27, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M29', 'loser_to' => null],
+            ['temp_id' => 'M28', 'round' => 10, 'match_number' => 28, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M29', 'loser_to' => null],
+
+            // Match 29 - Losers Round 6
+            ['temp_id' => 'M29', 'round' => 11, 'match_number' => 29, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M31', 'loser_to' => null],
+
+            // Match 30 - Winners Semifinals
+            ['temp_id' => 'M30', 'round' => 5, 'match_number' => 30, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M32', 'loser_to' => 'M31'],
+
+            // Match 31 - Losers Finals
+            ['temp_id' => 'M31', 'round' => 12, 'match_number' => 31, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M32', 'loser_to' => null],
+
+            // Match 32 - Grand Finals
+            ['temp_id' => 'M32', 'round' => 13, 'match_number' => 32, 'bracket' => 'grand_finals',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => null, 'loser_to' => null],
+        ];
+
+        return [
+            'teams' => $teamsWithIds,
+            'matches' => $matches,
+            'total_rounds' => 13,
+            'bracket_type' => 'double',
+            'winners_rounds' => 5,
+            'losers_rounds' => 7,
+        ];
+    }
+
+    private function generate18TeamDoubleElimination($teams, $eventId)
+    {
+        // 18-team double elimination structure
+        // WR1(2) + WR2(8) + WR3(4) + WR4(2) + WR5(1) + LR1(4) + LR2(6) + LR3(2) + LR4(2) + LR5(1) + LR6(1) + GF(1) = 34 matches
+
+        $teamsWithIds = [];
+        foreach ($teams as $index => $team) {
+            $teamsWithIds[] = array_merge($team, [
+                'temp_id' => 'team_' . $index,
+                'seed' => $index + 1,
+            ]);
+        }
+
+        $matches = [
+            // Winners Round 1 - Preliminary matches (2 matches)
+            // Match 1: 16 vs 17 → winner plays Seed 1
+            ['temp_id' => 'M1', 'round' => 1, 'match_number' => 1, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_15', 'team2_temp_id' => 'team_16',
+                'team1_name' => $teams[15]['name'], 'team2_name' => $teams[16]['name'],
+                'next_match_temp_id' => 'M11', 'loser_to' => 'M12'],
+            // Match 2: 15 vs 18 → winner plays Seed 2
+            ['temp_id' => 'M2', 'round' => 1, 'match_number' => 2, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_14', 'team2_temp_id' => 'team_17',
+                'team1_name' => $teams[14]['name'], 'team2_name' => $teams[17]['name'],
+                'next_match_temp_id' => 'M6', 'loser_to' => 'M13'],
+
+            // Winners Round 2 - 8 matches with proper seeding
+            // Match 11: 1 vs W(M1)
+            ['temp_id' => 'M11', 'round' => 2, 'match_number' => 11, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_0', 'team2_temp_id' => null,
+                'team1_name' => $teams[0]['name'], 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M20', 'loser_to' => 'M14'],
+            // Match 10: 8 vs 9
+            ['temp_id' => 'M10', 'round' => 2, 'match_number' => 10, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_7', 'team2_temp_id' => 'team_8',
+                'team1_name' => $teams[7]['name'], 'team2_name' => $teams[8]['name'],
+                'next_match_temp_id' => 'M20', 'loser_to' => 'M13'],
+            // Match 9: 4 vs 13
+            ['temp_id' => 'M9', 'round' => 2, 'match_number' => 9, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_3', 'team2_temp_id' => 'team_12',
+                'team1_name' => $teams[3]['name'], 'team2_name' => $teams[12]['name'],
+                'next_match_temp_id' => 'M19', 'loser_to' => 'M14'],
+            // Match 8: 5 vs 12
+            ['temp_id' => 'M8', 'round' => 2, 'match_number' => 8, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_4', 'team2_temp_id' => 'team_11',
+                'team1_name' => $teams[4]['name'], 'team2_name' => $teams[11]['name'],
+                'next_match_temp_id' => 'M19', 'loser_to' => 'M15'],
+            // Match 6: 2 vs W(M2)
+            ['temp_id' => 'M6', 'round' => 2, 'match_number' => 6, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_1', 'team2_temp_id' => null,
+                'team1_name' => $teams[1]['name'], 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M18', 'loser_to' => 'M15'],
+            // Match 5: 7 vs 10
+            ['temp_id' => 'M5', 'round' => 2, 'match_number' => 5, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_6', 'team2_temp_id' => 'team_9',
+                'team1_name' => $teams[6]['name'], 'team2_name' => $teams[9]['name'],
+                'next_match_temp_id' => 'M18', 'loser_to' => 'M16'],
+            // Match 4: 3 vs 14
+            ['temp_id' => 'M4', 'round' => 2, 'match_number' => 4, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_2', 'team2_temp_id' => 'team_13',
+                'team1_name' => $teams[2]['name'], 'team2_name' => $teams[13]['name'],
+                'next_match_temp_id' => 'M17', 'loser_to' => 'M16'],
+            // Match 3: 6 vs 11
+            ['temp_id' => 'M3', 'round' => 2, 'match_number' => 3, 'bracket' => 'winners',
+                'team1_temp_id' => 'team_5', 'team2_temp_id' => 'team_10',
+                'team1_name' => $teams[5]['name'], 'team2_name' => $teams[10]['name'],
+                'next_match_temp_id' => 'M17', 'loser_to' => 'M17'],
+
+            // Losers Round 1 - 4 matches from WR1 and WR2 losers
+            ['temp_id' => 'M12', 'round' => 6, 'match_number' => 12, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M21', 'loser_to' => null],
+            ['temp_id' => 'M13', 'round' => 6, 'match_number' => 13, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M22', 'loser_to' => null],
+            ['temp_id' => 'M14', 'round' => 6, 'match_number' => 14, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M23', 'loser_to' => null],
+            ['temp_id' => 'M15', 'round' => 6, 'match_number' => 15, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M24', 'loser_to' => null],
+
+            // Winners Round 3 - 4 matches
+            ['temp_id' => 'M20', 'round' => 3, 'match_number' => 20, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M28', 'loser_to' => 'M24'],
+            ['temp_id' => 'M19', 'round' => 3, 'match_number' => 19, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M28', 'loser_to' => 'M23'],
+            ['temp_id' => 'M18', 'round' => 3, 'match_number' => 18, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M27', 'loser_to' => 'M22'],
+            ['temp_id' => 'M17', 'round' => 3, 'match_number' => 17, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M27', 'loser_to' => 'M21'],
+
+            // Losers Round 2 - 6 matches
+            ['temp_id' => 'M21', 'round' => 7, 'match_number' => 21, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M25', 'loser_to' => null],
+            ['temp_id' => 'M22', 'round' => 7, 'match_number' => 22, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M25', 'loser_to' => null],
+            ['temp_id' => 'M23', 'round' => 7, 'match_number' => 23, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M26', 'loser_to' => null],
+            ['temp_id' => 'M24', 'round' => 7, 'match_number' => 24, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M26', 'loser_to' => null],
+            ['temp_id' => 'M16', 'round' => 7, 'match_number' => 16, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M25', 'loser_to' => null],
+            ['temp_id' => 'M7', 'round' => 7, 'match_number' => 7, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M26', 'loser_to' => null],
+
+            // Winners Round 4 - 2 matches
+            ['temp_id' => 'M28', 'round' => 4, 'match_number' => 28, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M32', 'loser_to' => 'M29'],
+            ['temp_id' => 'M27', 'round' => 4, 'match_number' => 27, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M32', 'loser_to' => 'M30'],
+
+            // Losers Round 3 - 2 matches
+            ['temp_id' => 'M25', 'round' => 8, 'match_number' => 25, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M29', 'loser_to' => null],
+            ['temp_id' => 'M26', 'round' => 8, 'match_number' => 26, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M30', 'loser_to' => null],
+
+            // Losers Round 4 - 2 matches
+            ['temp_id' => 'M29', 'round' => 9, 'match_number' => 29, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M31', 'loser_to' => null],
+            ['temp_id' => 'M30', 'round' => 9, 'match_number' => 30, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M31', 'loser_to' => null],
+
+            // Winners Finals
+            ['temp_id' => 'M32', 'round' => 5, 'match_number' => 32, 'bracket' => 'winners',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M34', 'loser_to' => 'M33'],
+
+            // Losers Finals
+            ['temp_id' => 'M31', 'round' => 10, 'match_number' => 31, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M33', 'loser_to' => null],
+
+            // Losers Round 6
+            ['temp_id' => 'M33', 'round' => 11, 'match_number' => 33, 'bracket' => 'losers',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => 'M34', 'loser_to' => null],
+
+            // Grand Finals
+            ['temp_id' => 'M34', 'round' => 12, 'match_number' => 34, 'bracket' => 'grand_finals',
+                'team1_temp_id' => null, 'team2_temp_id' => null,
+                'team1_name' => 'TBD', 'team2_name' => 'TBD',
+                'next_match_temp_id' => null, 'loser_to' => null],
+        ];
+
+        return [
+            'teams' => $teamsWithIds,
+            'matches' => $matches,
+            'total_rounds' => 12,
+            'bracket_type' => 'double',
+            'winners_rounds' => 5,
+            'losers_rounds' => 6,
+        ];
+    }
+
     private function generate14TeamDoubleElimination($teams, $eventId)
     {
         // Hardcoded 14-team double elimination structure (26 matches total)
@@ -2100,6 +2558,142 @@ class TournamentController extends Controller
     private function generateDoubleEliminationBracket($teams, $eventId)
     {
         $teamCount = count($teams);
+        \Log::info('generateDoubleEliminationBracket called with ' . $teamCount . ' teams');
+        
+        // Validate minimum team count for double elimination
+        if ($teamCount < 3) {
+            throw new \InvalidArgumentException('Double elimination requires at least 3 teams. You have ' . $teamCount . ' team(s). Please add more teams or use single elimination.');
+        }
+        
+        // Use the new ChallongeDoubleEliminationController for all team counts
+        $deController = new ChallongeDoubleEliminationController();
+        
+        try {
+            $bracket = $deController->generateDoubleEliminationBracket($teams, $eventId);
+            
+            \Log::info('ChallongeDoubleEliminationController SUCCESS - Generated ' . count($bracket['matches']) . ' matches');
+            
+            // Count matches by bracket
+            $winnerCount = 0;
+            $loserCount = 0;
+            $finalsCount = 0;
+            foreach ($bracket['matches'] as $match) {
+                if (isset($match['bracket'])) {
+                    if ($match['bracket'] === 'winners') $winnerCount++;
+                    elseif ($match['bracket'] === 'losers') $loserCount++;
+                    elseif (strpos($match['bracket'], 'grand_finals') !== false) $finalsCount++;
+                }
+            }
+            \Log::info("Bracket breakdown for {$teamCount} teams - Winners: {$winnerCount}, Losers: {$loserCount}, Finals: {$finalsCount}");
+            
+            // Prepare teams array with proper format
+            $teamsWithIds = [];
+            foreach ($teams as $index => $team) {
+                $teamsWithIds[] = array_merge($team, [
+                    'temp_id' => 'team_' . $index,
+                    'seed' => $index + 1,
+                ]);
+            }
+            
+            // Convert to format expected by frontend
+            return [
+                'teams' => $teamsWithIds, // Actual teams with temp IDs
+                'matches' => $this->convertChallongeMatchesToFrontend($bracket['matches'], $teams),
+                'total_rounds' => $bracket['total_rounds'],
+                'winners_rounds' => $bracket['winners_rounds'],
+                'losers_rounds' => $bracket['losers_rounds'],
+                'bracket_type' => 'double',
+                'bracket_size' => $bracket['bracket_size'],
+                'team_count' => $bracket['team_count'],
+                'bye_count' => $bracket['bye_count'],
+            ];
+        } catch (\Exception $e) {
+            \Log::error('ChallongeDoubleEliminationController FAILED - Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            // Fallback to old method if new one fails
+            \Log::info('Falling back to legacy double elimination generation');
+            return $this->generateDoubleEliminationBracketLegacy($teams, $eventId);
+        }
+    }
+    
+    /**
+     * Convert Challonge matches format to frontend-expected format
+     */
+    private function convertChallongeMatchesToFrontend($challongeMatches, $teams)
+    {
+        $matches = [];
+        $skippedCount = 0;
+        
+        foreach ($challongeMatches as $match) {
+            // Skip bye matches (these are automatic advances, not real matches)
+            if (isset($match['is_bye']) && $match['is_bye']) {
+                $skippedCount++;
+                \Log::debug('Skipping bye match: ' . $match['id']);
+                continue;
+            }
+            
+            // DEBUG: Log first match
+            if (count($matches) === 0) {
+                \Log::info('FIRST MATCH IN CONVERSION:', [
+                    'has_id' => isset($match['id']),
+                    'id_value' => $match['id'] ?? 'MISSING',
+                    'is_bye' => $match['is_bye'] ?? false,
+                ]);
+            }
+            
+            // Convert Challonge format to frontend format
+            $converted = [
+                'id' => $match['id'] ?? null, // Use semantic ID (WR1_M1, LR2_M14, etc.)
+                'temp_id' => $match['id'],
+                'match_number' => $match['match_number'],
+                'round' => $match['round'],
+                'bracket' => $match['bracket'],
+                'losers_round' => $match['losers_round'] ?? null,  // CRITICAL FOR LOSERS BRACKET
+                'round_name' => $match['round_name'] ?? null,
+                'position' => $match['position'] ?? null,
+                'team1_temp_id' => null,
+                'team2_temp_id' => null,
+                'team1_name' => $match['team1_name'] ?? 'TBD',
+                'team2_name' => $match['team2_name'] ?? 'TBD',
+                'team1_seed' => $match['team1_seed'] ?? null,
+                'team2_seed' => $match['team2_seed'] ?? null,
+                'winner_to' => $match['winner_to'] ?? null,
+                'next_match_temp_id' => $match['winner_to'] ?? null,
+                'loser_to' => $match['loser_to'] ?? null,
+                'previous_match_loser_1' => $match['previous_match_loser_1'] ?? null,
+                'previous_match_loser_2' => $match['previous_match_loser_2'] ?? null,
+            ];
+            
+            // Map team seeds to temp IDs
+            if (isset($match['team1_seed']) && $match['team1_seed']) {
+                $teamIndex = $match['team1_seed'] - 1;
+                if (isset($teams[$teamIndex])) {
+                    $converted['team1_temp_id'] = 'team_' . $teamIndex;
+                }
+            }
+            
+            if (isset($match['team2_seed']) && $match['team2_seed']) {
+                $teamIndex = $match['team2_seed'] - 1;
+                if (isset($teams[$teamIndex])) {
+                    $converted['team2_temp_id'] = 'team_' . $teamIndex;
+                }
+            }
+            
+            $matches[] = $converted;
+        }
+        
+        \Log::info('Converted ' . count($matches) . ' matches (skipped ' . $skippedCount . ' bye matches)');
+        
+        return $matches;
+    }
+    
+    /**
+     * Legacy double elimination generation (fallback)
+     */
+    private function generateDoubleEliminationBracketLegacy($teams, $eventId)
+    {
+        $teamCount = count($teams);
         
         // Prepare teams with temp IDs and seeds
         $teamsWithIds = [];
@@ -2158,7 +2752,19 @@ class TournamentController extends Controller
         if (count($teams) == 15) {
             return $this->generate15TeamDoubleElimination($teams, $eventId);
         }
+
+        if (count($teams) == 16) {
+            return $this->generate16TeamDoubleElimination($teams, $eventId);
+        }
+
+        if (count($teams) == 17) {
+            return $this->generate17TeamDoubleElimination($teams, $eventId);
+        }
         
+        if (count($teams) == 18) {
+            return $this->generate18TeamDoubleElimination($teams, $eventId);
+        }
+
         // Use single elimination as base for winners bracket
         $singleElimBracket = $this->generateSingleEliminationBracket($teams, $eventId);
         
@@ -2522,20 +3128,84 @@ class TournamentController extends Controller
         $matches = [];
         $matchCounter = 1;
 
-        // Generate all possible matchups
-        for ($i = 0; $i < $teamCount; $i++) {
-            for ($j = $i + 1; $j < $teamCount; $j++) {
-                $matches[] = [
-                    'temp_id' => 'match_1_' . $matchCounter,
-                    'round' => 1,
+        // Challonge-style round robin scheduling
+        // If odd number of teams, add a dummy "BYE" team
+        $scheduleTeams = $teams;
+        $isOddTeams = $teamCount % 2 === 1;
+        
+        if ($isOddTeams) {
+            $scheduleTeams[] = ['name' => 'BYE', 'temp_id' => 'bye'];
+            $teamCount++;
+        }
+
+        // Round robin algorithm: N-1 rounds for N teams
+        $totalRounds = $teamCount - 1;
+        $rounds = [];
+
+        for ($round = 1; $round <= $totalRounds; $round++) {
+            $rounds[$round] = [];
+            
+            // Generate matches for this round using round-robin rotation
+            for ($i = 0; $i < $teamCount / 2; $i++) {
+                // Calculate team indices using round-robin rotation
+                $team1Index = $i;
+                $team2Index = $teamCount - 1 - $i;
+                
+                // Rotate teams (except first team which stays fixed)
+                if ($round > 1) {
+                    if ($team1Index > 0) {
+                        $team1Index = (($team1Index - 1 + $round - 1) % ($teamCount - 1)) + 1;
+                    }
+                    if ($team2Index > 0) {
+                        $team2Index = (($team2Index - 1 + $round - 1) % ($teamCount - 1)) + 1;
+                    }
+                }
+
+                $team1 = $scheduleTeams[$team1Index];
+                $team2 = $scheduleTeams[$team2Index];
+
+                // Skip matches involving BYE team
+                if ($team1['name'] === 'BYE' || $team2['name'] === 'BYE') {
+                    // Record which team has the bye
+                    $byeTeam = $team1['name'] === 'BYE' ? $team2 : $team1;
+                    if ($byeTeam['name'] !== 'BYE') {
+                        $rounds[$round][] = [
+                            'temp_id' => 'bye_' . $round . '_' . $byeTeam['name'],
+                            'round' => $round,
+                            'match_number' => null,
+                            'team1_temp_id' => 'team_' . array_search($byeTeam, $teams),
+                            'team2_temp_id' => 'bye',
+                            'team1_name' => $byeTeam['name'],
+                            'team2_name' => 'BYE',
+                            'is_bye' => true,
+                            'next_match_temp_id' => null,
+                        ];
+                    }
+                    continue;
+                }
+
+                // Add regular match
+                $rounds[$round][] = [
+                    'temp_id' => 'match_' . $round . '_' . $matchCounter,
+                    'round' => $round,
                     'match_number' => $matchCounter,
-                    'team1_temp_id' => 'team_' . $i,
-                    'team2_temp_id' => 'team_' . $j,
-                    'team1_name' => $teams[$i]['name'],
-                    'team2_name' => $teams[$j]['name'],
+                    'team1_temp_id' => 'team_' . array_search($team1, $teams),
+                    'team2_temp_id' => 'team_' . array_search($team2, $teams),
+                    'team1_name' => $team1['name'],
+                    'team2_name' => $team2['name'],
+                    'is_bye' => false,
                     'next_match_temp_id' => null,
                 ];
                 $matchCounter++;
+            }
+        }
+
+        // Flatten rounds into matches array (excluding bye entries)
+        foreach ($rounds as $roundMatches) {
+            foreach ($roundMatches as $match) {
+                if (!$match['is_bye']) {
+                    $matches[] = $match;
+                }
             }
         }
 
@@ -2547,10 +3217,18 @@ class TournamentController extends Controller
             ]);
         }
 
+        // Calculate total matches: N × (N-1) / 2
+        $originalTeamCount = count($teams);
+        $totalMatches = ($originalTeamCount * ($originalTeamCount - 1)) / 2;
+
         return [
             'teams' => $teamsWithIds,
             'matches' => $matches,
-            'total_rounds' => 1,
+            'total_rounds' => $totalRounds,
+            'total_matches' => $totalMatches,
+            'matches_per_team' => $originalTeamCount - 1,
+            'has_byes' => $isOddTeams,
+            'rounds_schedule' => $rounds, // Include full schedule with byes for frontend
             'is_round_robin' => true,
         ];
     }

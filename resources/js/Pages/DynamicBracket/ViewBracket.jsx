@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import TreeBracket from "@/Components/TournamentBracket/TreeBracket";
+import ChallongeBracket from "@/Components/TournamentBracket/ChallongeBracket";
+import RoundRobin from "@/Components/TournamentBracket/RoundRobin";
 
 export default function ViewBracket({ event }) {
     const [generatedBracket, setGeneratedBracket] = useState(null);
@@ -12,12 +13,58 @@ export default function ViewBracket({ event }) {
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // Store original bracket data for saving
+    const [originalBracket, setOriginalBracket] = useState(null);
+
+    // Transform backend data to ChallongeBracket format
+    const transformMatchesForChallonge = (backendMatches) => {
+        if (!backendMatches) return [];
+        
+        return backendMatches.map(match => ({
+            id: match.id,
+            round: match.round,
+            match_number: match.match_number,
+            bracket: match.bracket, // IMPORTANT: Preserve bracket field for double elim
+            slot1: match.team1?.name || match.slot1 || 'TBD',
+            slot2: match.team2?.name || match.slot2 || 'TBD',
+            winner_to: match.next_match_id || match.winner_to,
+            team1_score: match.team1_score,
+            team2_score: match.team2_score,
+            winner_slot: match.winner_id === match.team1_id ? 1 : 
+                         match.winner_id === match.team2_id ? 2 : null,
+            winner_id: match.winner_id,
+            // Keep original data
+            team1_id: match.team1_id,
+            team2_id: match.team2_id,
+            team1: match.team1,
+            team2: match.team2,
+            temp_id: match.temp_id // Important for saving
+        }));
+    };
+
     // Load bracket data from session storage
     useEffect(() => {
         const storedData = sessionStorage.getItem('generatedBracket');
         if (storedData) {
             const data = JSON.parse(storedData);
-            setGeneratedBracket(data.bracket);
+            console.log('=== BRACKET DATA DEBUG ===');
+            console.log('Total matches received:', data.bracket.matches?.length);
+            console.log('Bracket type:', data.bracketType);
+            
+            // Check for WR1 matches specifically
+            const wr1Matches = data.bracket.matches?.filter(m => m.round === 1 && m.bracket === 'winners');
+            console.log('WR1 matches:', wr1Matches?.length);
+            console.log('WR1 match IDs:', wr1Matches?.map(m => m.id || m.temp_id));
+            
+            // Keep original bracket for saving
+            setOriginalBracket(data.bracket);
+            // Transform matches for ChallongeBracket display
+            const transformedBracket = {
+                ...data.bracket,
+                matches: transformMatchesForChallonge(data.bracket.matches)
+            };
+            console.log('Transformed matches:', transformedBracket.matches.length);
+            setGeneratedBracket(transformedBracket);
             setTournamentName(data.tournamentName);
             setBracketType(data.bracketType);
             setEventId(data.eventId);
@@ -29,7 +76,7 @@ export default function ViewBracket({ event }) {
 
     // Save bracket to database
     const saveBracket = async () => {
-        if (!generatedBracket) {
+        if (!originalBracket) {
             alert('No bracket data to save.');
             return;
         }
@@ -46,11 +93,11 @@ export default function ViewBracket({ event }) {
                 event_id: eventId,
                 tournament_name: tournamentName,
                 bracket_type: bracketType,
-                teams: generatedBracket.teams,
-                matches: generatedBracket.matches,
-                total_rounds: generatedBracket.total_rounds,
-                winners_rounds: generatedBracket.winners_rounds,
-                losers_rounds: generatedBracket.losers_rounds
+                teams: originalBracket.teams,
+                matches: originalBracket.matches,
+                total_rounds: originalBracket.total_rounds,
+                winners_rounds: originalBracket.winners_rounds,
+                losers_rounds: originalBracket.losers_rounds
             });
 
             if (response.data.success) {
@@ -84,7 +131,7 @@ export default function ViewBracket({ event }) {
         <AuthenticatedLayout>
             <Head title={`Bracket Preview - ${event?.title}`} />
             
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="py-12 px-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
@@ -108,7 +155,12 @@ export default function ViewBracket({ event }) {
                                 <button
                                     onClick={saveBracket}
                                     disabled={isSaving}
-                                    className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition-colors flex items-center font-semibold"
+                                    className="w-[150px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#20F20D] to-[#20F20D]/0 
+                                                               bg-[#20F20D]/20 flex items-center justify-center 
+                                                               hover:bg-[#20F20D]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#20F20D]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                 >
                                     {isSaving ? (
                                         <>
@@ -172,7 +224,7 @@ export default function ViewBracket({ event }) {
                     {/* Bracket Display */}
                     <div className="space-y-6">
                         {/* Tournament Info */}
-                        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                             <h3 className="text-white font-semibold text-lg mb-4">Tournament Information</h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                 <div>
@@ -195,11 +247,11 @@ export default function ViewBracket({ event }) {
                         </div>
 
                         {/* Competing Teams */}
-                        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                             <h3 className="text-white font-semibold text-lg mb-4">Competing Teams</h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {generatedBracket.teams?.map((team, idx) => (
-                                    <div key={idx} className="bg-gray-700/50 rounded-lg px-4 py-3 border border-gray-600">
+                                {generatedBracket.teams?.map((team) => (
+                                    <div key={team.id || team.name} className="bg-gray-700 rounded-lg px-4 py-3 border border-gray-600">
                                         <div className="flex items-center justify-between">
                                             <span className="text-white font-medium">{team.name}</span>
                                             {team.seed && <span className="text-gray-400 text-sm">#{team.seed}</span>}
@@ -211,7 +263,7 @@ export default function ViewBracket({ event }) {
 
                         {/* Tree Bracket Preview */}
                         {bracketType !== 'round-robin' && generatedBracket.matches && (
-                            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+                            <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-white font-semibold text-lg">Tournament Tree Preview</h3>
                                     <div className="flex items-center gap-4 text-sm">
@@ -234,45 +286,23 @@ export default function ViewBracket({ event }) {
                                     </div>
                                 </div>
                                 
-                                <TreeBracket 
+                                <ChallongeBracket 
                                     matches={generatedBracket.matches}
-                                    tournament={{ 
-                                        name: tournamentName, 
-                                        bracket_type: bracketType,
-                                        total_rounds: generatedBracket.total_rounds
-                                    }}
-                                    onReportScore={() => {}} // No scoring in preview mode
+                                    showScoreButton={false}
                                 />
                                 
-                                <div className="mt-8 bg-gray-700/30 border border-gray-600 rounded-lg p-4">
-                                    <h4 className="text-white font-medium mb-3">Legacy View (Hidden)</h4>
-                                    
-                                    {/* Legacy horizontal layout - hidden but kept for reference */}
-                                    <div style={{ display: 'none' }} className="overflow-x-auto pb-4">
-                                        {/* Original layout code preserved but hidden */}
-                                        <p className="text-gray-500 text-sm">Legacy horizontal bracket view has been replaced with the tree structure above.</p>
-                                    </div>
-                                </div>
+                                
                             </div>
                         )}
 
-                        {/* Round Robin Matches */}
+                        {/* Round Robin Tournament */}
                         {bracketType === 'round-robin' && generatedBracket.matches && (
-                            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                                <h3 className="text-white font-semibold text-lg mb-4">All Matches</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {generatedBracket.matches.map((match, idx) => (
-                                        <div key={idx} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                                            <div className="text-xs text-gray-400 mb-2">Match {idx + 1}</div>
-                                            <div className="flex items-center justify-between text-white">
-                                                <span className="font-medium">{match.team1_name}</span>
-                                                <span className="text-gray-500 mx-3">vs</span>
-                                                <span className="font-medium">{match.team2_name}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <RoundRobin 
+                                matches={generatedBracket.matches}
+                                teams={generatedBracket.teams}
+                                bracket={generatedBracket}
+                                showScoreButton={false}
+                            />
                         )}
                     </div>
                 </div>

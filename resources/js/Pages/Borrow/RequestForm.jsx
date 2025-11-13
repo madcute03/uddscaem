@@ -55,7 +55,9 @@ export default function BorrowRequestForm() {
                         <select id="item_id" name="item_id" value={data.item_id} onChange={(e)=>setData('item_id', e.target.value)} className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700" required>
                             <option value="" disabled>Select an item</option>
                             {items.map((it) => (
-                                <option key={it.id} value={it.id}>{it.name}</option>
+                                <option key={it.id} value={it.id}>
+                                    {it.name} (Available: {it.available})
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -77,15 +79,56 @@ export default function BorrowRequestForm() {
                     </div>
                     <div>
                         <label className="block text-sm mb-1" htmlFor="quantity">Quantity</label>
-                        <input id="quantity" name="quantity" type="number" value={data.quantity} onChange={(e)=>setData('quantity', e.target.value)} className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700" min="1" max="10" required />
+                        {(() => {
+                            const selectedItem = items.find(item => item.id == data.item_id);
+                            const maxQuantity = selectedItem ? selectedItem.available : 999;
+                            const hasError = errors.quantity || (data.quantity > maxQuantity && maxQuantity > 0);
+                            
+                            return (
+                                <>
+                                    <input 
+                                        id="quantity" 
+                                        name="quantity" 
+                                        type="number" 
+                                        value={data.quantity} 
+                                        onChange={(e)=>setData('quantity', e.target.value)} 
+                                        className={`w-full px-3 py-2 rounded bg-slate-900 border ${hasError ? 'border-red-500' : 'border-slate-700'}`}
+                                        min="1" 
+                                        max={maxQuantity > 0 ? maxQuantity : undefined}
+                                        required 
+                                    />
+                                    {selectedItem && (
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            Available: {selectedItem.available} items
+                                        </p>
+                                    )}
+                                    {errors.quantity && <p className="text-red-400 text-sm mt-1">{errors.quantity}</p>}
+                                    {!errors.quantity && data.quantity > maxQuantity && maxQuantity > 0 && (
+                                        <p className="text-red-400 text-sm mt-1">
+                                            Quantity cannot exceed {maxQuantity} (available items)
+                                        </p>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                     <div>
                         <label className="block text-sm mb-1" htmlFor="contact_number">Contact Number</label>
-                        <input id="contact_number" name="contact_number" type="number" value={data.contact_number} onChange={(e)=>setData('contact_number', e.target.value)} className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700" placeholder="Your phone number for contact" />
+                        <input id="contact_number" name="contact_number" type="tel" value={data.contact_number} onChange={(e)=>setData('contact_number', e.target.value)} className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700" placeholder="Your phone number for contact" />
                     </div>
                     <div className="flex items-center gap-3">
-                        <button type="submit" disabled={processing} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white">Submit Request</button>
-                        <Link href={route('borrow.index')} className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600">Cancel</Link>
+                        <button type="submit" disabled={processing} className="w-[131px] h-[45px] rounded-[15px] cursor-pointer
+                                                               transition duration-300 ease-in-out
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0
+                                                               bg-[#2e8eff]/20 flex items-center justify-center
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)]
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Submit Request</button>
+                        <Link href={route('borrow.index')} className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Cancel</Link>
                     </div>
                 </form>
             </div>

@@ -1,21 +1,96 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Head, Link } from "@inertiajs/react";
 import PublicLayout from "@/Layouts/PublicLayout";
-import TreeBracket from "@/Components/TournamentBracket/TreeBracket";
+import ChallongeBracket from "@/Components/TournamentBracket/ChallongeBracket";
+import RoundRobin from "@/Components/TournamentBracket/RoundRobin";
 
 export default function PublicViewBracket({ event, tournament }) {
     const [matches, setMatches] = useState([]);
     const [champion, setChampion] = useState(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState(0.6);
+    const bracketContainerRef = useRef(null);
+
+    // Transform backend data to ChallongeBracket format
+    const transformMatchesForChallonge = (backendMatches) => {
+        if (!backendMatches) return [];
+        
+        return backendMatches.map(match => ({
+            id: match.id,
+            round: match.round,
+            match_number: match.match_number,
+            bracket: match.bracket, // IMPORTANT: Preserve bracket field for double elim
+            slot1: match.team1?.name || 'TBD',
+            slot2: match.team2?.name || 'TBD',
+            winner_to: match.next_match_id,
+            team1_score: match.team1_score,
+            team2_score: match.team2_score,
+            winner_slot: match.winner_id === match.team1_id ? 1 : 
+                         match.winner_id === match.team2_id ? 2 : null,
+            winner_id: match.winner_id,
+            // Keep original data
+            team1_id: match.team1_id,
+            team2_id: match.team2_id,
+            team1: match.team1,
+            team2: match.team2
+        }));
+    };
 
     // Load tournament matches
     useEffect(() => {
         if (tournament && tournament.matches) {
-            setMatches(tournament.matches);
+            const transformedMatches = transformMatchesForChallonge(tournament.matches);
+            setMatches(transformedMatches);
             if (tournament.winner) {
                 setChampion(tournament.winner.name);
             }
         }
     }, [tournament]);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+
+        const handleFullscreenChange = () => {
+            setIsFullscreen(Boolean(document.fullscreenElement));
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        };
+    }, []);
+
+    const toggleFullscreen = () => {
+        if (typeof document === 'undefined') return;
+
+        const element = bracketContainerRef.current;
+        if (!element) return;
+
+        if (!document.fullscreenElement) {
+            element.requestFullscreen?.().catch(error => {
+                console.error('Failed to enter fullscreen:', error);
+            });
+        } else {
+            document.exitFullscreen?.().catch(error => {
+                console.error('Failed to exit fullscreen:', error);
+            });
+        }
+    };
+
+    const MIN_ZOOM = 0.6;
+    const MAX_ZOOM = 1.8;
+    const ZOOM_STEP = 0.2;
+
+    const handleZoomIn = () => {
+        setZoomLevel(prev => Math.min(MAX_ZOOM, Math.round((prev + ZOOM_STEP) * 100) / 100));
+    };
+
+    const handleZoomOut = () => {
+        setZoomLevel(prev => Math.max(MIN_ZOOM, Math.round((prev - ZOOM_STEP) * 100) / 100));
+    };
+
+    const handleZoomReset = () => setZoomLevel(0.6);
 
     const isDoubleElim = tournament?.bracket_type === 'double';
     const teamCount = useMemo(() => {
@@ -31,11 +106,13 @@ export default function PublicViewBracket({ event, tournament }) {
         return uniqueTeams.size;
     }, [matches]);
 
+    const isRoundRobin = tournament?.bracket_type === 'round-robin';
+
     return (
         <PublicLayout>
             <Head title={`Tournament Bracket - ${event?.title}`} />
 
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="py-12">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
@@ -52,7 +129,9 @@ export default function PublicViewBracket({ event, tournament }) {
                         <h1 className="text-3xl font-bold text-white mb-2">Tournament Bracket</h1>
                         <p className="text-gray-400">{tournament?.name}</p>
                         <div className="flex flex-wrap gap-3 items-center text-gray-500 text-sm">
-                            <p className="capitalize">{tournament?.bracket_type} Elimination</p>
+                            <p className="capitalize">
+                                {tournament?.bracket_type === 'round-robin' ? 'Round Robin' : `${tournament?.bracket_type} Elimination`}
+                            </p>
                             {teamCount > 0 && (
                                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-600 text-gray-300">
                                     <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,33 +152,121 @@ export default function PublicViewBracket({ event, tournament }) {
 
                     {/* Tournament Tree */}
                     <div className="mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold text-white">Tournament Bracket</h2>
-                            <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 border-2 border-green-500 rounded"></div>
-                                    <span className="text-gray-300">Winners</span>
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+                            <h2 className="text-xl font-bold text-white">
+                                {isRoundRobin ? 'Tournament Matches & Standings' : 'Tournament Bracket'}
+                            </h2>
+                            {!isRoundRobin && (
+                                <div className="flex flex-wrap items-center gap-4 text-sm justify-end">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 border-2 border-green-500 rounded"></div>
+                                        <span className="text-gray-300">Winners</span>
+                                    </div>
+                                    {isDoubleElim && (
+                                        <>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 border-2 border-red-500 rounded"></div>
+                                                <span className="text-gray-300">Losers</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 border-2 border-yellow-500 rounded"></div>
+                                                <span className="text-gray-300">Finals</span>
+                                            </div>
+                                        </>
+                                    )}
+                                <div className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800/60 px-2 py-1 text-gray-200">
+                                    <button
+                                        type="button"
+                                        onClick={handleZoomOut}
+                                        disabled={zoomLevel <= MIN_ZOOM}
+                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-600 bg-slate-900/60 text-base font-semibold transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                        title="Zoom out"
+                                        aria-label="Zoom out"
+                                    >
+                                        −
+                                    </button>
+                                    <span className="text-xs font-semibold uppercase tracking-widest whitespace-nowrap">
+                                        {Math.round(zoomLevel * 100)}%
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleZoomIn}
+                                        disabled={zoomLevel >= MAX_ZOOM}
+                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-600 bg-slate-900/60 text-base font-semibold transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                        title="Zoom in"
+                                        aria-label="Zoom in"
+                                    >
+                                        +
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleZoomReset}
+                                        disabled={zoomLevel === 0.6}
+                                        className="ml-1 inline-flex items-center rounded-md border border-slate-600 bg-slate-900/60 px-2 py-1 text-[11px] font-medium uppercase tracking-wide transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Reset
+                                    </button>
                                 </div>
-                                {isDoubleElim && (
-                                    <>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 border-2 border-red-500 rounded"></div>
-                                            <span className="text-gray-300">Losers</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 border-2 border-yellow-500 rounded"></div>
-                                            <span className="text-gray-300">Finals</span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                                <button
+                                    type="button"
+                                    onClick={toggleFullscreen}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-xs font-medium uppercase tracking-wide text-gray-200 transition hover:bg-slate-700"
+                                    title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                                >
+                                    <svg
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth={1.5}
+                                        viewBox="0 0 24 24"
+                                    >
+                                        {isFullscreen ? (
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M9 9H5V5m10 10h4v4M9 15H5v4m10-10h4V5"
+                                            />
+                                        ) : (
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M8 3H5a2 2 0 00-2 2v3m14-5h3a2 2 0 012 2v3M3 16v3a2 2 0 002 2h3m9-5h3a2 2 0 002-2v-3"
+                                            />
+                                        )}
+                                    </svg>
+                                    <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+                                </button>
+                                </div>
+                            )}
                         </div>
 
-                        <TreeBracket 
-                            matches={matches}
-                            tournament={tournament}
-                            onReportScore={() => {}} // Read-only for public view
-                        />
+                        {isRoundRobin ? (
+                            <RoundRobin 
+                                matches={matches}
+                                teams={tournament?.teams || []}
+                                bracket={tournament?.bracket_data || {}}
+                                showScoreButton={false}
+                            />
+                        ) : (
+                            <div
+                                ref={bracketContainerRef}
+                                className={`relative p-4 transition-[padding] overflow-auto ${isFullscreen ? 'min-h-screen' : ''}`}
+                            >
+                                <div
+                                    className="inline-block rounded-xl border border-gray-700 bg-gray-800 p-4"
+                                    style={{
+                                        transform: `scale(${zoomLevel})`,
+                                        transformOrigin: '0 0',
+                                        transition: 'transform 0.2s ease-out'
+                                    }}
+                                >
+                                    <ChallongeBracket 
+                                        matches={matches}
+                                        showScoreButton={false}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Champion Display */}

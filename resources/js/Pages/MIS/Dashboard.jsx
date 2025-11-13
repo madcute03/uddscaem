@@ -40,48 +40,61 @@ export default function MISDashboard({ auth, athletes, stats }) {
     };
 
     return (
-        <AuthenticatedLayout user={auth.user}>
+        <AuthenticatedLayout 
+            user={auth.user}
+            header={
+                <div className="flex justify-between items-center">
+                    <h1 className="font-semibold text-xl text-white leading-tight">
+                        MIS Dashboard - Athlete Management
+                    </h1>
+                </div>
+            }
+        >
             <Head title="MIS Dashboard - Athlete Management" />
-
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
+            
+            <div className="py-6 sm:py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="mb-8">
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                            <div>
-                                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                                    <ChartBarIcon className="w-10 h-10 text-blue-400" />
-                                    MIS Dashboard
-                                </h1>
-                                <p className="mt-2 text-slate-400">
-                                    Student-Athlete Management Information System
-                                </p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleExport}
-                                    className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                        <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div>
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                                        <ChartBarIcon className="w-8 h-8 sm:w-10 sm:h-10 text-blue-400" />
+                                        MIS Dashboard
+                                    </h1>
+                                    <p className="mt-2 text-slate-400">
+                                        Student-Athlete Management Information System
+                                    </p>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <button
+                                        onClick={handleExport}
+                                        className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
                                                                transition duration-300 ease-in-out 
-                                                               bg-gradient-to-br from-[#008000] to-[#008000]/0 
-                                                               bg-[#008000]/20 flex items-center justify-center 
-                                                               hover:bg-[#008000]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
-                                                               focus:outline-none focus:bg-[#008000]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                >
-                                    <DocumentArrowDownIcon className="w-5 h-5" />
-                                    Export CSV
-                                </button>
-                                <Link
-                                    href={route('mis.athletes.create')}
-                                    className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               bg-gradient-to-br from-[#20F20D] to-[#20F20D]/0 
+                                                               bg-[#20F20D]/20 flex items-center justify-center 
+                                                               hover:bg-[#20F20D]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#20F20D]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
+                                    >
+                                        <DocumentArrowDownIcon className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Export CSV</span>
+                                        <span className="sm:hidden">Export</span>
+                                    </button>
+                                    <Link
+                                        href={route('mis.athletes.create')}
+                                        className="w-[141px] h-[45px] rounded-[15px] cursor-pointer 
                                                                transition duration-300 ease-in-out 
                                                                bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
                                                                bg-[#2e8eff]/20 flex items-center justify-center 
                                                                hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
                                                                focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
-                                >
-                                    <PlusIcon className="w-5 h-5" />
-                                    Add Athlete
-                                </Link>
+                                    >
+                                        <PlusIcon className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Add Athlete</span>
+                                        <span className="sm:hidden">Add</span>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -116,46 +129,48 @@ export default function MISDashboard({ auth, athletes, stats }) {
 
                     {/* Search Bar */}
                     <div className="mb-6">
-                        <div className="relative">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                        <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                            <div className="relative">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-10 pr-3 py-3 text-sm border border-slate-600 rounded-lg bg-slate-700/50 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200"
+                                    placeholder="Search by name, student ID, email, course, department, or sport..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    aria-label="Search athletes"
+                                />
                             </div>
-                            <input
-                                type="text"
-                                className="block w-full pl-10 pr-3 py-3 text-sm border border-slate-600 rounded-lg bg-slate-700/50 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200"
-                                placeholder="Search by name, student ID, email, course, department, or sport..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                aria-label="Search athletes"
-                            />
                         </div>
                     </div>
 
                     {/* Athletes Table */}
-                    <div className="bg-slate-800/60 border border-slate-700 rounded-xl overflow-hidden">
+                    <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl shadow-lg border border-slate-700 overflow-hidden transition-all duration-300 hover:shadow-xl">
                         <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-700/50">
+                            <table className="min-w-full w-full">
+                                <thead className="bg-slate-700">
                                     <tr>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">Student ID</th>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">Name</th>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">Course</th>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">Year</th>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">Sport/Team</th>
-                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold">Scholarship</th>
-                                        <th className="text-right py-4 px-6 text-slate-300 font-semibold">Actions</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Student ID</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Name</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Course</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Year</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Sport/Team</th>
+                                        <th className="text-left py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Scholarship</th>
+                                        <th className="text-right py-4 px-6 text-slate-300 font-semibold whitespace-nowrap">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredAthletes.length > 0 ? (
                                         filteredAthletes.map((athlete) => (
                                             <tr key={athlete.id} className="border-t border-slate-700 hover:bg-slate-700/30 transition-colors">
-                                                <td className="py-4 px-6 text-white">{athlete.student_id}</td>
-                                                <td className="py-4 px-6 text-white">{athlete.name}</td>
-                                                <td className="py-4 px-6 text-slate-300">{athlete.course || 'N/A'}</td>
-                                                <td className="py-4 px-6 text-slate-300">{athlete.year_level || 'N/A'}</td>
-                                                <td className="py-4 px-6 text-slate-300">{athlete.sport_team || 'N/A'}</td>
-                                                <td className="py-4 px-6">
+                                                <td className="py-4 px-6 text-white whitespace-nowrap">{athlete.student_id}</td>
+                                                <td className="py-4 px-6 text-white whitespace-nowrap">{athlete.name}</td>
+                                                <td className="py-4 px-6 text-slate-300 whitespace-nowrap">{athlete.course || 'N/A'}</td>
+                                                <td className="py-4 px-6 text-slate-300 whitespace-nowrap">{athlete.year_level || 'N/A'}</td>
+                                                <td className="py-4 px-6 text-slate-300 whitespace-nowrap">{athlete.sport_team || 'N/A'}</td>
+                                                <td className="py-4 px-6 whitespace-nowrap">
                                                     <span className={`px-2 py-1 rounded-full text-xs ${
                                                         athlete.scholarship_status === 'Scholar' 
                                                             ? 'bg-green-500/20 text-green-400' 
@@ -164,7 +179,7 @@ export default function MISDashboard({ auth, athletes, stats }) {
                                                         {athlete.scholarship_status || 'N/A'}
                                                     </span>
                                                 </td>
-                                                <td className="py-4 px-6">
+                                                <td className="py-4 px-6 whitespace-nowrap">
                                                     <div className="flex justify-end gap-3">
                                                         <Link
                                                             href={route('mis.athletes.edit', athlete.id)}
@@ -200,7 +215,7 @@ export default function MISDashboard({ auth, athletes, stats }) {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="8" className="py-8 px-6 text-center text-slate-400">
+                                            <td colSpan="7" className="py-8 px-6 text-center text-slate-400">
                                                 {searchTerm ? (
                                                     <>
                                                         <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-slate-500 mb-2" />
@@ -245,21 +260,21 @@ export default function MISDashboard({ auth, athletes, stats }) {
 
 function StatCard({ title, value, icon: Icon, color }) {
     const colorClasses = {
-        blue: 'bg-blue-500/20 text-blue-400',
-        green: 'bg-green-500/20 text-green-400',
-        purple: 'bg-purple-500/20 text-purple-400',
-        orange: 'bg-orange-500/20 text-orange-400',
+        blue: 'from-blue-500 to-blue-600',
+        green: 'from-green-500 to-green-600',
+        purple: 'from-purple-500 to-purple-600',
+        orange: 'from-orange-500 to-orange-600',
     };
 
     return (
-        <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
-            <div className="flex items-center justify-between">
+        <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-6 border border-slate-700 transition-all duration-300 hover:shadow-xl">
+            <div className="flex items-center">
+                <div className={`bg-gradient-to-br ${colorClasses[color]} rounded-lg p-3 mr-4`}>
+                    <Icon className="h-6 w-6 text-white" />
+                </div>
                 <div>
                     <p className="text-slate-400 text-sm mb-1">{title}</p>
-                    <p className="text-3xl font-bold text-white">{value}</p>
-                </div>
-                <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-                    <Icon className="w-8 h-8" />
+                    <p className="text-2xl font-bold text-white">{value}</p>
                 </div>
             </div>
         </div>

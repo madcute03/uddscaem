@@ -16,11 +16,9 @@ use App\Http\Controllers\CreateBracketController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\RequirementsController;
 use App\Http\Controllers\EventRegistrationController;
-use App\Http\Controllers\DoubleEliminationController;
-use App\Http\Controllers\SingleEliminationController;
-use App\Http\Controllers\RoundRobinController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\ChallongeDoubleEliminationController;
 
 // ============================================
 // Public Routes
@@ -49,14 +47,6 @@ Route::get('/events', function () {
 
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 Route::get('/events/{event}/bracket/view', [TournamentController::class, 'publicViewBracket'])->name('events.publicViewBracket');
-Route::get('/bracket/{event}/show', [BracketController::class, 'ShowBracket'])->name('bracket.show');
-Route::get('/standing/{event}/show', [BracketController::class, 'ShowStanding'])->name('standing.show');
-
-// Bracket Data (Public JSON endpoints)
-Route::get('/double-elimination/{event}', [DoubleEliminationController::class, 'show'])->name('double-elimination.show');
-Route::get('/single-elimination/{event}', [SingleEliminationController::class, 'show'])->name('single-elimination.show');
-// Round Robin (Public JSON)
-Route::get('/round-robin/{event}', [RoundRobinController::class, 'show'])->name('round-robin.show');
 
 // ============================================
 // Event Registration (Single Player Version)
@@ -135,6 +125,38 @@ Route::get('/bracket/double/{teams}', function ($teams) {
 })->name('bracket.double');
 
 // ============================================
+// Challonge Double Elimination Demo/API
+// ============================================
+Route::get('/api/challonge-de/demo/{teams}', function ($teams) {
+    $teams = (int) $teams;
+    if ($teams < 3 || $teams > 32) {
+        return response()->json(['error' => 'Team count must be between 3 and 32'], 400);
+    }
+    
+    $controller = new ChallongeDoubleEliminationController();
+    $teamsArray = [];
+    for ($i = 1; $i <= $teams; $i++) {
+        $teamsArray[] = ['name' => 'Team ' . $i];
+    }
+    
+    $bracket = $controller->generateDoubleEliminationBracket($teamsArray, 1);
+    
+    return response()->json($bracket, 200, [], JSON_PRETTY_PRINT);
+})->name('challonge-de.demo.json');
+
+Route::get('/api/challonge-de/visualize/{teams}', function ($teams) {
+    $teams = (int) $teams;
+    if ($teams < 3 || $teams > 32) {
+        return response('Team count must be between 3 and 32', 400);
+    }
+    
+    $controller = new ChallongeDoubleEliminationController();
+    $visualization = $controller->visualizeBracket($teams);
+    
+    return response($visualization, 200, ['Content-Type' => 'text/plain']);
+})->name('challonge-de.demo.visualize');
+
+// ============================================
 // Admin Routes (Authenticated & Verified)
 // ============================================
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -156,6 +178,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/events/{id}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('/events/{id}/mark-done', [EventController::class, 'markDone'])->name('events.markDone');
     Route::post('/events/{id}/mark-undone', [EventController::class, 'markUndone'])->name('events.markUndone');
+    Route::get('/events/{event}/rulebook/view', [EventController::class, 'viewRulebook'])->name('events.rulebook.view');
     Route::get('/events/{event}/rulebook/download', [EventController::class, 'downloadRulebook'])->name('events.rulebook.download');
 
     // Bracket Management
@@ -164,9 +187,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/events/{event}/dynamic-bracket/view', [TournamentController::class, 'viewDynamicBracket'])->name('events.viewDynamicBracket');
     Route::get('/events/{event}/dynamic-bracket/manage', [TournamentController::class, 'manageBracket'])->name('events.manageBracket');
     Route::post('/events/{event}/bracket-settings', [BracketController::class, 'storeBracketSettings'])->name('bracket.storeSettings');
-    Route::post('/single-elimination/save', [SingleEliminationController::class, 'save'])->name('single-elimination.save');
-    Route::post('/double-elimination/save', [DoubleEliminationController::class, 'save'])->name('double-elimination.save');
-    Route::post('/round-robin/save', [RoundRobinController::class, 'save'])->name('round-robin.save');
     Route::post('/brackets/save', [BracketController::class, 'save'])->name('bracket.save');
 
     // Complaints Management
@@ -179,6 +199,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/requirements', [RequirementsController::class, 'adminIndex'])->name('admin.requirements.index');
         Route::post('/requirements', [RequirementsController::class, 'store'])->name('admin.requirements.store');
+        Route::get('/requirements/{requirement}/view', [RequirementsController::class, 'view'])->name('admin.requirements.view');
         Route::delete('/requirements/{requirement}', [RequirementsController::class, 'destroy'])->name('admin.requirements.destroy');
     });
 

@@ -37,7 +37,7 @@ export default function EditAthlete({ auth, athlete }) {
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Edit Athlete" />
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="py-12 px-8">
                 <div className="max-w-4xl mx-auto">
                     <div className="mb-8">
                         <Link href={route('mis.dashboard')} className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-4">
@@ -106,8 +106,18 @@ export default function EditAthlete({ auth, athlete }) {
                             </div>
                         </div>
                         <div className="flex justify-end gap-4 pt-6 border-t border-slate-700">
-                            <Link href={route('mis.dashboard')} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</Link>
-                            <button type="submit" disabled={processing} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">{processing ? 'Updating...' : 'Update'}</button>
+                            <Link href={route('mis.dashboard')} className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">Cancel</Link>
+                            <button type="submit" disabled={processing} className="w-[121px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]">{processing ? 'Updating...' : 'Update'}</button>
                         </div>
                     </form>
                 </div>

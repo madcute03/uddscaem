@@ -32,15 +32,6 @@ export default function EditWriter({ auth, writer }) {
 
             <div className="py-12">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-                    <Link
-                        href={route('admin.writers.index')}
-                        className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors"
-                    >
-                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Writers
-                    </Link>
                 </div>
                 <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
                     <div className="bg-slate-900 overflow-hidden shadow-sm sm:rounded-lg border border-slate-700">
@@ -193,14 +184,24 @@ export default function EditWriter({ auth, writer }) {
                                 <div className="flex justify-end space-x-3 pt-4">
                                     <a
                                         href={route('admin.writers.index')}
-                                        className="px-4 py-2 bg-slate-700 text-slate-300 rounded-md hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                                        className="w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                                     >
                                         Cancel
                                     </a>
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        className={`w-[141px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)] ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         {processing ? 'Updating...' : 'Update Writer'}
                                     </button>
