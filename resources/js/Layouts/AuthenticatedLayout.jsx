@@ -123,23 +123,25 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-black text-slate-100 flex">
             {/* Mobile Top Bar: Menu + Profile */}
             <div className="sm:hidden fixed top-0 left-0 w-full z-50 flex items-center gap-3 bg-slate-900/90 border-b border-slate-800/50 h-14 px-4 shadow-lg">
-                <button
-                    className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800/90 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                    onClick={() => setShowingNavigationDropdown((prev) => !prev)}
-                    aria-label="Toggle menu"
-                    aria-expanded={showingNavigationDropdown}
-                >
-                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+                {user.role !== 'writer' && (
+                    <button
+                        className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800/90 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        onClick={() => setShowingNavigationDropdown((prev) => !prev)}
+                        aria-label="Toggle menu"
+                        aria-expanded={showingNavigationDropdown}
+                    >
+                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                )}
                 <Link
                     href={user.role === 'admin' ? route('dashboard.summary') : (user.role === 'writer' ? "/admin/news" : "/dashboard")}
                     className="flex items-center gap-2"
                     onClick={() => setShowingNavigationDropdown(false)}
                 >
                     <img
-                        src="/images/sems.png"
+                        src="/images/udd.jpg"
                         alt="UdD Eventure logo"
                         className="w-9 h-9 rounded-full object-cover border border-blue-500/40 bg-slate-950 shadow-md shadow-blue-950/30"
                     />
@@ -193,17 +195,18 @@ export default function AuthenticatedLayout({ header, children }) {
 
             {/* Sidebar as Drawer on mobile, fixed on desktop */}
             {/* Overlay for mobile drawer */}
-            {showingNavigationDropdown && (
+            {user.role !== 'writer' && showingNavigationDropdown && (
                 <div
                     className="fixed top-14 left-0 right-0 bottom-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
                     onClick={() => setShowingNavigationDropdown(false)}
                 />
             )}
-            <aside
-                className={`fixed left-0 top-14 sm:top-0 h-[calc(100vh-3.5rem)] sm:h-full w-64 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 sm:z-30 transition-transform duration-300 ease-in-out
-                ${showingNavigationDropdown ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 sm:block`}
-                style={{ display: showingNavigationDropdown ? 'block' : undefined }}
-            >
+            {user.role !== 'writer' && (
+                <aside
+                    className={`fixed left-0 top-14 sm:top-0 h-[calc(100vh-3.5rem)] sm:h-full w-64 bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-r border-slate-800/50 shadow-2xl shadow-blue-950/30 z-50 sm:z-30 transition-transform duration-300 ease-in-out
+                    ${showingNavigationDropdown ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0 sm:block`}
+                    style={{ display: showingNavigationDropdown ? 'block' : undefined }}
+                >
                 <div className="flex flex-col h-full sm:pt-24">
                     {/* Navigation Menu */}
                     <nav className="flex-1 p-4">
@@ -233,16 +236,17 @@ export default function AuthenticatedLayout({ header, children }) {
                     </nav>
 
                 </div>
-            </aside>
+                </aside>
+            )}
 
             {/* Main Content Area */}
-            <div className="flex-1 pl-0 pt-16 sm:pl-64 sm:pt-24 overflow-x-hidden">
+            <div className={`flex-1 pl-0 pt-16 overflow-x-hidden ${user.role !== 'writer' ? 'sm:pl-64 sm:pt-24' : 'sm:pt-24'}`}>
                 <div className="hidden sm:block fixed inset-x-0 top-0 z-40 sm:z-50 bg-slate-900/70 backdrop-blur border-b border-slate-800/60 shadow-lg shadow-blue-950/20">
                     <div className="flex items-center gap-6 px-4 md:px-6 lg:px-8 py-4">
                         <div className="flex-1 flex items-center gap-6 min-w-0">
                             <Link href={user.role === 'admin' ? route('dashboard.summary') : (user.role === 'writer' ? "/admin/news" : "/dashboard")} className="flex items-center gap-3 flex-none text-left">
                                 <img
-                                    src="/images/sems.png"
+                                    src="/images/udd.jpg"
                                     alt="UdD Eventure logo"
                                     className="hidden sm:block w-12 h-12 rounded-full object-cover border border-blue-500/40 bg-slate-950 shadow-md shadow-blue-950/30"
                                 />

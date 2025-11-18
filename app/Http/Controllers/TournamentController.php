@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\ChallongeDoubleEliminationController;
 use App\Http\Controllers\ChallongeSeedingController;
 
+
 class TournamentController extends Controller
 {
     /**

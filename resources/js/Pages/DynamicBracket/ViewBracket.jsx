@@ -205,18 +205,7 @@ export default function ViewBracket({ event }) {
                                     </svg>
                                     Manage Bracket & Scoring
                                 </Link>
-                                <Link
-                                    href={route('events.show', event.id)}
-                                    className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                                >
-                                    View Event Page
-                                </Link>
-                                <Link
-                                    href={route('bracket')}
-                                    className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                                >
-                                    Back to Bracket Management
-                                </Link>
+                                
                             </div>
                         </div>
                     )}
@@ -261,39 +250,6 @@ export default function ViewBracket({ event }) {
                             </div>
                         </div>
 
-                        {/* Tree Bracket Preview */}
-                        {bracketType !== 'round-robin' && generatedBracket.matches && (
-                            <div className="bg-gray-800 border border-gray-700 rounded-xl p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-white font-semibold text-lg">Tournament Tree Preview</h3>
-                                    <div className="flex items-center gap-4 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 border-2 border-green-500 rounded"></div>
-                                            <span className="text-gray-300">Winners Bracket</span>
-                                        </div>
-                                        {bracketType === 'double' && (
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-3 h-3 border-2 border-red-500 rounded"></div>
-                                                <span className="text-gray-300">Losers Bracket</span>
-                                            </div>
-                                        )}
-                                        {bracketType === 'double' && (
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-3 h-3 border-2 border-yellow-500 rounded"></div>
-                                                <span className="text-gray-300">Grand Finals</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                
-                                <ChallongeBracket 
-                                    matches={generatedBracket.matches}
-                                    showScoreButton={false}
-                                />
-                                
-                                
-                            </div>
-                        )}
 
                         {/* Round Robin Tournament */}
                         {bracketType === 'round-robin' && generatedBracket.matches && (

@@ -302,6 +302,8 @@ class DoubleEliminationSimulator
     /**
      * Enqueue WB losers into LB rounds using CHALLONGE'S EXACT PATTERN
      * This new algorithm works for ANY team size (power of 2 or not)
+     * 
+     * Note: Fixed for team sizes 26-32 to ensure proper losers bracket generation
      */
     private function enqueueWBLosers($wbByRound, &$lbQueues, $wbRounds, $teamCount)
     {
@@ -456,24 +458,59 @@ class DoubleEliminationSimulator
                     }
                     
                 } else {
-                    // CLOSER TO UPPER POWER (e.g., 13-15 closer to 16 than 8)
+                    // CLOSER TO UPPER POWER (e.g., 13-15 closer to 16 than 8, or 26-31 closer to 32 than 16)
                     // Pattern: Spread distribution with partial WR1 to LR1
                     
                     $wr1Count = count($wr1Matches);
                     $wr2Count = count($wr2Matches);
                     
-                    // LR1: Gets only partial WR1 losers (enough for 1 match = 2 entrants)
-                    $wr1ToLR1 = min(2, $wr1Count);
-                    for ($i = 0; $i < $wr1ToLR1; $i++) {
-                        $lbQueues[1][] = ['type' => 'wb_loser', 'from_match' => $wr1Matches[$i]['id']];
-                    }
-                    
-                    // LR2: Gets remaining WR1 + all WR2 losers
-                    for ($i = $wr1ToLR1; $i < $wr1Count; $i++) {
-                        $lbQueues[2][] = ['type' => 'wb_loser', 'from_match' => $wr1Matches[$i]['id']];
-                    }
-                    foreach ($wr2Matches as $match) {
-                        $lbQueues[2][] = ['type' => 'wb_loser', 'from_match' => $match['id']];
+                    // For large brackets (26+), use specific distribution pattern
+                    if ($teamCount >= 26) {
+                        // Determine WR1 losers to send to LR1 based on team count
+                        // Pattern: Each team adds complexity, need to increase LR1 matches
+                        if ($teamCount == 26) {
+                            $wr1ToLR1 = 4; // LR1 = 2 matches
+                        } elseif ($teamCount == 27) {
+                            $wr1ToLR1 = 6; // LR1 = 3 matches
+                        } elseif ($teamCount == 28) {
+                            $wr1ToLR1 = 8; // LR1 = 4 matches
+                        } elseif ($teamCount == 29) {
+                            $wr1ToLR1 = 10; // LR1 = 5 matches
+                        } elseif ($teamCount == 30) {
+                            $wr1ToLR1 = 12; // LR1 = 6 matches
+                        } elseif ($teamCount == 31) {
+                            $wr1ToLR1 = 14; // LR1 = 7 matches
+                        } else {
+                            // 32 teams: send all WR1 losers to LR1
+                            $wr1ToLR1 = $wr1Count;
+                        }
+                        
+                        for ($i = 0; $i < $wr1ToLR1 && $i < $wr1Count; $i++) {
+                            $lbQueues[1][] = ['type' => 'wb_loser', 'from_match' => $wr1Matches[$i]['id']];
+                        }
+                        
+                        // LR2: Gets remaining WR1 losers + all WR2 losers
+                        for ($i = $wr1ToLR1; $i < $wr1Count; $i++) {
+                            $lbQueues[2][] = ['type' => 'wb_loser', 'from_match' => $wr1Matches[$i]['id']];
+                        }
+                        foreach ($wr2Matches as $match) {
+                            $lbQueues[2][] = ['type' => 'wb_loser', 'from_match' => $match['id']];
+                        }
+                    } else {
+                        // For smaller brackets (13-25), use minimal WR1 losers in LR1
+                        // LR1: Gets only partial WR1 losers (enough for 1 match = 2 entrants)
+                        $wr1ToLR1 = min(2, $wr1Count);
+                        for ($i = 0; $i < $wr1ToLR1; $i++) {
+                            $lbQueues[1][] = ['type' => 'wb_loser', 'from_match' => $wr1Matches[$i]['id']];
+                        }
+                        
+                        // LR2: Gets remaining WR1 + all WR2 losers
+                        for ($i = $wr1ToLR1; $i < $wr1Count; $i++) {
+                            $lbQueues[2][] = ['type' => 'wb_loser', 'from_match' => $wr1Matches[$i]['id']];
+                        }
+                        foreach ($wr2Matches as $match) {
+                            $lbQueues[2][] = ['type' => 'wb_loser', 'from_match' => $match['id']];
+                        }
                     }
                     
                     // LR3: Consolidation (no WR losers)
@@ -598,11 +635,84 @@ class DoubleEliminationSimulator
             
             // Link GF
             if ($match['bracket'] === 'grand_finals') {
-                if (isset($matchMap[$match['previous_match_1']])) {
-                    $matchMap[$match['previous_match_1']]['winner_to'] = $match['id'];
+                if (isset($match['previous_match_1'])) {
+                    if (isset($matchMap[$match['previous_match_1']])) {
+                        $matchMap[$match['previous_match_1']]['winner_to'] = $match['id'];
+                    }
                 }
-                if (isset($matchMap[$match['previous_match_2']])) {
-                    $matchMap[$match['previous_match_2']]['winner_to'] = $match['id'];
+                if (isset($match['previous_match_2'])) {
+                    if (isset($matchMap[$match['previous_match_2']])) {
+                        $matchMap[$match['previous_match_2']]['winner_to'] = $match['id'];
+                    }
+                }
+            }
+        }
+        
+        // Additional pass to ensure proper losers bracket linking
+        // This fixes issues with teams 26-32
+        $losersByRound = [];
+        foreach ($matches as &$match) {
+            if ($match['bracket'] === 'losers') {
+                $round = $match['losers_round'] ?? 0;
+                if (!isset($losersByRound[$round])) {
+                    $losersByRound[$round] = [];
+                }
+                $losersByRound[$round][] = &$match;
+            }
+        }
+        
+        // For each losers round, ensure winners advance properly
+        ksort($losersByRound);
+        $maxRound = max(array_keys($losersByRound));
+        
+        for ($lr = 1; $lr < $maxRound; $lr++) {
+            // Find matches in current round that don't have winner_to set
+            if (!isset($losersByRound[$lr])) continue;
+            
+            foreach ($losersByRound[$lr] as &$match) {
+                // Skip if already linked
+                if (!empty($match['winner_to'])) continue;
+                
+                // Find appropriate match in next round to advance to
+                $nextRound = $lr + 1;
+                if (isset($losersByRound[$nextRound])) {
+                    // Find first match in next round that doesn't have both previous matches set
+                    foreach ($losersByRound[$nextRound] as &$nextMatch) {
+                        $canLink = false;
+                        
+                        if (empty($nextMatch['previous_match_1'])) {
+                            $nextMatch['previous_match_1'] = $match['id'];
+                            $canLink = true;
+                        } else if (empty($nextMatch['previous_match_2'])) {
+                            $nextMatch['previous_match_2'] = $match['id'];
+                            $canLink = true;
+                        }
+                        
+                        if ($canLink) {
+                            $match['winner_to'] = $nextMatch['id'];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Ensure final losers round match advances to grand finals
+        if (isset($losersByRound[$maxRound])) {
+            foreach ($losersByRound[$maxRound] as &$match) {
+                if (empty($match['winner_to'])) {
+                    // Find grand finals match
+                    foreach ($matches as &$gfMatch) {
+                        if ($gfMatch['bracket'] === 'grand_finals') {
+                            $match['winner_to'] = $gfMatch['id'];
+                            
+                            if (empty($gfMatch['previous_losers_match'])) {
+                                $gfMatch['previous_losers_match'] = $match['id'];
+                            }
+                            
+                            break;
+                        }
+                    }
                 }
             }
         }

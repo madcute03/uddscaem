@@ -8,7 +8,6 @@ export default function PublicViewBracket({ event, tournament }) {
     const [matches, setMatches] = useState([]);
     const [champion, setChampion] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState(0.6);
     const bracketContainerRef = useRef(null);
 
     // Transform backend data to ChallongeBracket format
@@ -78,19 +77,6 @@ export default function PublicViewBracket({ event, tournament }) {
         }
     };
 
-    const MIN_ZOOM = 0.6;
-    const MAX_ZOOM = 1.8;
-    const ZOOM_STEP = 0.2;
-
-    const handleZoomIn = () => {
-        setZoomLevel(prev => Math.min(MAX_ZOOM, Math.round((prev + ZOOM_STEP) * 100) / 100));
-    };
-
-    const handleZoomOut = () => {
-        setZoomLevel(prev => Math.max(MIN_ZOOM, Math.round((prev - ZOOM_STEP) * 100) / 100));
-    };
-
-    const handleZoomReset = () => setZoomLevel(0.6);
 
     const isDoubleElim = tournament?.bracket_type === 'double';
     const teamCount = useMemo(() => {
@@ -174,39 +160,6 @@ export default function PublicViewBracket({ event, tournament }) {
                                             </div>
                                         </>
                                     )}
-                                <div className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800/60 px-2 py-1 text-gray-200">
-                                    <button
-                                        type="button"
-                                        onClick={handleZoomOut}
-                                        disabled={zoomLevel <= MIN_ZOOM}
-                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-600 bg-slate-900/60 text-base font-semibold transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                                        title="Zoom out"
-                                        aria-label="Zoom out"
-                                    >
-                                        −
-                                    </button>
-                                    <span className="text-xs font-semibold uppercase tracking-widest whitespace-nowrap">
-                                        {Math.round(zoomLevel * 100)}%
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={handleZoomIn}
-                                        disabled={zoomLevel >= MAX_ZOOM}
-                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-600 bg-slate-900/60 text-base font-semibold transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                                        title="Zoom in"
-                                        aria-label="Zoom in"
-                                    >
-                                        +
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleZoomReset}
-                                        disabled={zoomLevel === 0.6}
-                                        className="ml-1 inline-flex items-center rounded-md border border-slate-600 bg-slate-900/60 px-2 py-1 text-[11px] font-medium uppercase tracking-wide transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        Reset
-                                    </button>
-                                </div>
                                 <button
                                     type="button"
                                     onClick={toggleFullscreen}
@@ -252,14 +205,8 @@ export default function PublicViewBracket({ event, tournament }) {
                                 ref={bracketContainerRef}
                                 className={`relative p-4 transition-[padding] overflow-auto ${isFullscreen ? 'min-h-screen' : ''}`}
                             >
-                                <div
-                                    className="inline-block rounded-xl border border-gray-700 bg-gray-800 p-4"
-                                    style={{
-                                        transform: `scale(${zoomLevel})`,
-                                        transformOrigin: '0 0',
-                                        transition: 'transform 0.2s ease-out'
-                                    }}
-                                >
+                                <div className="w-full">
+                                
                                     <ChallongeBracket 
                                         matches={matches}
                                         showScoreButton={false}

@@ -14,39 +14,6 @@ export default function NewsShow({ news, relatedNews }) {
         return () => window.removeEventListener('resize', checkIfMobile);
     }, []);
 
-    // Share functionality
-    const handleShare = (platform) => {
-        const url = window.location.href;
-        const title = news.title;
-        const description = news.description ? news.description.replace(/<[^>]*>/g, '').substring(0, 200) + '...' : title;
-
-        let shareUrl = '';
-
-        switch (platform) {
-            case 'twitter':
-                shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
-                break;
-            case 'facebook':
-                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                break;
-            case 'linkedin':
-                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-                break;
-            case 'whatsapp':
-                shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
-                break;
-            default:
-                // Copy to clipboard as fallback
-                navigator.clipboard.writeText(url);
-                // You could add a toast notification here
-                return;
-        }
-
-        if (shareUrl) {
-            window.open(shareUrl, '_blank', 'width=600,height=400');
-        }
-    };
-
     return (
         <PublicLayout>
             <style jsx global>{`
@@ -339,48 +306,6 @@ export default function NewsShow({ news, relatedNews }) {
                                             }
                                         `}</style>
                                         <div dangerouslySetInnerHTML={{ __html: news.description }} />
-                                    </div>
-                                </div>
-
-                                {/* Social Sharing Buttons */}
-                                <div className="px-4 sm:px-6 md:px-8 pb-6 md:pb-8">
-                                    <div className="flex flex-wrap gap-3">
-                                        <span className="text-sm text-slate-400 flex items-center mr-2">Share:</span>
-                                        {[
-                                            { 
-                                                name: 'twitter',
-                                                path: 'M22.46,6C21.69,6.35 20.86,6.58 20,6.69C20.88,6.16 21.56,5.32 21.88,4.31C21.05,4.81 20.13,5.16 19.16,5.36C18.37,4.5 17.26,4 16,4C13.65,4 11.73,5.92 11.73,8.29C11.73,8.63 11.77,8.96 11.84,9.27C8.28,9.09 5.11,7.38 3,4.79C2.63,5.42 2.42,6.16 2.42,6.94C2.42,8.43 3.17,9.75 4.33,10.5C3.62,10.5 2.96,10.3 2.38,10C2.38,10 2.38,10 2.38,10.03C2.38,12.11 3.86,13.85 5.82,14.24C5.19,14.4 4.62,14.4 4,14.31C4.32,15.19 4.97,15.88 5.79,16.18C4.66,16.85 3.32,17.23 1.88,17.23C1.53,17.23 1.19,17.22 0.85,17.16C1.7,17.85 2.76,18.27 3.92,18.27C8.1,18.27 10.68,14.59 10.68,11.5C10.68,11.4 10.68,11.29 10.67,11.19C11.5,10.6 12.2,9.86 12.72,9' 
-                                            },
-                                            { 
-                                                name: 'facebook',
-                                                path: 'M18.77,7.46H14.5v-1.9c0-0.8,0.43-1.56,1.5-1.56h1.27V0.56c-0.22-0.03-0.98-0.09-1.86-0.09c-1.85,0-3.11,1.12-3.11,3.19v1.7h-2.5v3.2h2.5v8.53h3.16v-8.53h2.22L18.77,7.46z'
-                                            },
-                                            { 
-                                                name: 'linkedin',
-                                                path: 'M20.45,20.45h-3.56v-5.57c0-1.33-0.02-3.03-1.84-3.03c-1.85,0-2.13,1.44-2.13,2.94v5.66H9.35V9h3.42v1.56h0.05c0.47-0.9,1.64-1.84,3.37-1.84c3.61,0,4.27,2.38,4.27,5.47V20.45z M5.34,7.43c-1.15,0-2.08-0.94-2.08-2.08c0-1.15,0.93-2.08,2.08-2.08c1.15,0,2.08,0.93,2.08,2.08C7.42,6.5,6.49,7.43,5.34,7.43z M7.12,20.45H3.56V9h3.56V20.45z M22.23,0H1.77C0.79,0,0,0.78,0,1.75v20.5C0,23.22,0.79,24,1.77,24h20.46c0.98,0,1.77-0.78,1.77-1.75V1.75C24,0.78,23.21,0,22.23,0z'
-                                            },
-                                            { 
-                                                name: 'whatsapp',
-                                                path: 'M17.5,14.4c-0.2-0.1-1.2-0.6-1.4-0.6c-0.2,0-0.4,0.1-0.5,0.3c-0.1,0.2-0.4,0.6-0.5,0.7c-0.1,0.1-0.2,0.1-0.4,0c-0.2-0.1-0.7-0.3-1.4-0.9c-0.5-0.5-0.9-1-1-1.2c-0.1-0.2,0-0.3,0.1-0.4c0.1-0.1,0.2-0.2,0.3-0.3c0.1-0.1,0.2-0.2,0.3-0.3c0.1-0.1,0.1-0.2,0.2-0.3c0.1-0.1,0-0.3,0-0.3c0-0.1-0.5-1.3-0.7-1.8c-0.2-0.5-0.4-0.4-0.5-0.4c-0.1,0-0.3,0-0.5,0c-0.2,0-0.5,0.1-0.8,0.3c-0.3,0.2-1,1-1,2.4c0,1.3,1,2.8,1.1,3c0.1,0.2,1.8,2.7,4.4,3.8c0.6,0.3,1.1,0.5,1.5,0.6c0.6,0.2,1.2,0.2,1.6,0.1c0.5-0.1,1.4-0.6,1.6-1.1c0.2-0.5,0.2-1,0.1-1.1C17.8,14.5,17.7,14.4,17.5,14.4z M12,0C5.4,0,0,5.4,0,12s5.4,12,12,12s12-5.4,12-12S18.6,0,12,0z M12,22.5c-5.8,0-10.5-4.7-10.5-10.5S6.2,1.5,12,1.5S22.5,6.2,22.5,12S17.8,22.5,12,22.5z'
-                                            },
-                                            {
-                                                name: 'copy',
-                                                path: 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
-                                            }
-                                        ].map(({ name, path }) => (
-                                            <button
-                                                key={name}
-                                                onClick={() => handleShare(name)}
-                                                className="w-9 h-9 rounded-full bg-slate-700/50 hover:bg-slate-700/80 flex items-center justify-center transition-colors"
-                                                aria-label={`Share on ${name === 'copy' ? 'Copy link' : name}`}
-                                                title={name === 'copy' ? 'Copy link to clipboard' : `Share on ${name}`}
-                                            >
-                                                <span className="sr-only">{name === 'copy' ? 'Copy link' : `Share on ${name}`}</span>
-                                                <svg className="w-4 h-4 text-slate-300" viewBox="0 0 24 24">
-                                                    <path fill="currentColor" d={path} />
-                                                </svg>
-                                            </button>
-                                        ))}
                                     </div>
                                 </div>
                             </article>

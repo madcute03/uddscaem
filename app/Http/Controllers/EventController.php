@@ -110,7 +110,7 @@ class EventController extends Controller
         $totalBorrowRequests = BorrowRequest::count();
         $pendingBorrowRequests = BorrowRequest::where('status', 'pending')->count();
         $approvedBorrowRequests = BorrowRequest::where('status', 'approved')->count();
-        $returnedBorrowRequests = BorrowRequest::where('status', 'returned')->count();
+        $returnedBorrowRequests = BorrowRequest::whereNotNull('returned_at')->count();
 
         // Get recent borrow requests for the dashboard
         $recentBorrowRequests = BorrowRequest::with('item')

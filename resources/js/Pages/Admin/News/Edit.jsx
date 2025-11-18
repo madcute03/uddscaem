@@ -576,14 +576,24 @@ export default function EditNews({ auth, news, categories: propCategories = [] }
               <div className="flex justify-end space-x-2">
                 <Link 
                   href={route('admin.news.index')} 
-                  className="px-4 py-2 bg-slate-700 text-slate-300 rounded-md hover:bg-slate-600 border border-slate-600 transition-colors"
+                  className="w-[110px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#C90808] to-[#C90808]/0 
+                                                               bg-[#C90808]/20 flex items-center justify-center 
+                                                               hover:bg-[#C90808]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#C90808]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)]"
                 >
                   Cancel
                 </Link>
                 <button 
                   type="submit" 
                   disabled={processing} 
-                  className={`px-4 py-2 rounded-md text-white border ${processing ? 'bg-blue-400 border-blue-400' : 'bg-blue-600 hover:bg-blue-700 border-blue-600'} transition-colors`}
+                  className={`w-[120px] h-[45px] rounded-[15px] cursor-pointer 
+                                                               transition duration-300 ease-in-out 
+                                                               bg-gradient-to-br from-[#2e8eff] to-[#2e8eff]/0 
+                                                               bg-[#2e8eff]/20 flex items-center justify-center 
+                                                               hover:bg-[#2e8eff]/70 hover:shadow-[0_0_10px_rgba(46,142,255,0.5)] 
+                                                               focus:outline-none focus:bg-[#2e8eff]/70 focus:shadow-[0_0_10px_rgba(46,142,255,0.5)] ${processing ? 'bg-blue-400 border-blue-400' : 'bg-blue-600 hover:bg-blue-700 border-blue-600'} transition-colors`}
                 >
                   {processing ? 'Updating...' : 'Update News'}
                 </button>

@@ -30,6 +30,19 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
 
     // Update team name
     const updateTeamName = (index, name) => {
+        // Check for duplicate team names (case-insensitive)
+        const trimmedName = name.trim();
+        if (trimmedName) {
+            const isDuplicate = teams.some((team, i) => 
+                i !== index && team.name.trim().toLowerCase() === trimmedName.toLowerCase()
+            );
+            
+            if (isDuplicate) {
+                alert(`Team name "${trimmedName}" already exists. Please choose a unique name.`);
+                return;
+            }
+        }
+        
         const newTeams = [...teams];
         newTeams[index].name = name;
         setTeams(newTeams);
@@ -78,6 +91,17 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
             return;
         }
 
+        // Check for duplicates within the bulk add list (case-insensitive)
+        const lowerCaseNames = teamNames.map(name => name.toLowerCase());
+        const hasDuplicates = lowerCaseNames.some((name, index) => 
+            lowerCaseNames.indexOf(name) !== index
+        );
+
+        if (hasDuplicates) {
+            alert('Duplicate team names found in your list. Each team name must be unique.');
+            return;
+        }
+
         // Convert to team objects
         const newTeams = teamNames.map(name => ({
             name: name,
@@ -98,6 +122,17 @@ export default function CreateBracket({ event, registeredPlayers = [] }) {
 
         if (teams.some(t => !t.name.trim())) {
             alert('Please provide names for all teams.');
+            return;
+        }
+
+        // Check for duplicate team names (case-insensitive)
+        const teamNamesLower = teams.map(t => t.name.trim().toLowerCase());
+        const hasDuplicates = teamNamesLower.some((name, index) => 
+            teamNamesLower.indexOf(name) !== index
+        );
+
+        if (hasDuplicates) {
+            alert('Duplicate team names found. Each team must have a unique name.');
             return;
         }
 

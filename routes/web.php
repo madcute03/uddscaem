@@ -32,6 +32,21 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+// Test route for visualization
+Route::get('bracket/visualize', function () {
+    return Inertia::render('BracketVisualize');
+});
+
+// Test route for bracket visualization fixes
+Route::get('bracket/test', function () {
+    return Inertia::render('BracketTest');
+})->middleware(['auth']);
+
+// Test route for double elimination logic validation
+Route::get('bracket/double-elim-test', function () {
+    return Inertia::render('DoubleElimTest');
+})->middleware(['auth']);
+
 // Events Page - List all events
 Route::get('/events', function () {
     return Inertia::render('Events', [

@@ -1,36 +1,37 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 
 /**
- * Challonge-style Single Elimination Tournament Bracket
+ * ChallongeBracket.jsx - Tree-Based Tournament Bracket Renderer
  * 
+ * Improved implementation based on react-tournament-brackets library
  * Features:
- * - Horizontal layout with vertical columns for each round
- * - Matches displayed as cards with smooth connecting lines
- * - Dynamic spacing that adapts to team count (4-64+)
- * - Centered positioning with exponential vertical spacing
- * - SVG lines connecting parent matches to child matches
+ * - SVG-based tree layout with exponential spacing
+ * - Proper parent-child centering for clean tree structure
+ * - Color-coded connection lines (green for winners, red for losers)
+ * - Support for single and double elimination
+ * - Responsive sizing and smooth rendering
  */
-const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, showScoreButton = true }) => {
+const ChallongeBracket = ({ matches = [], onReportScore = null, showScoreButton = true, bracketType = 'single', containerWidth = 1200, containerHeight = 600 }) => {
     const containerRef = useRef(null);
     const matchRefs = useRef({});
     const [connections, setConnections] = useState([]);
     const [matchPositions, setMatchPositions] = useState({});
-    const [containerSize, setContainerSize] = useState({ width: 400, height: 400 });
+    const [containerSize, setContainerSize] = useState({ width: containerWidth, height: containerHeight });
     
     // Normalize matches: ensure every match has an 'id' field (use temp_id as fallback)
     // Use useMemo to prevent infinite re-render loop
-    const matches = React.useMemo(() => {
-        return rawMatches.map(m => ({
+    const normalizedMatches = React.useMemo(() => {
+        return matches.map(m => ({
             ...m,
             id: m.id || m.temp_id
         }));
     }, [rawMatches]);
 
     // Constants for layout
-    const MATCH_WIDTH = 170;
-    const MATCH_HEIGHT = 45;
-    const ROUND_SPACING = 210; // Horizontal spacing between rounds
-    const BASE_VERTICAL_GAP = 12; // Base vertical gap between matches
+    const MATCH_WIDTH = 210;
+    const MATCH_HEIGHT = 60;
+    const ROUND_SPACING = 280; // Horizontal spacing between rounds
+    const BASE_VERTICAL_GAP = 20; // Base vertical gap between matches
 
     /**
      * Get proper round name for single elimination brackets
@@ -349,163 +350,156 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
             
             console.log('WR1 matches positioned with parent centering');
 
-            // Position Losers Bracket - EXACT same algorithm as Winners Bracket
+            // losersRounds and losersRoundNumbers are now defined at component level
+            
+            // Calculate minimum gap needed to prevent overlap
+            // For larger brackets (26-32), increase vertical spacing to avoid congestion
+            const MIN_BRACKET_GAP = teamCount > 25 ? 400 : 300;
+            const losersStartY = winnersMaxY + MIN_BRACKET_GAP;
+
+            console.log('Winners bracket Y range:', winnersMinY, 'to', winnersMaxY);
+            console.log('Losers bracket starts at:', losersStartY);
+            console.log('Losers rounds:', losersRoundNumbers);
+            console.log('Losers matches per round:', losersRoundNumbers.map(r => `LR${r}: ${losersRounds[r].length} matches`));
+            console.log('Team count:', teamCount);
+
+            // Track top/bottom of losers bracket
             let losersMinY = Infinity;
             let losersMaxY = -Infinity;
+
+            // LOSERS BRACKET STRUCTURE - Grid-based positioning with parent centering
+            // Position each round horizontally, then center parents between children
             const loserPositions = {};
 
             if (losersRoundNumbers.length > 0) {
-                console.log('=== LOSERS BRACKET POSITIONING (Same as Winners) ===');
-                console.log('Losers rounds:', losersRoundNumbers);
-                
-                // STEP 1: Backward pass - position parents at average of children
-                // Same logic as winners bracket (lines 280-311)
-                [...losersRoundNumbers].reverse().forEach(logicalRound => {
+                // FIXED GAP: Ensure consistent spacing between winners and losers brackets
+                const FIXED_BRACKET_GAP = teamCount > 25 ? 800 : (teamCount > 15 ? 600 : 500);
+                const losersStartY = winnersMaxY + FIXED_BRACKET_GAP;
+
+                console.log(`Losers bracket starting at Y: ${losersStartY}`);
+
+                // STEP 1: Position all rounds with grid spacing first
+                losersRoundNumbers.forEach((logicalRound, roundIndex) => {
                     const roundMatches = losersRounds[logicalRound] || [];
-                    const roundIndex = losersRoundNumbers.indexOf(logicalRound);
                     const x = roundIndex * ROUND_SPACING;
                     
-                    roundMatches.forEach((match, matchIndex) => {
-                        if (logicalRound === losersRoundNumbers[losersRoundNumbers.length - 1]) {
-                            // Final round - position in center
-                            loserPositions[match.id] = { x, y: 0, round: logicalRound, matchIndex };
-                        } else {
-                            // Find children of this match
-                            const children = losers.filter(m => m.winner_to === match.id);
-                            
-                            if (children.length > 0 && children.every(child => loserPositions[child.id])) {
-                                // Calculate the average Y position of the children
-                                const avgY = children.reduce((sum, child) => sum + loserPositions[child.id].y, 0) / children.length;
-                                loserPositions[match.id] = { x, y: avgY, round: logicalRound, matchIndex };
-                            } else {
-                                // Fallback: spacing based on match count (same count = same spacing)
-                                // This ensures LR8 and LR9 have identical spacing since both have 4 matches
-                                const matchCount = roundMatches.length;
-                                let spacing;
-                                if (matchCount >= 8) {
-                                    spacing = 80; // 8+ matches: very compact
-                                } else if (matchCount >= 4) {
-                                    spacing = 130; // 4-7 matches: compact
-                                } else if (matchCount >= 2) {
-                                    spacing = 200; // 2-3 matches: medium
-                                } else {
-                                    spacing = 0; // 1 match: no spacing needed
-                                }
-                                const totalHeight = matchCount > 1 ? (matchCount - 1) * spacing : 0;
-                                const startY = -totalHeight / 2;
-                                loserPositions[match.id] = { x, y: startY + (matchIndex * spacing), round: logicalRound, matchIndex };
-                            }
-                        }
-                        
-                        const y = loserPositions[match.id].y;
-                        losersMinY = Math.min(losersMinY, y - MATCH_HEIGHT / 2);
-                        losersMaxY = Math.max(losersMaxY, y + MATCH_HEIGHT / 2);
+                    // Calculate vertical spacing for this round
+                    const roundSpacing = calculateRoundSpacing(roundIndex, roundMatches.length, 'losers');
+                    const roundTotalHeight = roundMatches.length > 1 ? (roundMatches.length - 1) * roundSpacing : 0;
+                    const roundStartY = losersStartY + roundTotalHeight / 2;
+
+                    console.log(`LR${logicalRound} (index ${roundIndex}): x=${x}, ${roundMatches.length} matches, spacing=${roundSpacing}`);
+
+                    roundMatches.forEach((match, idx) => {
+                        const y = roundStartY - idx * roundSpacing;
+                        loserPositions[match.id] = { 
+                            x, 
+                            y, 
+                            round: logicalRound, 
+                            matchIndex: idx 
+                        };
                     });
                 });
-                
-                // STEP 2: First round special handling - same as winners bracket (lines 321-348)
-                // Position first round matches based on their parent positions
-                const firstLosersRound = losersRoundNumbers[0];
-                losersRounds[firstLosersRound]?.forEach(match => {
-                    if (!loserPositions[match.id]) {
-                        const parentId = match.winner_to;
-                        const parentPos = loserPositions[parentId];
-                        const siblingMatches = losers.filter(m => m.winner_to === parentId);
-                        const matchIndex = siblingMatches.findIndex(m => m.id === match.id);
+
+                // STEP 2: Adjust positions to center parents between children
+                losersRoundNumbers.forEach((logicalRound, roundIndex) => {
+                    if (roundIndex === 0) return; // Skip first round
+                    
+                    const roundMatches = losersRounds[logicalRound] || [];
+
+                    roundMatches.forEach((match) => {
+                        // Find children of this match
+                        const children = losers.filter(m => m.winner_to === match.id);
+                        const positionedChildren = children.filter(c => loserPositions[c.id]);
+
+                        if (positionedChildren.length === 2) {
+                            // Center between two children
+                            const child1Y = loserPositions[positionedChildren[0].id].y;
+                            const child2Y = loserPositions[positionedChildren[1].id].y;
+                            const centerY = (child1Y + child2Y) / 2;
+                            loserPositions[match.id].y = centerY;
+                        } else if (positionedChildren.length === 1) {
+                            // Align with single child
+                            loserPositions[match.id].y = loserPositions[positionedChildren[0].id].y;
+                        }
+                        // If no children, keep grid position
+                    });
+                });
+
+                // STEP 3: Enforce minimum spacing and prevent overlaps
+                losersRoundNumbers.forEach((logicalRound) => {
+                    const roundMatches = losersRounds[logicalRound] || [];
+                    
+                    // Sort by Y position
+                    const sorted = roundMatches
+                        .map(m => ({ match: m, pos: loserPositions[m.id] }))
+                        .sort((a, b) => a.pos.y - b.pos.y);
+                    
+                    // Enforce minimum spacing
+                    const minSpacing = MATCH_HEIGHT + 20;
+                    for (let i = 1; i < sorted.length; i++) {
+                        const prev = sorted[i - 1];
+                        const curr = sorted[i];
+                        const gap = curr.pos.y - prev.pos.y;
                         
-                        if (parentPos && siblingMatches.length > 0) {
-                            // Use same match-count-based spacing as fallback
-                            const matchCount = siblingMatches.length;
-                            let spacing;
-                            if (matchCount >= 8) {
-                                spacing = 80;
-                            } else if (matchCount >= 4) {
-                                spacing = 130;
-                            } else if (matchCount >= 2) {
-                                spacing = 200;
-                            } else {
-                                spacing = 0;
-                            }
-                            const totalHeight = matchCount > 1 ? (matchCount - 1) * spacing : 0;
-                            const startY = parentPos.y - (totalHeight / 2);
-                            const y = startY + (matchIndex * spacing);
-                            
-                            loserPositions[match.id] = { 
-                                x: 0, 
-                                y, 
-                                round: firstLosersRound, 
-                                matchIndex, 
-                                bracket: 'losers' 
-                            };
-                            
-                            losersMinY = Math.min(losersMinY, y - MATCH_HEIGHT / 2);
-                            losersMaxY = Math.max(losersMaxY, y + MATCH_HEIGHT / 2);
+                        if (gap < minSpacing) {
+                            const adjustment = minSpacing - gap;
+                            curr.pos.y += adjustment;
+                            loserPositions[curr.match.id].y = curr.pos.y;
                         }
                     }
                 });
-                
-                console.log('Losers bracket positioned with parent-child centering (same as winners)');
-                
-                // PASS 2: Tighten child pairs and ensure perfect parent centering
-                // Group all losers matches by their parent
-                const grouped = {};
-                losers.forEach(match => {
-                    const parentId = match.winner_to;
-                    if (parentId && loserPositions[parentId]) {
-                        if (!grouped[parentId]) grouped[parentId] = [];
-                        grouped[parentId].push(match.id);
-                    }
-                });
-                
-                // For each parent with 2 children, enforce tight 60px spacing
-                Object.keys(grouped).forEach(parentId => {
-                    const childIds = grouped[parentId];
-                    const parentPos = loserPositions[parentId];
-                    
-                    if (childIds.length === 2 && parentPos) {
-                        const PAIR_GAP = MATCH_HEIGHT + 13; // 60px - tight spacing for pairs
-                        
-                        // Sort children by current Y position
-                        const sortedIds = childIds.sort((a, b) => 
-                            loserPositions[a].y - loserPositions[b].y
-                        );
-                        
-                        // Position children symmetrically around parent
-                        loserPositions[sortedIds[0]].y = parentPos.y - PAIR_GAP / 2;
-                        loserPositions[sortedIds[1]].y = parentPos.y + PAIR_GAP / 2;
-                    } else if (childIds.length === 1 && parentPos) {
-                        // Single child aligns exactly with parent
-                        loserPositions[childIds[0]].y = parentPos.y;
-                    }
-                });
-                
-                console.log('PASS 2: Child pairs tightened to 60px spacing');
-                
-                // Add all loser positions to main positions
-                Object.keys(loserPositions).forEach(id => {
-                    positions[id] = { ...loserPositions[id], bracket: 'losers' };
-                });
-                
-                console.log('Losers positions added to main positions map - ready to render');
-                
-                // STEP 3: Shift losers bracket below winners bracket
-                const MIN_BRACKET_GAP = teamCount > 25 ? 250 : 200;
-                const desiredTop = winnersMaxY + MIN_BRACKET_GAP;
-                const verticalShift = desiredTop - losersMinY;
-                
-                // Apply shift to all losers matches
-                losers.forEach(match => {
-                    if (positions[match.id]) {
-                        positions[match.id].y += verticalShift;
-                    }
-                });
-                
-                // Update bounds
-                losersMinY += verticalShift;
-                losersMaxY += verticalShift;
-                
-                console.log('Losers bracket shifted below winners. Range:', losersMinY.toFixed(1), 'to', losersMaxY.toFixed(1));
             }
+            
+            // Update min/max Y tracking for losers bracket after all positioning
+            Object.keys(loserPositions).forEach(id => {
+                const pos = loserPositions[id];
+                losersMinY = Math.min(losersMinY, pos.y - MATCH_HEIGHT / 2);
+                losersMaxY = Math.max(losersMaxY, pos.y + MATCH_HEIGHT / 2);
+            });
+            
+            // Add all losers positions to the main positions object
+            Object.keys(loserPositions).forEach(id => {
+                const pos = loserPositions[id];
+                positions[id] = { ...pos, bracket: 'losers' };
+            });
+            
+            console.log('Losers bracket positioned with parent-centered tree layout. Range:', losersMinY.toFixed(1), 'to', losersMaxY.toFixed(1));
+                
+            // Optional: Final collision detection pass to prevent overlaps
+            losersRoundNumbers.forEach((logicalRound) => {
+                const roundMatches = losersRounds[logicalRound];
+                
+                // Sort matches by their current Y position
+                const sortedMatches = roundMatches
+                    .map(match => ({ match, pos: positions[match.id] }))
+                    .sort((a, b) => a.pos.y - b.pos.y);
+                
+                // Adjust positions to prevent overlaps within the round
+                for (let i = 1; i < sortedMatches.length; i++) {
+                    const currentMatch = sortedMatches[i];
+                    const prevMatch = sortedMatches[i - 1];
+                    
+                    const minDistance = MATCH_HEIGHT + 20; // Minimum distance between matches
+                    const currentDistance = currentMatch.pos.y - prevMatch.pos.y;
+                    
+                    if (currentDistance < minDistance) {
+                        // Adjust current match position
+                        const adjustment = minDistance - currentDistance;
+                        currentMatch.pos.y += adjustment;
+                        
+                        // Update the position in the positions object
+                        positions[currentMatch.match.id] = {
+                            ...positions[currentMatch.match.id],
+                            y: currentMatch.pos.y
+                        };
+                        
+                        console.log(`  Adjusted LR${logicalRound} Match ${currentMatch.match.id} by +${adjustment.toFixed(1)} to prevent overlap`);
+                    }
+                }
+            });
+
+            console.log('Losers bracket positioning complete. Range:', losersMinY.toFixed(1), 'to', losersMaxY.toFixed(1));
             
             // Position Grand Finals with clean alignment
             if (grandFinals.length > 0) {
@@ -584,7 +578,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                     console.log(`Group for parent ${parentId}:`, group.length, 'matches, parent pos:', parentPos);
                     
                     if (parentPos && group.length === 2) {
-                        const gap = MATCH_HEIGHT + 13;
+                        const gap = MATCH_HEIGHT + 20;
                         const oldY0 = positions[group[0].id]?.y;
                         const oldY1 = positions[group[1].id]?.y;
                         const newY0 = parentPos.y - gap / 2;
@@ -668,11 +662,8 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                             // Use average position plus offset to avoid overlap
                             y = avgY + (120 * ((missingPositions.indexOf(match) % 4) - 1.5));
                         } else {
-                            // Fallback positioning: place near the top of the losers block
-                            const baseTop = Number.isFinite(losersMinY)
-                                ? losersMinY
-                                : (winnersMaxY + 300);
-                            y = baseTop + (200 * (missingPositions.indexOf(match) % 4));
+                            // Fallback positioning
+                            y = losersStartY + (200 * (missingPositions.indexOf(match) % 4));
                         }
                         
                         positions[match.id] = {
@@ -834,15 +825,13 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
             maxY = Math.max(maxY, pos.y + MATCH_HEIGHT / 2);
         });
         
-        const paddingX = 100; // Horizontal padding
-        const paddingTop = 100; // Top padding
-        const paddingBottom = 50; // Reduced bottom padding
-        const width = maxX - minX + paddingX * 2;
-        const height = maxY - minY + paddingTop + paddingBottom;
+        const padding = 100;
+        const width = maxX - minX + padding * 2;
+        const height = maxY - minY + padding * 2;
         
         console.log('Container size calculated:', { width, height, minY, maxY });
         
-        setContainerSize({ width, height, offsetX: -minX + paddingX, offsetY: -minY + paddingTop });
+        setContainerSize({ width, height, offsetX: -minX + padding, offsetY: -minY + padding });
     }, [matchPositions]);
 
     /**
@@ -871,7 +860,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
             <div
                 key={match.id}
                 ref={el => matchRefs.current[match.id] = el}
-                className={`absolute bg-gray-800 border ${borderColor} rounded shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer`}
+                className={`absolute bg-gray-800 border-2 ${borderColor} rounded-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer`}
                 style={{
                     width: `${MATCH_WIDTH}px`,
                     height: `${MATCH_HEIGHT}px`,
@@ -883,7 +872,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                 {/* Phase badge for losers bracket */}
                 {match.bracket === 'losers' && loserPhases[match.id] && (
                     <div 
-                        className={`absolute -top-0.5 -left-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shadow-md ${
+                        className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md ${
                             loserPhases[match.id] === 'A' 
                                 ? 'bg-blue-500 text-white' 
                                 : 'bg-purple-500 text-white'
@@ -897,9 +886,9 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                 {/* Match content */}
                 <div className="h-full flex items-center">
                     {/* Teams section */}
-                    <div className="flex-1 flex flex-col justify-center pl-4 pr-1.5 py-0.5">
+                    <div className="flex-1 flex flex-col justify-center px-3 py-2">
                         {/* Team 1 */}
-                        <div className={`flex items-center justify-between text-[11px] font-semibold mb-0.5 px-1 py-0.5 rounded ${
+                        <div className={`flex items-center justify-between text-sm font-semibold mb-1 px-2 py-0.5 rounded ${
                             hasWinner && match.winner_slot === 1 
                                 ? 'bg-green-600 text-white' 
                                 : 'text-gray-300'
@@ -914,7 +903,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                         <div className="border-t border-gray-600 my-0.5"></div>
 
                         {/* Team 2 */}
-                        <div className={`flex items-center justify-between text-[11px] font-semibold px-1 py-0.5 rounded ${
+                        <div className={`flex items-center justify-between text-sm font-semibold px-2 py-0.5 rounded ${
                             hasWinner && match.winner_slot === 2 
                                 ? 'bg-green-600 text-white' 
                                 : 'text-gray-300'
@@ -933,7 +922,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                                 e.stopPropagation();
                                 onReportScore(match);
                             }}
-                            className="mr-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded p-1 flex items-center justify-center shadow transition-all duration-200"
+                            className="mr-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded p-1.5 flex items-center justify-center shadow transition-all duration-200"
                             title="Report Score"
                         >
                             <svg 
@@ -944,7 +933,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                                 strokeWidth="2" 
                                 strokeLinecap="round" 
                                 strokeLinejoin="round" 
-                                className="w-3 h-3"
+                                className="w-4 h-4"
                             >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -954,7 +943,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                 </div>
 
                 {/* Match number badge */}
-                <div className="absolute -top-1 -left-1 bg-blue-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow">
+                <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow">
                     M{match.match_number || match.id}
                 </div>
             </div>
@@ -1088,7 +1077,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                                 key={conn.id}
                                 d={conn.path}
                                 stroke={strokeColor}
-                                strokeWidth="2"
+                                strokeWidth="3"
                                 strokeDasharray={strokeDasharray}
                                 fill="none"
                                 strokeLinecap="round"
