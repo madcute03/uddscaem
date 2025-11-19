@@ -10,12 +10,20 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
  * - Centered positioning with exponential vertical spacing
  * - SVG lines connecting parent matches to child matches
  */
-const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, showScoreButton = true }) => {
+const ChallongeBracket = ({ 
+    matches: rawMatches = [], 
+    onReportScore = null, 
+    showScoreButton = true,
+    enableDragDrop = false,
+    onSwapTeams = null
+}) => {
     const containerRef = useRef(null);
     const matchRefs = useRef({});
     const [connections, setConnections] = useState([]);
     const [matchPositions, setMatchPositions] = useState({});
     const [containerSize, setContainerSize] = useState({ width: 400, height: 400 });
+    const [draggedTeam, setDraggedTeam] = useState(null); // { matchId, slot, teamName }
+    const [dragOverTeam, setDragOverTeam] = useState(null); // { matchId, slot }
     
     // Normalize matches: ensure every match has an 'id' field (use temp_id as fallback)
     // Use useMemo to prevent infinite re-render loop
@@ -846,6 +854,54 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
     }, [matchPositions]);
 
     /**
+     * Drag and drop handlers for individual teams
+     */
+    const handleTeamDragStart = (e, match, slot, teamName) => {
+        if (!enableDragDrop || match.bracket === 'losers' || match.bracket === 'grand_finals' || teamName === 'TBD') {
+            e.preventDefault();
+            return;
+        }
+        setDraggedTeam({ matchId: match.id, slot, teamName });
+        e.dataTransfer.effectAllowed = 'move';
+        e.stopPropagation();
+    };
+
+    const handleTeamDragOver = (e, match, slot) => {
+        if (!enableDragDrop || !draggedTeam || match.bracket === 'losers' || match.bracket === 'grand_finals') {
+            return;
+        }
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverTeam({ matchId: match.id, slot });
+        e.stopPropagation();
+    };
+
+    const handleTeamDragLeave = () => {
+        setDragOverTeam(null);
+    };
+
+    const handleTeamDrop = (e, targetMatch, targetSlot) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!enableDragDrop || !draggedTeam || !onSwapTeams) return;
+        
+        if (targetMatch.bracket !== 'losers' && targetMatch.bracket !== 'grand_finals') {
+            // Don't swap if it's the same team
+            if (draggedTeam.matchId !== targetMatch.id || draggedTeam.slot !== targetSlot) {
+                onSwapTeams(draggedTeam.matchId, draggedTeam.slot, targetMatch.id, targetSlot);
+            }
+        }
+        
+        setDraggedTeam(null);
+        setDragOverTeam(null);
+    };
+
+    const handleTeamDragEnd = () => {
+        setDraggedTeam(null);
+        setDragOverTeam(null);
+    };
+
+    /**
      * Render individual match card
      */
     const renderMatch = (match) => {
@@ -858,6 +914,12 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
         const team1 = match.slot1 || 'TBD';
         const team2 = match.slot2 || 'TBD';
         const hasWinner = match.winner_id !== null && match.winner_id !== undefined;
+        const isTeam1Draggable = enableDragDrop && match.bracket !== 'losers' && match.bracket !== 'grand_finals' && team1 !== 'TBD';
+        const isTeam2Draggable = enableDragDrop && match.bracket !== 'losers' && match.bracket !== 'grand_finals' && team2 !== 'TBD';
+        const isTeam1DraggedOver = dragOverTeam?.matchId === match.id && dragOverTeam?.slot === 1;
+        const isTeam2DraggedOver = dragOverTeam?.matchId === match.id && dragOverTeam?.slot === 2;
+        const isTeam1BeingDragged = draggedTeam?.matchId === match.id && draggedTeam?.slot === 1;
+        const isTeam2BeingDragged = draggedTeam?.matchId === match.id && draggedTeam?.slot === 2;
 
         // Determine border color based on bracket
         let borderColor = 'border-green-500'; // Default/Winners
@@ -871,7 +933,7 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
             <div
                 key={match.id}
                 ref={el => matchRefs.current[match.id] = el}
-                className={`absolute bg-gray-800 border ${borderColor} rounded shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer`}
+                className={`absolute bg-gray-800 border ${borderColor} rounded shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200`}
                 style={{
                     width: `${MATCH_WIDTH}px`,
                     height: `${MATCH_HEIGHT}px`,
@@ -899,11 +961,26 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                     {/* Teams section */}
                     <div className="flex-1 flex flex-col justify-center pl-4 pr-1.5 py-0.5">
                         {/* Team 1 */}
-                        <div className={`flex items-center justify-between text-[11px] font-semibold mb-0.5 px-1 py-0.5 rounded ${
-                            hasWinner && match.winner_slot === 1 
-                                ? 'bg-green-600 text-white' 
-                                : 'text-gray-300'
-                        }`}>
+                        <div 
+                            draggable={isTeam1Draggable}
+                            onDragStart={(e) => handleTeamDragStart(e, match, 1, team1)}
+                            onDragOver={(e) => handleTeamDragOver(e, match, 1)}
+                            onDragLeave={handleTeamDragLeave}
+                            onDrop={(e) => handleTeamDrop(e, match, 1)}
+                            onDragEnd={handleTeamDragEnd}
+                            className={`flex items-center justify-between text-[11px] font-semibold mt-0.5 px-0.5 py-0.5 rounded-sm transition-all ${
+                                hasWinner && match.winner_slot === 1 
+                                    ? 'bg-green-600 text-white' 
+                                    : 'text-gray-300'
+                            } ${
+                                isTeam1Draggable ? 'cursor-move hover:bg-gray-700' : ''
+                            } ${
+                                isTeam1BeingDragged ? 'opacity-30' : ''
+                            } ${
+                                isTeam1DraggedOver ? 'ring-2 ring-blue-400 bg-blue-900/30' : ''
+                            }`}
+                            title={isTeam1Draggable ? 'Drag to swap this team' : ''}
+                        >
                             <span className="truncate flex-1">{team1}</span>
                             {match.team1_score !== undefined && (
                                 <span className="ml-2 font-bold">{match.team1_score}</span>
@@ -914,11 +991,26 @@ const ChallongeBracket = ({ matches: rawMatches = [], onReportScore = null, show
                         <div className="border-t border-gray-600 my-0.5"></div>
 
                         {/* Team 2 */}
-                        <div className={`flex items-center justify-between text-[11px] font-semibold px-1 py-0.5 rounded ${
-                            hasWinner && match.winner_slot === 2 
-                                ? 'bg-green-600 text-white' 
-                                : 'text-gray-300'
-                        }`}>
+                        <div 
+                            draggable={isTeam2Draggable}
+                            onDragStart={(e) => handleTeamDragStart(e, match, 2, team2)}
+                            onDragOver={(e) => handleTeamDragOver(e, match, 2)}
+                            onDragLeave={handleTeamDragLeave}
+                            onDrop={(e) => handleTeamDrop(e, match, 2)}
+                            onDragEnd={handleTeamDragEnd}
+                            className={`flex items-center justify-between text-[11px] font-semibold px-0.5 py-0.5 rounded-sm transition-all ${
+                                hasWinner && match.winner_slot === 2 
+                                    ? 'bg-green-600 text-white' 
+                                    : 'text-gray-300'
+                            } ${
+                                isTeam2Draggable ? 'cursor-move hover:bg-gray-700' : ''
+                            } ${
+                                isTeam2BeingDragged ? 'opacity-30' : ''
+                            } ${
+                                isTeam2DraggedOver ? 'ring-2 ring-blue-400 bg-blue-900/30' : ''
+                            }`}
+                            title={isTeam2Draggable ? 'Drag to swap this team' : ''}
+                        >
                             <span className="truncate flex-1">{team2}</span>
                             {match.team2_score !== undefined && (
                                 <span className="ml-2 font-bold">{match.team2_score}</span>

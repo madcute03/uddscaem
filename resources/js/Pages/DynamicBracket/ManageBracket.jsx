@@ -17,6 +17,8 @@ export default function ManageBracket({ event, tournament }) {
     const bracketContainerRef = useRef(null);
     const boxRefs = useRef({});
     const [lines, setLines] = useState([]);
+    const [isSwapping, setIsSwapping] = useState(false);
+    const [bracketHasStarted, setBracketHasStarted] = useState(false);
 
     // Transform backend data to ChallongeBracket format
     const transformMatchesForChallonge = (backendMatches) => {
@@ -51,6 +53,12 @@ export default function ManageBracket({ event, tournament }) {
             if (tournament.winner) {
                 setChampion(tournament.winner.name);
             }
+            
+            // Check if bracket has started (any match has scores)
+            const hasStarted = tournament.matches.some(m => 
+                m.team1_score !== null || m.team2_score !== null || m.winner_id !== null
+            );
+            setBracketHasStarted(hasStarted);
         }
     }, [tournament]);
 
@@ -190,6 +198,45 @@ export default function ManageBracket({ event, tournament }) {
         }
     };
 
+    // Handle team swap
+    const handleSwapTeams = async (match1Id, match1Slot, match2Id, match2Slot) => {
+        if (isSwapping || bracketHasStarted) return;
+        
+        setIsSwapping(true);
+        try {
+            const response = await axios.post(
+                route('api.bracket.swapTeams', { tournamentId: tournament.id }),
+                {
+                    match1_id: match1Id,
+                    match1_slot: match1Slot,
+                    match2_id: match2Id,
+                    match2_slot: match2Slot
+                }
+            );
+
+            if (response.data.success) {
+                // Reload tournament data to get updated matches
+                const tournamentResponse = await axios.get(route('api.bracket.get', { eventId: event.id }));
+                if (tournamentResponse.data.success && tournamentResponse.data.tournament) {
+                    const transformedMatches = transformMatchesForChallonge(tournamentResponse.data.tournament.matches);
+                    setMatches(transformedMatches);
+                    
+                    setShowSavePopup(true);
+                    setTimeout(() => setShowSavePopup(false), 2000);
+                }
+            }
+        } catch (error) {
+            console.error('Error swapping teams:', error);
+            if (error.response?.data?.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Failed to swap teams. Please try again.');
+            }
+        } finally {
+            setIsSwapping(false);
+        }
+    };
+
     // Render match box
     const renderMatch = (match, label) => {
         if (!match) return null;
@@ -319,6 +366,9 @@ export default function ManageBracket({ event, tournament }) {
                         <p className="text-gray-500 text-sm capitalize">
                             {tournament?.bracket_type === 'round-robin' ? 'Round Robin' : `${tournament?.bracket_type} Elimination`}
                         </p>
+                        {!bracketHasStarted && !isRoundRobin && (
+                            <div></div>
+                        )}
                     </div>
 
                     {/* Bracket Display */}
@@ -397,8 +447,76 @@ export default function ManageBracket({ event, tournament }) {
                                         matches={matches}
                                         onReportScore={openReportScore}
                                         showScoreButton={true}
+                                        enableDragDrop={!bracketHasStarted}
+                                        onSwapTeams={handleSwapTeams}
                                     />
                                 </div>
+
+                                {/* Score Report Modal - Inside fullscreen container */}
+                                {showModal && currentMatch && (
+                                    <div 
+                                        className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[99999]"
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        <div 
+                                            className="bg-gray-800 p-6 rounded-lg w-full max-w-md border border-gray-700"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <h2 className="text-xl font-bold mb-4 text-white">
+                                                Report Score - Match {currentMatch.match_number}
+                                            </h2>
+                                            <div className="space-y-4">
+                                                {/* Team 1 Score */}
+                                                <div>
+                                                    <label className="block text-sm mb-2 text-gray-300">
+                                                        {currentMatch.team1?.name || 'Team 1'}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={scoreInput.team1}
+                                                        onChange={e => setScoreInput({ ...scoreInput, team1: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        placeholder="Score"
+                                                        min="0"
+                                                    />
+                                                </div>
+
+                                                {/* Team 2 Score */}
+                                                <div>
+                                                    <label className="block text-sm mb-2 text-gray-300">
+                                                        {currentMatch.team2?.name || 'Team 2'}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={scoreInput.team2}
+                                                        onChange={e => setScoreInput({ ...scoreInput, team2: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        placeholder="Score"
+                                                        min="0"
+                                                    />
+                                                </div>
+
+                                                {/* Buttons */}
+                                                <div className="flex justify-end gap-3 mt-6">
+                                                    <button
+                                                        onClick={() => setShowModal(false)}
+                                                        disabled={isSubmitting}
+                                                        className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        onClick={submitScore}
+                                                        disabled={isSubmitting}
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isSubmitting ? 'Submitting...' : 'Submit Score'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -510,65 +628,6 @@ export default function ManageBracket({ event, tournament }) {
                 </div>
             )}
 
-            {/* Score Report Modal */}
-            {showModal && currentMatch && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-                    <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md border border-gray-700">
-                        <h2 className="text-xl font-bold mb-4 text-white">
-                            Report Score - Match {currentMatch.match_number}
-                        </h2>
-                        <div className="space-y-4">
-                            {/* Team 1 Score */}
-                            <div>
-                                <label className="block text-sm mb-2 text-gray-300">
-                                    {currentMatch.team1?.name || 'Team 1'}
-                                </label>
-                                <input
-                                    type="number"
-                                    value={scoreInput.team1}
-                                    onChange={e => setScoreInput({ ...scoreInput, team1: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Score"
-                                    min="0"
-                                />
-                            </div>
-
-                            {/* Team 2 Score */}
-                            <div>
-                                <label className="block text-sm mb-2 text-gray-300">
-                                    {currentMatch.team2?.name || 'Team 2'}
-                                </label>
-                                <input
-                                    type="number"
-                                    value={scoreInput.team2}
-                                    onChange={e => setScoreInput({ ...scoreInput, team2: e.target.value })}
-                                    className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Score"
-                                    min="0"
-                                />
-                            </div>
-
-                            {/* Buttons */}
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    disabled={isSubmitting}
-                                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={submitScore}
-                                    disabled={isSubmitting}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isSubmitting ? 'Submitting...' : 'Submit Score'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </AuthenticatedLayout>
     );
 }

@@ -441,12 +441,171 @@ class TournamentController extends Controller
                 }
             }
             }
+            
+            // Check if tournament is completed
+            // For elimination tournaments: check if this is the final match
+            $isFinalMatch = false;
+            
+            // Check 1: No next match (this is a terminal match)
+            if (!$match->next_match_id) {
+                // For double elimination: grand finals bracket
+                if ($tournament->bracket_type === 'double' && $match->bracket === 'grand_finals') {
+                    $isFinalMatch = true;
+                }
+                // For single elimination or highest round match
+                elseif ($match->round == $tournament->total_rounds) {
+                    $isFinalMatch = true;
+                }
+            }
+            
+            // Check 2: All matches are completed (fallback check)
+            if (!$isFinalMatch) {
+                $remainingMatches = TournamentMatch::where('tournament_id', $tournament->id)
+                    ->where('status', '!=', 'completed')
+                    ->count();
+                    
+                if ($remainingMatches === 0) {
+                    $isFinalMatch = true;
+                }
+            }
+            
+            if ($isFinalMatch) {
+                $tournament->update([
+                    'status' => 'completed',
+                    'winner_id' => $request->winner_id
+                ]);
+            }
+        }
+        
+        // For round robin: check if all matches are completed
+        if ($tournament->bracket_type === 'round-robin') {
+            $allMatchesCompleted = TournamentMatch::where('tournament_id', $tournament->id)
+                ->where('status', '!=', 'completed')
+                ->count() === 0;
+                
+            if ($allMatchesCompleted) {
+                // Determine winner by points (wins * 3 + draws * 1)
+                $teams = Team::where('event_id', $tournament->event_id)->get();
+                $standings = [];
+                
+                foreach ($teams as $team) {
+                    $wins = 0;
+                    $draws = 0;
+                    
+                    $matches = TournamentMatch::where('tournament_id', $tournament->id)
+                        ->where(function($q) use ($team) {
+                            $q->where('team1_id', $team->id)
+                              ->orWhere('team2_id', $team->id);
+                        })
+                        ->where('status', 'completed')
+                        ->get();
+                    
+                    foreach ($matches as $m) {
+                        if ($m->team1_score === $m->team2_score) {
+                            $draws++;
+                        } elseif (
+                            ($m->team1_id === $team->id && $m->team1_score > $m->team2_score) ||
+                            ($m->team2_id === $team->id && $m->team2_score > $m->team1_score)
+                        ) {
+                            $wins++;
+                        }
+                    }
+                    
+                    $points = ($wins * 3) + $draws;
+                    $standings[] = ['team_id' => $team->id, 'points' => $points];
+                }
+                
+                // Sort by points descending
+                usort($standings, function($a, $b) {
+                    return $b['points'] - $a['points'];
+                });
+                
+                if (!empty($standings)) {
+                    $tournament->update([
+                        'status' => 'completed',
+                        'winner_id' => $standings[0]['team_id']
+                    ]);
+                }
+            }
         }
 
         return response()->json([
             'success' => true,
             'match' => $match->load(['team1', 'team2', 'winner']),
             'message' => 'Match result updated successfully',
+        ]);
+    }
+
+    /**
+     * Swap individual teams between matches
+     * Only allowed if bracket hasn't started (no scores reported in any match)
+     * Only allowed for winners bracket matches
+     */
+    public function swapTeams(Request $request, $tournamentId)
+    {
+        $request->validate([
+            'match1_id' => 'required|exists:matches,id',
+            'match1_slot' => 'required|in:1,2',
+            'match2_id' => 'required|exists:matches,id',
+            'match2_slot' => 'required|in:1,2',
+        ]);
+
+        $tournament = Tournament::findOrFail($tournamentId);
+        $match1 = TournamentMatch::findOrFail($request->match1_id);
+        $match2 = TournamentMatch::findOrFail($request->match2_id);
+
+        // Check if tournament has started (any match has scores)
+        $hasStarted = TournamentMatch::where('tournament_id', $tournamentId)
+            ->where(function($query) {
+                $query->whereNotNull('team1_score')
+                      ->orWhereNotNull('team2_score')
+                      ->orWhereNotNull('winner_id');
+            })
+            ->exists();
+
+        if ($hasStarted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot swap teams after tournament has started'
+            ], 400);
+        }
+
+        // Check if both matches are in winners bracket (or null for single elimination)
+        if ($match1->bracket === 'losers' || $match2->bracket === 'losers' || 
+            $match1->bracket === 'grand_finals' || $match2->bracket === 'grand_finals') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Can only swap teams in winners bracket'
+            ], 400);
+        }
+
+        // Get the team IDs based on slots
+        $team1Id = $request->match1_slot == 1 ? $match1->team1_id : $match1->team2_id;
+        $team2Id = $request->match2_slot == 1 ? $match2->team1_id : $match2->team2_id;
+
+        // Swap the teams
+        if ($request->match1_slot == 1) {
+            $match1->team1_id = $team2Id;
+        } else {
+            $match1->team2_id = $team2Id;
+        }
+
+        if ($request->match2_slot == 1) {
+            $match2->team1_id = $team1Id;
+        } else {
+            $match2->team2_id = $team1Id;
+        }
+
+        $match1->save();
+        $match2->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Teams swapped successfully',
+            'matches' => [
+                'match1' => $match1->fresh(['team1', 'team2']),
+                'match2' => $match2->fresh(['team1', 'team2'])
+            ]
         ]);
     }
 

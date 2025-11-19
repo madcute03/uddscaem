@@ -696,29 +696,11 @@ function Dashboard() {
         team_size: '',
     });
 
-    const [successMessage, setSuccessMessage] = useState(null);
     const [errorMessage, setErrorMessage] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
 
     // Ensure images is always an array
     const safeImages = Array.isArray(editData.images) ? editData.images : [];
-
-    useEffect(() => {
-        if (flash?.success) {
-            setSuccessMessage(flash.success);
-            setErrorMessage(null);
-        }
-    }, [flash]);
-
-    useEffect(() => {
-        if (!successMessage) return;
-
-        const timer = setTimeout(() => {
-            setSuccessMessage(null);
-        }, 3000);
-
-        return () => clearTimeout(timer);
-    }, [successMessage]);
 
     // Helper function to parse date/time values consistently
     const parseDateTimeValue = (dateTimeValue) => {
@@ -1359,11 +1341,6 @@ function Dashboard() {
         <AuthenticatedLayout
             user={auth.user}
         >
-            {successMessage && (
-                <div className="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
-                    {successMessage}
-                </div>
-            )}
             {errorMessage && (
                 <div className="mb-4 rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-rose-200 space-y-1">
                     <div>{errorMessage}</div>

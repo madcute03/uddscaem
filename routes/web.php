@@ -263,6 +263,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/bracket/store', [TournamentController::class, 'storeBracket'])->name('api.bracket.store');
         Route::get('/bracket/{eventId}', [TournamentController::class, 'getBracket'])->name('api.bracket.get');
         Route::put('/bracket/match/{matchId}', [TournamentController::class, 'updateMatchResult'])->name('api.bracket.updateMatch');
+        Route::post('/bracket/{tournamentId}/swap-teams', [TournamentController::class, 'swapTeams'])->name('api.bracket.swapTeams');
     });
 
     // User Profile

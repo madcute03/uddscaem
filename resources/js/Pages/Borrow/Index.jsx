@@ -82,8 +82,6 @@ export default function BorrowIndex() {
         <PublicLayout>
             <Head title="Borrow" />
             <div className="mt-8 max-w-3xl mx-auto px-6 py-8 bg-slate-800/60 rounded-xl border border-slate-700">
-                <h1 className="text-2xl font-bold mb-6">Available Items</h1>
-
                 {/* Search Form */}
                 <div className="bg-slate-900/50 rounded-lg border border-slate-800 p-6 mb-8">
                     <h2 className="text-lg font-semibold mb-4 text-slate-200">Find Your Requests</h2>
@@ -127,7 +125,7 @@ export default function BorrowIndex() {
                         </button>
                     </div>
                 </div>
-
+                <h1 className="text-2xl font-bold mb-6">Available Items</h1>
                 <div className="overflow-x-auto rounded-lg border border-slate-800">
                     <table className="min-w-full text-sm">
                         <thead className="bg-slate-900/60">

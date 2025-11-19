@@ -361,8 +361,17 @@ function ActionButtons({ event, tournament, isRegistrationOpen, isUpcoming, hasB
                                     <span className="capitalize">{tournament.bracket_type} Elimination</span>
                                 </p>
                                 <p className="text-xs text-gray-400 mt-1">
-                                    Status: <span className="capitalize text-green-400">{tournament.status}</span>
+                                    Status: <span className={`capitalize font-semibold ${
+                                        tournament.status === 'active' ? 'text-green-400' :
+                                        tournament.status === 'completed' ? 'text-blue-400' :
+                                        'text-gray-400'
+                                    }`}>{tournament.status}</span>
                                 </p>
+                                {tournament.status === 'completed' && tournament.winner && (
+                                    <p className="text-xs text-white-400 mt-2 flex items-center gap-1">
+                                        Winner: {tournament.winner.name}
+                                    </p>
+                                )}
                             </div>
                         )}
 
